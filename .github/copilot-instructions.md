@@ -11,6 +11,7 @@ Antes de começar qualquer tarefa, leia os seguintes arquivos para entender o es
 
 - `.prompts/progresso.md` — Registro de progresso, bugs conhecidos e roadmap.
 - `.prompts/prd.md` — PRD completo do produto.
+- `.prompts/plano.md` — Plano de desenvolvimento detalhado, dividido em fases
 
 ---
 
