@@ -51,3 +51,10 @@ Antes de começar qualquer tarefa, leia os seguintes arquivos para entender o es
   - Bugs encontrados/corrigidos.
   - Novos débitos técnicos.
   - Atualizar contagem de testes.
+- **Manter o `README.md` atualizado** sempre que houver:
+  - Novos endpoints ou rotas.
+  - Mudanças na stack ou dependências relevantes.
+  - Alterações na estrutura de pastas.
+  - Avanço no roadmap (marcar fases concluídas).
+  - Novas variáveis de ambiente.
+  - Mudança na contagem de testes.
