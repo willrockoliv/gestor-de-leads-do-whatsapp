@@ -58,6 +58,9 @@ cover/
 # Django stuff:
 *.log
 local_settings.py
+
+# SQLite databases
+*.db
 db.sqlite3
 db.sqlite3-journal
 
@@ -205,3 +208,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# IDEs / Editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
