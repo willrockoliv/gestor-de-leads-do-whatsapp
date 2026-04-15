@@ -5,6 +5,8 @@ services:
       - "8000:8000"
     volumes:
       - ./app:/app/app
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/leads
       - DEBUG=true

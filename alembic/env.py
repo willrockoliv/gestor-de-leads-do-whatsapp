@@ -15,7 +15,7 @@ config = context.config
 
 # Override sqlalchemy.url from settings
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("+asyncpg", "+psycopg2") if "asyncpg" in settings.DATABASE_URL else settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("+asyncpg", "+psycopg") if "asyncpg" in settings.DATABASE_URL else settings.DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
