@@ -1,0 +1,18 @@
+{
+  "name": "Copilot Agent Sandbox",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "GitHub.copilot",
+        "GitHub.copilot-chat"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}

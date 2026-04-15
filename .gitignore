@@ -211,6 +211,7 @@ __marimo__/
 
 # IDEs / Editors
 .vscode/
+!.vscode/settings.json
 .idea/
 
 # OS
