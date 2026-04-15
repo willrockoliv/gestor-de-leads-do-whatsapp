@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     WHATSAPP_WEBHOOK_SECRET: str = ""
     WHATSAPP_API_URL: str = "http://waha:3000"
 
+    # CORS
+    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 
