@@ -10,7 +10,7 @@ Micro SaaS de triagem de leads via WhatsApp. O sistema escuta mensagens via WebS
 | Banco de Dados | PostgreSQL 16 |
 | IA | LiteLLM (OpenAI, Anthropic, Google) |
 | WhatsApp | Waha / Evolution API (WebSocket) |
-| Frontend | Next.js · React · Tailwind CSS · shadcn/ui *(em desenvolvimento)* |
+| Frontend | Next.js 16 · React · Tailwind CSS · shadcn/ui |
 | Infra | Docker Compose · pyenv |
 
 ## Pré-requisitos
@@ -21,26 +21,36 @@ Micro SaaS de triagem de leads via WhatsApp. O sistema escuta mensagens via WebS
 
 ## Início Rápido
 
+### Com Docker (recomendado)
+
 ```bash
 # 1. Clonar e entrar no projeto
 git clone <repo-url> && cd gestor-de-leads-do-whatsapp
 
-# 2. Criar virtualenv e ativar
-pyenv virtualenv 3.14.3 gestor-leads
-pyenv local gestor-leads
-
-# 3. Instalar dependências
-pip install -r requirements.txt
-
-# 4. Copiar variáveis de ambiente
+# 2. Copiar variáveis de ambiente
 cp .env.example .env
 # Editar .env com suas chaves (SECRET_KEY, LLM_API_KEY, etc.)
 
-# 5. Subir com Docker (backend + PostgreSQL)
+# 3. Subir tudo (backend + PostgreSQL + frontend)
 docker compose up --build -d
+# Backend em localhost:8000, Frontend em localhost:3000
+```
 
-# 6. Rodar testes
+### Desenvolvimento local (sem Docker)
+
+```bash
+# 1. Criar virtualenv e ativar
+pyenv virtualenv 3.14.3 gestor-leads
+pyenv local gestor-leads
+
+# 2. Instalar dependências do backend
+pip install -r requirements.txt
+
+# 3. Rodar testes
 pytest tests/ -v
+
+# 4. Frontend (em outro terminal)
+cd frontend && npm install && npm run dev
 ```
 
 ## Variáveis de Ambiente
@@ -53,7 +63,9 @@ pytest tests/ -v
 | `LLM_MODEL` | Modelo a usar via LiteLLM | `gpt-4o-mini` |
 | `WHATSAPP_WEBHOOK_SECRET` | Secret HMAC do webhook | — |
 | `WHATSAPP_API_URL` | URL da API WhatsApp | `http://waha:3000` |
+| `CORS_ORIGINS` | Origens permitidas (JSON list) | `["http://localhost:3000"]` |
 | `DEBUG` | Modo debug | `false` |
+| `NEXT_PUBLIC_API_URL` | URL da API (frontend) | `http://localhost:8000` |
 
 ## Estrutura do Projeto
 
@@ -72,6 +84,16 @@ app/
 └── main.py         # App FastAPI + watchdog background task
 tests/              # pytest + pytest-asyncio (SQLite in-memory)
 alembic/            # Migrations
+frontend/           # Next.js 16 + TypeScript + Tailwind + shadcn/ui
+├── src/app/             # App Router pages
+│   ├── login/           # Página de login
+│   ├── register/        # Página de cadastro
+│   └── (authenticated)/ # Layout autenticado
+│       ├── dashboard/   # Dashboard com Kanban
+│       ├── leads/       # Lista e detalhe de leads
+│       └── settings/    # Configuração do funil
+├── src/components/      # Componentes reutilizáveis
+└── src/lib/             # API client, auth context, utils
 ```
 
 ## API — Endpoints Principais
@@ -134,7 +156,7 @@ pytest tests/test_auth.py -v
 - [x] Fase 4 — Motor de inteligência (LLM)
 - [x] Fase 5 — API do dashboard
 - [ ] Fase 6 — Integração WhatsApp (QR Code, Waha/Evolution API)
-- [ ] Fase 7 — Frontend Next.js
+- [x] Fase 7 — Frontend Next.js
 - [ ] Fase 8 — Hardening e deploy
 
 ## Licença
