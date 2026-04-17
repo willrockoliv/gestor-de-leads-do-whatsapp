@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Save } from "lucide-react";
+import { useOnboardingGuard } from "../onboarding/guard";
 
 interface FunnelTemplate {
   name: string;
@@ -74,11 +75,15 @@ export default function SettingsPage() {
 
   function applyTemplate(key: string) {
     const tmpl = templates[key];
-    if (tmpl) {
+    if (tmpl && tmpl.funnel_config && typeof tmpl.funnel_config === "object") {
       setFunnelEntries(Object.entries(tmpl.funnel_config));
       toast.info(`Template "${tmpl.name}" aplicado. Salve para confirmar.`);
+    } else {
+      toast.error(`Template inválido ou incompleto.`);
     }
   }
+
+  const onboardingGuard = useOnboardingGuard();
 
   if (loading) {
     return (
@@ -122,16 +127,18 @@ export default function SettingsPage() {
                   Aplicar template:
                 </Label>
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(templates).map(([key, tmpl]) => (
-                    <Button
-                      key={key}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => applyTemplate(key)}
-                    >
-                      {tmpl.name}
-                    </Button>
-                  ))}
+                  {Object.entries(templates)
+                    .filter(([, tmpl]) => tmpl && tmpl.funnel_config && typeof tmpl.funnel_config === "object")
+                    .map(([key, tmpl]) => (
+                      <Button
+                        key={key}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => applyTemplate(key)}
+                      >
+                        {tmpl.name}
+                      </Button>
+                    ))}
                 </div>
               </div>
               <Separator />

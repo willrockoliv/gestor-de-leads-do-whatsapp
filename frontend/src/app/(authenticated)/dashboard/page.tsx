@@ -24,6 +24,7 @@ import {
   RefreshCw,
   Loader2,
 } from "lucide-react";
+import { useOnboardingGuard } from "../onboarding/guard";
 
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <Badge variant="outline">—</Badge>;
@@ -33,6 +34,7 @@ function ScoreBadge({ score }: { score: number | null }) {
 }
 
 export default function DashboardPage() {
+  useOnboardingGuard();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [leads, setLeads] = useState<LeadListItem[]>([]);
   const [tenant, setTenant] = useState<TenantResponse | null>(null);

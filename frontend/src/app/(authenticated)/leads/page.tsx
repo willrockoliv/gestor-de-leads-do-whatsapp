@@ -47,6 +47,7 @@ import {
   XCircle,
   ArrowUpDown,
 } from "lucide-react";
+import { useOnboardingGuard } from "../onboarding/guard";
 
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <Badge variant="outline">—</Badge>;

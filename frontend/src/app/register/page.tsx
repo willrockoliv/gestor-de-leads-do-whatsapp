@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { register as apiRegister, getFunnelTemplates } from "@/lib/api";
+import { register as apiRegister } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,10 +18,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-interface FunnelTemplate {
-  name: string;
-  funnel_config: Record<string, string>;
-}
+
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -29,23 +26,19 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [funnelTemplate, setFunnelTemplate] = useState("default");
-  const [templates, setTemplates] = useState<Record<string, FunnelTemplate>>({});
+  // Removido campo de template
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    getFunnelTemplates()
-      .then(setTemplates)
-      .catch(() => {});
-  }, []);
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await apiRegister(email, password, businessName, funnelTemplate);
+      // Usa "default" como template backend, mas não mostra para o usuário
+      const res = await apiRegister(email, password, businessName, "default");
       setToken(res.access_token);
-      router.push("/dashboard");
+      router.push("/onboarding");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao cadastrar");
     } finally {
@@ -95,24 +88,7 @@ export default function RegisterPage() {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="funnel">Template de Funil</Label>
-              <Select value={funnelTemplate} onValueChange={(v) => v && setFunnelTemplate(v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um template" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(templates).map(([key, tmpl]) => (
-                    <SelectItem key={key} value={key}>
-                      {tmpl.name}
-                    </SelectItem>
-                  ))}
-                  {Object.keys(templates).length === 0 && (
-                    <SelectItem value="default">Padrão</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Criando conta..." : "Cadastrar"}
             </Button>
