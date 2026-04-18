@@ -24,6 +24,12 @@ Antes de começar qualquer tarefa, leia os seguintes arquivos para entender o es
 - Dependências de teste/dev ficam no mesmo `requirements.txt` (sem separação por arquivo).
 - Após editar `requirements.txt`, valide com `pip install -r requirements.txt` para garantir que não há conflitos.
 
+### Validação do Frontend
+
+- **Sempre validar o frontend após qualquer alteração feita no código do frontend.**
+- Se o serviço estiver rodando localmente, acesse o frontend diretamente pela porta configurada (ex: `http://localhost:3000`) para garantir que as mudanças funcionam corretamente.
+- Caso o VS Code esteja rodando em um container separado, pode ser necessário acessar o serviço usando o IP do container ou da máquina host, e não apenas `localhost`.
+
 ### Testes
 
 - Seguir o princípio **TDD** — escrever testes primeiro quando possível.
