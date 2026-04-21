@@ -28,33 +28,45 @@ import { useOnboardingGuard } from "../onboarding/guard";
 
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <Badge variant="outline">—</Badge>;
-  if (score >= 70) return <Badge className="bg-red-500 hover:bg-red-600">{score}</Badge>;
-  if (score >= 40) return <Badge className="bg-yellow-500 hover:bg-yellow-600">{score}</Badge>;
-  return <Badge className="bg-blue-500 hover:bg-blue-600">{score}</Badge>;
+  if (score >= 70) return <Badge variant="default">Quente</Badge>; // "success" não existe
+  if (score >= 40) return <Badge variant="outline">Morno</Badge>; // "warning" não existe
+  return <Badge variant="secondary">Frio</Badge>;
 }
 
 export default function DashboardPage() {
   useOnboardingGuard();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [leads, setLeads] = useState<LeadListItem[]>([]);
-  const [tenant, setTenant] = useState<TenantResponse | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [leadsByStage, setLeadsByStage] = useState<Record<string, LeadListItem[]>>({});
+  const [funnelStages, setFunnelStages] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
     try {
-      const [s, l, t] = await Promise.all([
+      const [statsData, leadsData, tenantData] = await Promise.all([
         getDashboardStats(),
-        getLeads({ page_size: 100 }),
+        getLeads(),
         getTenant(),
       ]);
-      setStats(s);
-      setLeads(l);
-      setTenant(t);
-    } catch {
+      setStats(statsData);
+      setLeads(leadsData);
+      // Etapas do funil
+      const stages = tenantData?.funnel_config ? Object.values(tenantData.funnel_config) : [];
+      setFunnelStages(stages);
+      // Agrupa leads por etapa
+      const grouped: Record<string, LeadListItem[]> = {};
+      for (const l of leadsData) {
+        const stageKey = l.current_stage ?? "Sem etapa";
+        if (!grouped[stageKey]) grouped[stageKey] = [];
+        grouped[stageKey].push(l);
+      }
+      // Garante todas as etapas do funil como colunas, mesmo vazias
+      for (const stage of stages) {
+        if (!grouped[stage]) grouped[stage] = [];
+      }
+      setLeadsByStage(grouped);
+    } catch (err) {
       toast.error("Erro ao carregar dados do dashboard");
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -62,49 +74,18 @@ export default function DashboardPage() {
     refresh();
   }, [refresh]);
 
-  async function handleAnalyzeAll() {
+  const handleAnalyzeAll = async () => {
     setAnalyzing(true);
     try {
-      const res = await analyzeAll();
-      toast.success(
-        `Análise concluída: ${res.succeeded} sucesso, ${res.failed} falhas de ${res.total} total`
-      );
+      await analyzeAll();
+      toast.success("Análise concluída!");
       await refresh();
     } catch (err) {
-      if (err instanceof ApiError) {
-        toast.error(err.message);
-      } else {
-        toast.error("Erro ao analisar leads");
-      }
+      toast.error("Erro ao analisar todos os leads");
     } finally {
       setAnalyzing(false);
     }
-  }
-
-  // Build funnel stages from tenant config
-  const funnelStages: string[] = tenant?.funnel_config
-    ? Object.values(tenant.funnel_config)
-    : [];
-
-  // Group leads by stage for kanban
-  const leadsByStage: Record<string, LeadListItem[]> = {};
-  for (const stage of funnelStages) {
-    leadsByStage[stage] = [];
-  }
-  leadsByStage["Sem etapa"] = [];
-  for (const lead of leads) {
-    const stage = lead.current_stage || "Sem etapa";
-    if (!leadsByStage[stage]) leadsByStage[stage] = [];
-    leadsByStage[stage].push(lead);
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -116,13 +97,22 @@ export default function DashboardPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             Atualizar
           </Button>
-          <Button size="sm" onClick={handleAnalyzeAll} disabled={analyzing}>
+          <Button
+            size="sm"
+            onClick={handleAnalyzeAll}
+            disabled={analyzing}
+            className="relative flex items-center justify-center min-w-[140px] bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-600"
+          >
             {analyzing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span className="absolute left-4 flex items-center">
+                <Loader2 className="h-4 w-4 animate-spin text-slate-300 dark:text-slate-500" />
+              </span>
             ) : (
-              <Thermometer className="mr-2 h-4 w-4" />
+              <span className="absolute left-4 flex items-center">
+                <Thermometer className="h-4 w-4 text-slate-200 dark:text-slate-700" />
+              </span>
             )}
-            Analisar Todos
+            <span className={analyzing ? "opacity-60" : ""}>Analisar Todos</span>
           </Button>
         </div>
       </div>
@@ -175,52 +165,55 @@ export default function DashboardPage() {
       <div>
         <h2 className="text-lg font-semibold mb-4">Funil de Vendas</h2>
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {Object.entries(leadsByStage).map(([stage, stageLeads]) => (
-            <div
-              key={stage}
-              className="flex-shrink-0 w-72 rounded-lg border bg-muted/30"
-            >
-              <div className="flex items-center justify-between border-b px-3 py-2">
-                <h3 className="text-sm font-semibold">{stage}</h3>
-                <Badge variant="secondary">{stageLeads.length}</Badge>
-              </div>
-              <div className="space-y-2 p-2 max-h-[60vh] overflow-y-auto">
-                {stageLeads
-                  .sort((a, b) => (b.temperature_score ?? 0) - (a.temperature_score ?? 0))
-                  .map((lead) => (
-                    <Link key={lead.id} href={`/leads/${lead.id}`}>
-                      <Card className="cursor-pointer transition-shadow hover:shadow-md">
-                        <CardContent className="p-3 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm truncate">
-                              {lead.name || lead.phone}
-                            </span>
-                            <ScoreBadge score={lead.temperature_score} />
-                          </div>
-                          <p className="text-xs text-muted-foreground">{lead.phone}</p>
-                          {lead.is_processing && (
-                            <div className="flex items-center gap-1 text-xs text-blue-500">
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              Processando...
+          {funnelStages.map((stage) => {
+            const stageLeads = leadsByStage[stage] || [];
+            return (
+              <div
+                key={stage}
+                className="flex-shrink-0 w-72 rounded-lg border bg-muted/30"
+              >
+                <div className="flex items-center justify-between border-b px-3 py-2">
+                  <h3 className="text-sm font-semibold">{stage}</h3>
+                  <Badge variant="secondary">{stageLeads.length}</Badge>
+                </div>
+                <div className="space-y-2 p-2 max-h-[60vh] overflow-y-auto">
+                  {stageLeads
+                    .sort((a: LeadListItem, b: LeadListItem) => (b.temperature_score ?? 0) - (a.temperature_score ?? 0))
+                    .map((lead: LeadListItem) => (
+                      <Link key={lead.id} href={`/leads/${lead.id}`}>
+                        <Card className="cursor-pointer transition-shadow hover:shadow-md">
+                          <CardContent className="p-3 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-sm truncate">
+                                {lead.name || lead.phone}
+                              </span>
+                              <ScoreBadge score={lead.temperature_score} />
                             </div>
-                          )}
-                          {lead.conversation_time_minutes !== null && (
-                            <p className="text-xs text-muted-foreground">
-                              ⏱ {Math.round(lead.conversation_time_minutes)} min de conversa
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                {stageLeads.length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-4">
-                    Nenhum lead nesta etapa
-                  </p>
-                )}
+                            <p className="text-xs text-muted-foreground">{lead.phone}</p>
+                            {lead.is_processing && (
+                              <div className="flex items-center gap-1 text-xs text-blue-500">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Processando...
+                              </div>
+                            )}
+                            {lead.conversation_time_minutes !== null && (
+                              <p className="text-xs text-muted-foreground">
+                                ⏱ {Math.round(lead.conversation_time_minutes)} min de conversa
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  {stageLeads.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      Nenhum lead nesta etapa
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

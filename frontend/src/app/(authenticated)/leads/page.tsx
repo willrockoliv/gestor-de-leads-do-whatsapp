@@ -12,49 +12,46 @@ import {
   type TenantResponse,
   ApiError,
 } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
+
+
 import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectContent,
+  SelectItem
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  Thermometer,
   RefreshCw,
   Loader2,
-  CheckCircle2,
-  XCircle,
+  Thermometer,
   ArrowUpDown,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
-import { useOnboardingGuard } from "../onboarding/guard";
+
 
 function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <Badge variant="outline">—</Badge>;
-  if (score >= 70) return <Badge className="bg-red-500 hover:bg-red-600">{score}</Badge>;
-  if (score >= 40) return <Badge className="bg-yellow-500 hover:bg-yellow-600">{score}</Badge>;
-  return <Badge className="bg-blue-500 hover:bg-blue-600">{score}</Badge>;
+  if (score === null || score === undefined) return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">—</Badge>;
+  if (score >= 70) return <Badge className="bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400 border border-transparent font-semibold px-3 py-1">Quente</Badge>;
+  if (score >= 40) return <Badge className="bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400 border border-transparent font-semibold px-3 py-1">Morno</Badge>;
+  return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">Frio</Badge>;
 }
+
+// O componente LeadsPage deve ser implementado aqui, com o JSX correto, hooks e lógica.
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<LeadListItem[]>([]);
@@ -163,8 +160,19 @@ export default function LeadsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="grid gap-4 py-8">
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm p-6 flex flex-col gap-4 animate-pulse"
+          >
+            <div className="flex flex-row items-center justify-between pb-2">
+              <div className="h-4 w-32 rounded bg-slate-100 dark:bg-slate-800" />
+              <div className="h-5 w-5 rounded-full bg-slate-100 dark:bg-slate-800" />
+            </div>
+            <div className="h-6 w-40 rounded bg-slate-100 dark:bg-slate-800" />
+          </div>
+        ))}
       </div>
     );
   }

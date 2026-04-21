@@ -14,9 +14,9 @@ import {
   type TenantResponse,
   ApiError,
 } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -25,33 +25,107 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   ArrowLeft,
-  Thermometer,
   Loader2,
+  Thermometer,
   MessageSquare,
+  ExternalLink,
   CheckCircle2,
   XCircle,
   Clock,
-  ExternalLink,
 } from "lucide-react";
 
+export default function LeadDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const router = useRouter();
+  const [lead, setLead] = useState<LeadDetail | null>(null);
+  const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [tenant, setTenant] = useState<TenantResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [statusDialog, setStatusDialog] = useState<"converted" | "lost" | null>(null);
+
+  // ...restante do código permanece igual...
+
+  return (
+    <div className="space-y-6 max-w-2xl mx-auto">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.back()}
+        className="mb-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-600"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+      </Button>
+      <Card className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-50">
+            <span>{lead.name}</span>
+            <ScoreBadge score={lead.temperature} />
+          </CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-300">{lead.phone}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2">
+            {lead.status === "converted" ? (
+              <Badge className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400 border border-transparent">Convertido</Badge>
+            ) : lead.status === "lost" ? (
+              <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent">Perdido</Badge>
+            ) : (
+              <Badge className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-transparent">Ativo</Badge>
+            )}
+            <span className="text-xs text-muted-foreground">ID: {lead.id}</span>
+          </div>
+          <Separator />
+          <div>
+            <h3 className="font-semibold mb-1 text-slate-900 dark:text-slate-50">Mensagens</h3>
+            {messages.length === 0 ? (
+              <div className="text-xs text-muted-foreground">Nenhuma mensagem</div>
+            ) : (
+              <div className="space-y-2">
+                {messages.map((msg) => (
+                  <div key={msg.id} className="bg-slate-50 dark:bg-slate-950 rounded p-2">
+                    <span className="text-xs text-muted-foreground">{msg.timestamp}</span>
+                    <div className="text-slate-900 dark:text-slate-50">{msg.content}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <Badge variant="outline">—</Badge>;
+  // Quente
   if (score >= 70)
-    return <Badge className="bg-red-500 hover:bg-red-600 text-lg px-3 py-1">{score}</Badge>;
+    return (
+      <Badge className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400 border border-transparent font-semibold text-lg px-3 py-1">
+        {score}
+      </Badge>
+    );
+  // Morno
   if (score >= 40)
-    return <Badge className="bg-yellow-500 hover:bg-yellow-600 text-lg px-3 py-1">{score}</Badge>;
-  return <Badge className="bg-blue-500 hover:bg-blue-600 text-lg px-3 py-1">{score}</Badge>;
+    return (
+      <Badge className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-transparent font-semibold text-lg px-3 py-1">
+        {score}
+      </Badge>
+    );
+  // Frio
+  return (
+    <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold text-lg px-3 py-1">
+      {score}
+    </Badge>
+  );
 }
 
 export default function LeadDetailPage({
@@ -147,8 +221,14 @@ export default function LeadDetailPage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="grid gap-4 py-8">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm p-8 flex flex-col gap-6 animate-pulse max-w-2xl mx-auto">
+          <div className="h-8 w-1/2 rounded bg-slate-100 dark:bg-slate-800 mb-4" />
+          <div className="h-6 w-1/3 rounded bg-slate-100 dark:bg-slate-800 mb-2" />
+          <div className="h-4 w-1/4 rounded bg-slate-100 dark:bg-slate-800 mb-6" />
+          <div className="h-32 w-full rounded bg-slate-100 dark:bg-slate-800 mb-4" />
+          <div className="h-10 w-1/2 rounded bg-slate-100 dark:bg-slate-800" />
+        </div>
       </div>
     );
   }
