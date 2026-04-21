@@ -93,3 +93,26 @@
 - [ ] Fase 6 — Integração WhatsApp (QR Code, Waha/Evolution API)
 - [x] Fase 7 — Frontend Next.js (Dashboard, Kanban, detalhes, resposta)
 - [ ] Fase 8 — Hardening (rate limit, CORS, logging, deploy)
+
+## Changelog — Redesign Visual Frontend (Fase 7)
+
+- Redesign completo do frontend Next.js seguindo padrão SaaS enterprise minimalista (Nordic, alto contraste, responsivo, suporte nativo a Light/Dark mode).
+- Atualização de todos os cards, tabelas, badges, botões e containers para o novo design system (Tailwind + shadcn/ui).
+- Inclusão de Skeleton Loaders elegantes para todos os estados de carregamento (substituindo spinners genéricos).
+- Toggle de tema (Sol/Lua) minimalista no header da sidebar e header mobile.
+- Garantia de preservação total da lógica de negócio, hooks e chamadas de API.
+- Nenhuma alteração em endpoints, lógica backend ou contratos de API.
+- Nenhum teste backend quebrado (79 testes passando).
+
+### Validação Completa do Frontend (2026-04-19)
+
+- Todos os endpoints principais do frontend foram testados manualmente via `curl` após refatoração e correção de imports/build:
+  - `/dashboard`
+  - `/leads`
+  - `/settings`
+  - `/onboarding`
+  - `/register`
+  - `/login`
+- Critério de sucesso: resposta HTTP 200 OK e renderização correta da interface (formulários, tabelas, onboarding, etc).
+- Todos os erros de build, dependências e imports foram corrigidos durante o processo.
+- Progresso e procedimentos registrados também em `.github/instructions/copilot-instructions.md`.
