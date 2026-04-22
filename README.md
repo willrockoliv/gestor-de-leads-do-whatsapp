@@ -1,3 +1,49 @@
+# Gestor de Leads do WhatsApp
+
+## Estrutura de Contexto para Copilot Chat Agent
+
+Este projeto está otimizado para desenvolvimento assistido por IA (Copilot Chat Agent), com contexto modularizado e instruções específicas por domínio.
+
+### Estrutura Recomendada
+
+```
+.github/
+	instructions/
+		copilot-instructions.md
+		<outros arquivos de instructions por domínio>
+	skills/
+		<nome-da-skill>/
+			SKILL.md
+	AGENTS.md
+memories/
+	repo/
+		<notas e convenções específicas do repositório>
+.prompts/
+	prd.md
+	plano.md
+	progresso.md
+	frontend.md
+```
+
+### Como usar e atualizar instruções/skills/memórias
+
+- **Leia sempre** os arquivos de contexto obrigatórios antes de iniciar tarefas.
+- **Carregue apenas as skills relevantes** para a tarefa em questão.
+- **Atualize** as skills e instructions sempre que fluxos mudarem ou bugs recorrentes forem identificados.
+- **Registre decisões, padrões e troubleshooting** em `memories/repo/` de forma breve e objetiva.
+- **Documente agentes customizados** em `.github/AGENTS.md`.
+
+### Para novos contribuidores
+
+1. Leia o PRD, plano e progresso em `.prompts/`.
+2. Consulte `copilot-instructions.md` para convenções globais.
+3. Use as skills em `.github/skills/` conforme o domínio da tarefa.
+4. Consulte e atualize memórias em `memories/repo/`.
+5. Siga o fluxo de validação e registro de progresso descrito nas instruções.
+
+---
+
+Consulte sempre os arquivos de instrução e memórias para garantir contexto atualizado e evitar retrabalho.
 # 📱 Gestor de Leads do WhatsApp
 
 Micro SaaS de triagem de leads via WhatsApp. O sistema escuta mensagens via WebSocket, usa LLM para classificar a "temperatura" do lead, gerar resumos e sugerir respostas — permitindo que o vendedor foque nas oportunidades com maior intenção de compra.
