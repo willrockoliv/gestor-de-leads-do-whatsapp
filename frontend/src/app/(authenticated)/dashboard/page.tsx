@@ -26,11 +26,32 @@ import {
 } from "lucide-react";
 import { useOnboardingGuard } from "../onboarding/guard";
 
+
+// Badge premium conforme RFC (cores e variantes)
 function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <Badge variant="outline">—</Badge>;
-  if (score >= 70) return <Badge variant="default">Quente</Badge>; // "success" não existe
-  if (score >= 40) return <Badge variant="outline">Morno</Badge>; // "warning" não existe
-  return <Badge variant="secondary">Frio</Badge>;
+  if (score === null)
+    return (
+      <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">
+        —
+      </Badge>
+    );
+  if (score >= 70)
+    return (
+      <Badge className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400 border border-transparent font-semibold px-3 py-1">
+        Quente
+      </Badge>
+    );
+  if (score >= 40)
+    return (
+      <Badge className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-transparent font-semibold px-3 py-1">
+        Morno
+      </Badge>
+    );
+  return (
+    <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">
+      Frio
+    </Badge>
+  );
 }
 
 export default function DashboardPage() {
@@ -40,8 +61,10 @@ export default function DashboardPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [leadsByStage, setLeadsByStage] = useState<Record<string, LeadListItem[]>>({});
   const [funnelStages, setFunnelStages] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    setLoading(true);
     try {
       const [statsData, leadsData, tenantData] = await Promise.all([
         getDashboardStats(),
@@ -67,6 +90,8 @@ export default function DashboardPage() {
       setLeadsByStage(grouped);
     } catch (err) {
       toast.error("Erro ao carregar dados do dashboard");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -87,21 +112,29 @@ export default function DashboardPage() {
     }
   };
 
+  // Hero visual premium
   return (
-    <div className="space-y-6">
-      {/* Title + Actions */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+    <div className="space-y-10 px-2 sm:px-8 md:px-14 lg:px-28 xl:px-44 2xl:px-72 py-10 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh]">
+      {/* Hero Section */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10 mb-8">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-2">
+            Painel de Leads
+          </h1>
+          <p className="text-lg text-slate-500 dark:text-slate-400 max-w-xl">
+            Acompanhe o funil, temperatura e performance dos seus leads em tempo real.<br className="hidden md:inline" />Visual premium, dark/light mode e microinterações refinadas.
+          </p>
+        </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={refresh}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+          <Button variant="outline" size="sm" onClick={refresh} disabled={loading || analyzing} className="transition-all border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800">
+            {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <RefreshCw className="mr-2 h-4 w-4" />}
             Atualizar
           </Button>
           <Button
             size="sm"
             onClick={handleAnalyzeAll}
             disabled={analyzing}
-            className="relative flex items-center justify-center min-w-[140px] bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-600"
+            className="relative flex items-center justify-center min-w-[140px] bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 shadow-sm"
           >
             {analyzing ? (
               <span className="absolute left-4 flex items-center">
@@ -117,103 +150,136 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Leads Ativos</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_active}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Convertidos</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_converted}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Perdidos</CardTitle>
-              <XCircle className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_lost}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Temperatura Média</CardTitle>
-              <Thermometer className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.avg_temperature !== null ? stats.avg_temperature : "—"}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Stats Cards ou Skeleton Loader */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i} className="animate-pulse bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="h-4 w-6 bg-slate-200 dark:bg-slate-800 rounded" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-8 w-16 bg-slate-200 dark:bg-slate-800 rounded" />
+                </CardContent>
+              </Card>
+            ))
+          : stats && (
+              <>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Leads Ativos</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.total_active}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Convertidos</CardTitle>
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.total_converted}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Perdidos</CardTitle>
+                    <XCircle className="h-4 w-4 text-red-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.total_lost}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Temperatura Média</CardTitle>
+                    <Thermometer className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.avg_temperature !== null ? stats.avg_temperature : "—"}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+      </div>
 
-      {/* Kanban */}
+      {/* Kanban Premium */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Funil de Vendas</h2>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {funnelStages.map((stage) => {
-            const stageLeads = leadsByStage[stage] || [];
-            return (
-              <div
-                key={stage}
-                className="flex-shrink-0 w-72 rounded-lg border bg-muted/30"
-              >
-                <div className="flex items-center justify-between border-b px-3 py-2">
-                  <h3 className="text-sm font-semibold">{stage}</h3>
-                  <Badge variant="secondary">{stageLeads.length}</Badge>
-                </div>
-                <div className="space-y-2 p-2 max-h-[60vh] overflow-y-auto">
-                  {stageLeads
-                    .sort((a: LeadListItem, b: LeadListItem) => (b.temperature_score ?? 0) - (a.temperature_score ?? 0))
-                    .map((lead: LeadListItem) => (
-                      <Link key={lead.id} href={`/leads/${lead.id}`}>
-                        <Card className="cursor-pointer transition-shadow hover:shadow-md">
-                          <CardContent className="p-3 space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium text-sm truncate">
-                                {lead.name || lead.phone}
-                              </span>
-                              <ScoreBadge score={lead.temperature_score} />
-                            </div>
-                            <p className="text-xs text-muted-foreground">{lead.phone}</p>
-                            {lead.is_processing && (
-                              <div className="flex items-center gap-1 text-xs text-blue-500">
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                Processando...
-                              </div>
-                            )}
-                            {lead.conversation_time_minutes !== null && (
-                              <p className="text-xs text-muted-foreground">
-                                ⏱ {Math.round(lead.conversation_time_minutes)} min de conversa
-                              </p>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Link>
+        <h2 className="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-50">Funil de Vendas</h2>
+        <div className="flex gap-6 overflow-x-auto pb-4">
+          {loading
+            ? Array.from({ length: funnelStages.length || 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-72 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 shadow-sm animate-pulse"
+                >
+                  <div className="flex items-center justify-between border-b px-3 py-2">
+                    <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
+                    <div className="h-4 w-8 bg-slate-200 dark:bg-slate-800 rounded" />
+                  </div>
+                  <div className="space-y-2 p-2 max-h-[60vh] overflow-y-auto">
+                    {Array.from({ length: 2 }).map((_, j) => (
+                      <div key={j} className="rounded-lg bg-slate-200 dark:bg-slate-800 h-16" />
                     ))}
-                  {stageLeads.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      Nenhum lead nesta etapa
-                    </p>
-                  )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              ))
+            : funnelStages.map((stage) => {
+                const stageLeads = leadsByStage[stage] || [];
+                return (
+                  <div
+                    key={stage}
+                    className="flex-shrink-0 w-72 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between border-b px-3 py-2">
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{stage}</h3>
+                      <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-2 py-0.5">
+                        {stageLeads.length}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2 p-2 max-h-[60vh] overflow-y-auto">
+                      {stageLeads
+                        .sort((a: LeadListItem, b: LeadListItem) => (b.temperature_score ?? 0) - (a.temperature_score ?? 0))
+                        .map((lead: LeadListItem) => (
+                          <Link key={lead.id} href={`/leads/${lead.id}`}>
+                            <Card className="cursor-pointer transition-all hover:scale-[1.025] hover:shadow-lg focus-visible:ring-2 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 outline-none">
+                              <CardContent className="p-3 space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-sm truncate">
+                                    {lead.name || lead.phone}
+                                  </span>
+                                  <ScoreBadge score={lead.temperature_score} />
+                                </div>
+                                <p className="text-xs text-muted-foreground">{lead.phone}</p>
+                                {lead.is_processing && (
+                                  <div className="flex items-center gap-1 text-xs text-blue-500">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Processando...
+                                  </div>
+                                )}
+                                {lead.conversation_time_minutes !== null && (
+                                  <p className="text-xs text-muted-foreground">
+                                    ⏱ {Math.round(lead.conversation_time_minutes)} min de conversa
+                                  </p>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        ))}
+                      {stageLeads.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-4">
+                          Nenhum lead nesta etapa
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
         </div>
       </div>
     </div>
