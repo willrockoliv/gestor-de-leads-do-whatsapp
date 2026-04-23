@@ -45,6 +45,14 @@ applyTo: "**/*"
 - Teste cada endpoint pelo menos 3 vezes após alterações.
 - Use o endpoint de login do backend para obter JWT se necessário.
 
+### Melhores Práticas para Testes Playwright/E2E e Frontend
+
+- Sempre simule login nos testes Playwright/E2E de páginas autenticadas. Use usuário de teste conhecido (ex: teste@teste.com/123456) ou crie um usuário de teste no setup do teste.
+- Antes de rodar testes, verifique se o serviço frontend está rodando e acessível. Use `curl` ou `docker compose ps` para garantir que o endpoint está disponível.
+- Sempre confira os logs do serviço frontend (`docker compose logs frontend --tail 40`) ao depurar falhas ou timeouts em testes automatizados.
+- Se ocorrer timeout, verifique se a página está compilando, lenta ou em loading. Aguarde e execute novamente, ou aumente o timeout do teste Playwright se necessário.
+- Para ambientes Docker, valide se o endpoint correto é `localhost` ou o gateway do container, usando comandos bash para descobrir o IP correto.
+
 ## Atualização de Skills e Instruções
 - Atualize skills e instructions sempre que fluxos mudarem ou bugs recorrentes forem identificados.
 - Documente exemplos de prompts eficazes e ineficazes.
