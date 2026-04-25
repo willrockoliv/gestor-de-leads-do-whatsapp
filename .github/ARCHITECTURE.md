@@ -23,12 +23,13 @@ frontend/
     src/app/      # Páginas Next.js (dashboard, leads, onboarding, settings)
     src/components/ui/ # Componentes visuais (badge, button, card, etc)
     src/lib/      # API client, contextos, utilitários
-tests/          # Testes unitários e integração (pytest)
+tests/            # Testes unitários e integração (pytest)
 .github/
     instructions/ # Instruções para agentes IA
+    memories/     # Decisões, padrões, troubleshooting
+    rfcs/         # Propostas formais de mudanças e padrões de arquitetura 
     skills/       # Skills por domínio (ex: analysis, frontend, auth)
-.prompts/       # PRD, plano, progresso, frontend
-memories/repo/  # Decisões, padrões, troubleshooting
+.prompts/         # PRD, plano, progresso, frontend
 ```
 
 ---
@@ -88,7 +89,7 @@ memories/repo/  # Decisões, padrões, troubleshooting
 
 - **Leia sempre:** `.prompts/prd.md`, `.prompts/plano.md`, `.prompts/progresso.md` antes de iniciar tarefas.
 - **Skills:** Carregue skills relevantes de `.github/skills/` conforme o domínio (ex: analysis, frontend, auth).
-- **Memória:** Use `memories/repo/` para registrar decisões, padrões, troubleshooting.
+- **Memória:** Use `memories/` para registrar decisões, padrões, troubleshooting.
 - **Testes:** Use pytest, siga TDD, rode todos os testes após mudanças.
 - **Frontend:** Valide endpoints via curl após alterações.
 - **Documentação:** Atualize README e progresso após cada entrega.
@@ -112,7 +113,7 @@ memories/repo/  # Decisões, padrões, troubleshooting
 - **Progresso:** `.prompts/progresso.md`
 - **Instruções para IA:** `.github/instructions/copilot-instructions.md`
 - **Skills:** `.github/skills/`
-- **Memórias:** `memories/repo/`
+- **Memórias:** `memories/`
 
 ---
 

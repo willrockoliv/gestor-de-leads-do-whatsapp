@@ -13,4 +13,4 @@ Este diretório armazena skills específicas por domínio, otimizando o uso de t
 ## Boas práticas
 - Skills devem ser carregadas apenas quando o domínio for relevante para a tarefa.
 - Atualize sempre que padrões mudarem ou bugs recorrentes forem identificados.
-- Use links para `.github/memories/repo/` para registrar decisões e padrões do domínio.
+- Use links para `.github/memories/` para registrar decisões e padrões do domínio.

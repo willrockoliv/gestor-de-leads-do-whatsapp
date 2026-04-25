@@ -60,4 +60,4 @@ O teste Playwright que valida o loading/spinner ao acionar análise de lead faz 
 - label: Instruções Copilot
 	url: ../../instructions/copilot-instructions.md
 - label: Memórias do domínio
-	url: ../../memories/repo/
+	url: ../../memories/

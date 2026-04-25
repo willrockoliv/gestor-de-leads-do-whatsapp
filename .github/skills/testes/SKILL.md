@@ -17,4 +17,4 @@
 
 ## Links úteis
 - [copilot-instructions.md](../../instructions/copilot-instructions.md)
-- [memories/repo/gestor-leads.md](../../../memories/repo/gestor-leads.md)
+- [memories/gestor-leads.md](../../../memories/gestor-leads.md)

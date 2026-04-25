@@ -12,7 +12,7 @@ Sugestão de arquivos orquestradores:
 
 - `.github/instructions/CONTEXT-INDEX.md` (ou README.md dentro de instructions/)
 - `.github/skills/SKILLS-INDEX.md`
-- `memories/repo/CONTEXT-INDEX.md` (para memórias persistentes)
+- `memories/CONTEXT-INDEX.md` (para memórias persistentes)
 - `.github/ARCHITECTURE.md` (índice de documentação arquitetural, RFCs e diagramas)
 
 ---
@@ -105,13 +105,13 @@ memories/
 ## Carregar sob demanda:
 - .github/skills/SKILLS-INDEX.md (guia para skills por domínio)
 - .github/ARCHITECTURE.md (estrutura, diagramas, RFCs)
-- memories/repo/CONTEXT-INDEX.md (memórias persistentes relevantes)
+- memories/CONTEXT-INDEX.md (memórias persistentes relevantes)
 - Arquivos de skills específicos conforme domínio da tarefa
 
 ## Como decidir:
 - Consulte SKILLS-INDEX.md para saber qual skill carregar.
 - Consulte ARCHITECTURE.md para diagramas, fluxos e decisões arquiteturais.
-- Consulte memories/repo/CONTEXT-INDEX.md para fatos persistentes.
+- Consulte memories/CONTEXT-INDEX.md para fatos persistentes.
 
 ## Sempre atualizar:
 - Este índice ao criar/remover arquivos de contexto.

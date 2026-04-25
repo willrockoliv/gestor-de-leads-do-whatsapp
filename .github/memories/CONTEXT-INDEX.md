@@ -12,7 +12,8 @@ Este arquivo serve como índice de contexto para agentes de IA e desenvolvedores
 - `.github/ARCHITECTURE.md` — Arquitetura e visão geral do sistema
 - `.github/instructions/copilot-instructions.md` — Convenções globais e fluxo de trabalho para IA
 - `.github/skills/` — Skills por domínio (ex: analysis, frontend, auth)
-- `memories/repo/` — Decisões, padrões, troubleshooting
+- `.github/memories/` — Decisões, padrões, troubleshooting
+- `.github/memories/plan.md` — planejamento para implementações em curso
 
 ## Como usar
 

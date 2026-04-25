@@ -65,7 +65,7 @@ memories/
 - Liste agentes customizados (se houver), suas funções e quando invocá-los.
 - Explique como criar novos agentes e boas práticas para prompts autônomos.
 
-### 3.4. `memories/repo/`
+### 3.4. `memories/`
 
 - Armazene convenções, decisões arquiteturais, padrões de commit, dicas de troubleshooting e lições aprendidas.
 - Mantenha arquivos curtos e objetivos para facilitar o carregamento automático.
@@ -107,7 +107,7 @@ memories/
 - Skills disponíveis: autenticação, frontend, integração, testes, etc.
 
 ## Memória
-- Use arquivos em `memories/repo/` para registrar decisões e padrões.
+- Use arquivos em `memories/` para registrar decisões e padrões.
 ```
 
 ---
@@ -131,7 +131,7 @@ memories/
 
 ## Links úteis
 - [copilot-instructions.md](../instructions/copilot-instructions.md)
-- [memories/repo/frontend-validation.md](../../memories/repo/frontend-validation.md)
+- [memories/frontend-validation.md](../../memories/frontend-validation.md)
 ```
 
 ---

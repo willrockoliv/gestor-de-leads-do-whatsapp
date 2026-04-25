@@ -17,5 +17,5 @@ links:
 	- label: Instruções Copilot
 		url: ../../instructions/copilot-instructions.md
 	- label: Memórias do domínio
-		url: ../../memories/repo/gestor-leads.md
+		url: ../../memories/gestor-leads.md
 ---

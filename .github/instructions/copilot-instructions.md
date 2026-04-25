@@ -6,13 +6,17 @@ applyTo: "**/*"
 
 # Copilot Instructions
 
+## Memoria de planos
+
+- sempre leia o arquivo `.github/memories/plan.md` para entender os planos de implementação, próximos passos e decisões em andamento no projeto. Este arquivo deve ser atualizado a cada tarefa concluída, constantemente com o progresso e mudanças de direção, servindo como guia para o desenvolvimento assistido.
+
 ## Contexto do Projeto
 - Sempre antes de iniciar tarefas, leia os arquivos:
   - `.prompts/prd.md`
   - `.prompts/plano.md`
   - `.prompts/progresso.md`
   - `.github/instructions/CONTEXT-INDEX.md`
-  - `.github/memories/repo/`
+  - `.github/memories/`
   - `.github/ARCHITECTURE.md`
   - `.github/rfcs/`
   - `.github/skills/SKILLS-INDEX.md`
@@ -37,7 +41,7 @@ applyTo: "**/*"
 - Skills ficam em `.github/skills/<domínio>/SKILL.md`.
 
 ## Memória
-- Use arquivos em `.github/memories/repo/` para registrar decisões, padrões, troubleshooting e lições aprendidas.
+- Use arquivos em `.github/memories/` para registrar decisões, padrões, troubleshooting e lições aprendidas.
 - Mantenha arquivos curtos e objetivos para facilitar o carregamento automático.
 
 ## Fluxo de Trabalho Ideal
@@ -68,4 +72,4 @@ applyTo: "**/*"
 
 ## Links Úteis
 - [README.md](../../README.md)
-- [.github/memories/repo/](../memories/repo/)
+- [.github/memories/](../memories/)

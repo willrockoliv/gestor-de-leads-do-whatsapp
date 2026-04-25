@@ -30,7 +30,7 @@ memories/
 - **Leia sempre** os arquivos de contexto obrigatórios antes de iniciar tarefas.
 - **Carregue apenas as skills relevantes** para a tarefa em questão.
 - **Atualize** as skills e instructions sempre que fluxos mudarem ou bugs recorrentes forem identificados.
-- **Registre decisões, padrões e troubleshooting** em `memories/repo/` de forma breve e objetiva.
+- **Registre decisões, padrões e troubleshooting** em `memories/` de forma breve e objetiva.
 - **Documente agentes customizados** em `.github/AGENTS.md`.
 
 ### Para novos contribuidores
@@ -38,7 +38,7 @@ memories/
 1. Leia o PRD, plano e progresso em `.prompts/`.
 2. Consulte `copilot-instructions.md` para convenções globais.
 3. Use as skills em `.github/skills/` conforme o domínio da tarefa.
-4. Consulte e atualize memórias em `memories/repo/`.
+4. Consulte e atualize memórias em `memories/`.
 5. Siga o fluxo de validação e registro de progresso descrito nas instruções.
 
 ---
