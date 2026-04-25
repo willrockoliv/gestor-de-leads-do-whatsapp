@@ -30,25 +30,22 @@ import { useOnboardingGuard } from "../onboarding/guard";
 // Badge premium conforme RFC (cores e variantes)
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null)
-    return (
-      <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">
-        —
-      </Badge>
-    );
+    return <Badge variant="outline">—</Badge>;
   if (score >= 70)
     return (
-      <Badge className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400 border border-transparent font-semibold px-3 py-1">
+      <Badge variant="default" className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400">
         Quente
       </Badge>
     );
   if (score >= 40)
     return (
-      <Badge className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-transparent font-semibold px-3 py-1">
+      <Badge variant="default" className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
         Morno
       </Badge>
     );
+  // Frio: aplica classes RFC
   return (
-    <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">
+    <Badge variant="default" className="bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-200">
       Frio
     </Badge>
   );
@@ -238,7 +235,7 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-center justify-between border-b px-3 py-2">
                       <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{stage}</h3>
-                      <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-2 py-0.5">
+                      <Badge variant="outline">
                         {stageLeads.length}
                       </Badge>
                     </div>

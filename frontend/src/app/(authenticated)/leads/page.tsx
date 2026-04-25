@@ -46,12 +46,12 @@ import {
 
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null || score === undefined)
-    return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">—</Badge>;
+    return <Badge variant="outline">—</Badge>;
   if (score >= 70)
-    return <Badge className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400 border border-transparent font-semibold px-3 py-1">Quente</Badge>;
+    return <Badge variant="default" className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400">Quente</Badge>;
   if (score >= 40)
-    return <Badge className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-transparent font-semibold px-3 py-1">Morno</Badge>;
-  return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">Frio</Badge>;
+    return <Badge variant="default" className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">Morno</Badge>;
+  return <Badge variant="outline">Frio</Badge>;
 }
 
 // O componente LeadsPage deve ser implementado aqui, com o JSX correto, hooks e lógica.
@@ -265,7 +265,7 @@ export default function LeadsPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-2 py-0.5">
+                    <Badge variant="outline">
                       {lead.current_stage || "Sem etapa"}
                     </Badge>
                   </TableCell>
