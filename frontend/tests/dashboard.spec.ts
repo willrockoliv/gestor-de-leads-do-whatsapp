@@ -1,34 +1,21 @@
 import { test, expect } from '@playwright/test';
-
-// Teste visual e funcional do dashboard
-
-async function login(page) {
-  await page.goto('http://localhost:3000/login');
-  await page.fill('input[type="email"]', 'teste@teste.com');
-  await page.fill('input[type="password"]', '123456');
-  await page.click('button[type="submit"]');
-  await page.waitForURL('**/dashboard');
-  // Aguarda o token ser salvo no localStorage
-  await page.waitForFunction(() => !!localStorage.getItem('token'), null, { timeout: 10000 });
-  const token = await page.evaluate(() => localStorage.getItem('token'));
-  console.log('Token JWT após login:', token);
-}
+import { login } from './utils/login';
 
 test.describe('Dashboard visual e funcional', () => {
-  test('Deve exibir hero, cards, kanban e badges corretamente', async ({ page }) => {
-    test.setTimeout(300000);
+  test('Deve exibir hero, cards e kanban corretamente', async ({ page }) => {
+    test.setTimeout(20000);
     await login(page);
     // Hero
     await expect(page.getByRole('heading', { name: /painel de leads/i })).toBeVisible();
     await expect(page.getByText(/acompanh/i)).toBeVisible();
     // Aguarda o sumiço do loader
-    await expect(page.getByText('Carregando...')).toBeHidden({ timeout: 120000 });
+    await expect(page.getByText('Carregando...')).toBeHidden({ timeout: 10000 });
     // Cards
     try {
-      await expect(page.getByText('Leads Ativos', { exact: false })).toBeVisible({ timeout: 60000 });
-      await expect(page.getByText('Convertidos', { exact: false })).toBeVisible({ timeout: 60000 });
-      await expect(page.getByText('Perdidos', { exact: false })).toBeVisible({ timeout: 60000 });
-      await expect(page.getByText('Temperatura Média', { exact: false })).toBeVisible({ timeout: 60000 });
+      await expect(page.getByText('Leads Ativos', { exact: false })).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('Convertidos', { exact: false })).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('Perdidos', { exact: false })).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('Temperatura Média', { exact: false })).toBeVisible({ timeout: 5000 });
     } catch (e) {
       const html = await page.content();
       console.log('HTML do dashboard ao falhar:', html);
@@ -36,8 +23,36 @@ test.describe('Dashboard visual e funcional', () => {
     }
     // Kanban
     await expect(page.getByText(/funil de vendas/i)).toBeVisible();
-    // Badge de temperatura
-    await expect(page.locator('.bg-teal-50, .dark\\:bg-teal-500\\/10')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('Deve exibir badge quente no dashboard', async ({ page }) => {
+    test.setTimeout(20000);
+    await login(page);
+    const badgeQuente = page.locator('span.group\\/badge', { hasText: 'Quente' });
+    await expect(badgeQuente).toBeVisible({ timeout: 2000 });
+    // Confere classes RFC (light e dark)
+    await expect(badgeQuente).toHaveClass(/bg-teal-50/);
+    await expect(badgeQuente).toHaveClass(/dark:bg-teal-500\/10/);
+  });
+
+  test('Deve exibir badge morno no dashboard', async ({ page }) => {
+    test.setTimeout(20000);
+    await login(page);
+      const badgeMorno = page.locator('span.group\\/badge', { hasText: 'Morno' });
+      await expect(badgeMorno).toBeVisible({ timeout: 2000 });
+      // Confere classes RFC (light e dark)
+      await expect(badgeMorno).toHaveClass(/bg-blue-50/);
+      await expect(badgeMorno).toHaveClass(/dark:bg-blue-500\/10/);
+  });
+
+  test('Deve exibir badge frio no dashboard', async ({ page }) => {
+    test.setTimeout(20000);
+    await login(page);
+      const badgeFrio = page.locator('span.group\\/badge', { hasText: 'Frio' });
+      await expect(badgeFrio).toBeVisible({ timeout: 2000 });
+      // Confere classes RFC (light e dark)
+      await expect(badgeFrio).toHaveClass(/bg-slate-100/);
+      await expect(badgeFrio).toHaveClass(/dark:bg-slate-800\/50/);
   });
 
   test('Deve alternar entre light e dark mode', async ({ page }) => {

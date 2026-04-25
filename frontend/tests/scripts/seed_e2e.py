@@ -11,7 +11,9 @@ from app.core.security import hash_password
 
 async def seed():
     async with AsyncSessionLocal() as session:
-        # Remove leads e usuários do tenant de teste
+        # Remove na ordem correta para respeitar FKs
+        await session.execute(text("DELETE FROM messages"))
+        await session.execute(text("DELETE FROM analyses"))
         await session.execute(text("DELETE FROM leads"))
         await session.execute(text("DELETE FROM users"))
         await session.execute(text("DELETE FROM tenants"))
@@ -27,16 +29,44 @@ async def seed():
             hashed_password=hash_password("123456"),
         )
         session.add(user)
-        lead = Lead(
+        # Lead Quente
+        lead_quente = Lead(
             tenant_id=tenant.id,
             phone="11999999999",
-            name="Lead Teste",
+            name="Lead Quente",
             current_stage="Prospecção",
+            temperature_score=80,
+        )
+        # Lead Morno
+        lead_morno = Lead(
+            tenant_id=tenant.id,
+            phone="11988888888",
+            name="Lead Morno",
+            current_stage="Contato",
             temperature_score=55,
         )
-        session.add(lead)
+        # Lead Frio
+        lead_frio = Lead(
+            tenant_id=tenant.id,
+            phone="11977777777",
+            name="Lead Frio",
+            current_stage="Fechamento",
+            temperature_score=20,
+        )
+        session.add_all([lead_quente, lead_morno, lead_frio])
+        await session.flush()
+
+        # Mensagens para cada lead
+        from app.models.models import Message, MessageDirection
+        messages = [
+            Message(lead_id=lead_quente.id, direction=MessageDirection.inbound, content="Olá, quero saber mais sobre o produto!"),
+            Message(lead_id=lead_quente.id, direction=MessageDirection.outbound, content="Claro! Posso te ajudar com as informações."),
+            Message(lead_id=lead_morno.id, direction=MessageDirection.inbound, content="Oi, estou pensando em comprar."),
+            Message(lead_id=lead_frio.id, direction=MessageDirection.inbound, content="Só olhando, obrigado."),
+        ]
+        session.add_all(messages)
         await session.commit()
-        print("Seed inserida com sucesso!")
+        print("Seed inserida com sucesso! (quente, morno, frio, com mensagens)")
 
 if __name__ == "__main__":
     asyncio.run(seed())
