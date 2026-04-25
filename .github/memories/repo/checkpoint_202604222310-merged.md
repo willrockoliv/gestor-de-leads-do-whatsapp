@@ -1,9 +1,9 @@
-# Checkpoint 202604222310 — Merge Premium Frontend Todos
+# Checkpoint 20260425 — Continuação Premium Frontend Todos
 
 ## Contexto Geral
 
 - Projeto: Gestor de Leads do WhatsApp
-- Data: 22/04/2026
+- Data: 25/04/2026
 - Objetivo do ciclo: Garantir que os testes E2E (Playwright) da página de leads passem 100% de ponta a ponta, com seed de dados correta, ambiente Docker funcional e integração frontend-backend validada. Redesign visual premium do frontend conforme RFC 002.
 
 ## O que foi feito
@@ -27,12 +27,8 @@
 
 ## Aprendizados/Relevâncias
 
-- O backend e o seed estão corretos, mas o frontend trava em loading infinito na página de leads.
-- O problema não é de redirecionamento após login, mas sim do fluxo de autenticação no frontend (provavelmente getMe() ou token).
-- O ambiente Docker está correto e não sofre com conflitos de versão do Node.js, pois usa node:20-alpine.
-- Localmente, o build do frontend falha se Node.js < 20, mas isso não afeta o ambiente Docker.
-- Logs de depuração no frontend são essenciais para identificar onde o fluxo trava.
-- Testes E2E dependem de seed, backend, frontend e autenticação estarem 100% alinhados.
+- Não é necessário refazer seed, backend, integração, testes Playwright, badges ou docs já entregues.
+- O foco agora é apenas nos todos pendentes do redesign visual premium, auditorias e validação visual/acessibilidade.
 
 ## Todos detalhados — Redesign Visual Premium do Frontend (RFC 002)
 
@@ -53,7 +49,7 @@
 ### Fase 3 — Refatoração Visual e Microinterações
 
 - [ ] Atualizar classes Tailwind em todos os componentes e páginas, aplicando `dark:` e seguindo a paleta, tipografia e espaçamentos da RFC
-- [ ] Customizar badges de temperatura do lead conforme especificação de cor (frio, morno, quente)
+- [x] Customizar badges de temperatura do lead conforme especificação de cor (frio, morno, quente)
 - [ ] Reforçar uso de azul aço e teal escuro em botões e elementos de destaque
 - [ ] Padronizar grid e espaçamentos em todas as páginas (dashboard, leads, onboarding, settings, etc)
 - [ ] Implementar skeleton loaders elegantes (com suporte a dark mode) nos principais fluxos de carregamento
@@ -74,11 +70,11 @@
 
 ### E2E e Integração
 
-- [ ] Coletar logs do navegador (Console do DevTools) ao acessar /leads para identificar onde o frontend trava.
-- [ ] Validar se o token está sendo salvo e propagado corretamente no localStorage e contexto React.
-- [ ] Validar se o getMe() está batendo no backend correto e recebendo resposta 200.
-- [ ] Corrigir o fluxo de autenticação/carga do usuário no frontend, se necessário.
-- [ ] Rodar novamente os testes Playwright até todos passarem.
+- [x] Coletar logs do navegador (Console do DevTools) ao acessar /leads para identificar onde o frontend trava.
+- [x] Validar se o token está sendo salvo e propagado corretamente no localStorage e contexto React.
+- [x] Validar se o getMe() está batendo no backend correto e recebendo resposta 200.
+- [x] Corrigir o fluxo de autenticação/carga do usuário no frontend, se necessário.
+- [x] Rodar novamente os testes Playwright até todos passarem.
 - [ ] Remover logs de depuração e garantir código limpo.
 
 ## Pontos de atenção para novo chat
