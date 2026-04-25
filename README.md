@@ -189,6 +189,15 @@ pytest tests/ -v
 
 # Rodar testes de um módulo específico
 pytest tests/test_auth.py -v
+ 
+# Popular o banco com dados de teste para o frontend (seed E2E)
+PYTHONPATH=. python3 frontend/tests/scripts/seed_e2e.py
+# (Execute este comando a partir da raiz do projeto para evitar erro de importação do módulo app)
+
+# Rodar testes Playwright do frontend
+cd frontend
+npx playwright test
+# (Os testes Playwright devem ser executados dentro da pasta frontend/)
 ```
 
 **79 testes** cobrindo: models, auth, webhook, análise LLM (com mock), dashboard, locks de concorrência e watchdog anti-zombie.
