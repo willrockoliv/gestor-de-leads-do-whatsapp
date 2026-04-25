@@ -7,7 +7,16 @@ applyTo: "**/*"
 # Copilot Instructions
 
 ## Contexto do Projeto
-- Sempre leia `.prompts/prd.md`, `.prompts/plano.md` e `.prompts/progresso.md` antes de iniciar tarefas.
+- Sempre antes de iniciar tarefas, leia os arquivos:
+  - `.prompts/prd.md`
+  - `.prompts/plano.md`
+  - `.prompts/progresso.md`
+  - `.github/instructions/CONTEXT-INDEX.md`
+  - `.github/memories/repo/`
+  - `.github/ARCHITECTURE.md`
+  - `.github/rfcs/`
+  - `.github/skills/SKILLS-INDEX.md`
+- sempre procure pelos arquivos `*INDEX.md` para se guiar quais arquivos fazem sentido ler conforme a tarefa para evitar carregar para o contexto arquivos desnecessários e economizar tokens.
 - Siga as convenções de dependências, testes e validação descritas abaixo.
 
 ## Convenções Globais
