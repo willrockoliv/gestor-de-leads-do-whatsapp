@@ -4,7 +4,7 @@
 
 - **Propósito:** Micro SaaS para triagem e gestão de leads via WhatsApp, usando LLM para classificar leads, gerar resumos e sugerir respostas, focando vendedores nas melhores oportunidades.
 - **Stack:** 
-    - **Backend:** Python 3.14, FastAPI, SQLAlchemy (async), PostgreSQL, LiteLLM
+    - **Backend:** Python 3.11+, FastAPI, SQLAlchemy (async), PostgreSQL, LiteLLM
     - **Frontend:** Next.js 16, React, Tailwind CSS, shadcn/ui
     - **Infra:** Docker Compose
 
@@ -20,7 +20,7 @@ app/
     schemas/      # Schemas Pydantic (validação e resposta)
     services/     # Lógica de negócio (análise, auth, webhooks, funil)
 frontend/
-    src/app/      # Páginas Next.js (dashboard, leads, onboarding, settings)
+    src/app/      # Páginas Next.js (dashboard, leads, onboarding, settings, login, register)
     src/components/ui/ # Componentes visuais (badge, button, card, etc)
     src/lib/      # API client, contextos, utilitários
 tests/            # Testes unitários e integração (pytest)
@@ -185,3 +185,4 @@ erDiagram
 
 ## Atualização obrigatória
 - Atualize este arquivo ao alterar estrutura, fluxos, dependências ou criar novos diagramas/RFCs.
+- Sempre revise RFCs e diagramas ao propor mudanças estruturais.
