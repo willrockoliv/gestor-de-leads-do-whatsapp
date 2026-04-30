@@ -38,101 +38,16 @@ import {
   Clock,
 } from "lucide-react";
 
-export default function LeadDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
-  const router = useRouter();
-  const [lead, setLead] = useState<LeadDetail | null>(null);
-  const [messages, setMessages] = useState<MessageItem[]>([]);
-  const [tenant, setTenant] = useState<TenantResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [statusDialog, setStatusDialog] = useState<"converted" | "lost" | null>(null);
-
-  // ...restante do código permanece igual...
-
-  return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => router.back()}
-        className="mb-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-slate-600"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-      </Button>
-      <Card className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-50">
-            <span>{lead.name}</span>
-            <ScoreBadge score={lead.temperature} />
-          </CardTitle>
-          <CardDescription className="text-slate-600 dark:text-slate-300">{lead.phone}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-2">
-            {lead.status === "converted" ? (
-              <Badge className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400 border border-transparent">Convertido</Badge>
-            ) : lead.status === "lost" ? (
-              <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent">Perdido</Badge>
-            ) : (
-              <Badge className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-transparent">Ativo</Badge>
-            )}
-            <span className="text-xs text-muted-foreground">ID: {lead.id}</span>
-          </div>
-          <Separator />
-          <div>
-            <h3 className="font-semibold mb-1 text-slate-900 dark:text-slate-50">Mensagens</h3>
-            {messages.length === 0 ? (
-              <div className="text-xs text-muted-foreground">Nenhuma mensagem</div>
-            ) : (
-              <div className="space-y-2">
-                {messages.map((msg) => (
-                  <div key={msg.id} className="bg-slate-50 dark:bg-slate-950 rounded p-2">
-                    <span className="text-xs text-muted-foreground">{msg.timestamp}</span>
-                    <div className="text-slate-900 dark:text-slate-50">{msg.content}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <Badge variant="outline">—</Badge>;
-  // Quente
   if (score >= 70)
-    return (
-      <Badge className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400 border border-transparent font-semibold text-lg px-3 py-1">
-        {score}
-      </Badge>
-    );
-  // Morno
+    return <Badge variant="default" className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400 text-lg">{score}</Badge>;
   if (score >= 40)
-    return (
-      <Badge className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-transparent font-semibold text-lg px-3 py-1">
-        {score}
-      </Badge>
-    );
-  // Frio
-  return (
-    <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold text-lg px-3 py-1">
-      {score}
-    </Badge>
-  );
+    return <Badge variant="default" className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 text-lg">{score}</Badge>;
+  return <Badge variant="outline" className="text-lg">{score}</Badge>;
 }
 
-export default function LeadDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [lead, setLead] = useState<LeadDetail | null>(null);
@@ -237,7 +152,20 @@ export default function LeadDetailPage({
     return <p className="text-center text-muted-foreground py-20">Lead não encontrado</p>;
   }
 
-  const analysis = lead.latest_analysis;
+  // Protege campos opcionais e padroniza nomes
+  const analysis = lead.latest_analysis ?? null;
+  const temperature = lead.temperature_score ?? lead.temperature ?? null;
+  const leadName = lead.name || lead.phone || "—";
+  const leadPhone = lead.phone || "—";
+  const leadStatus = lead.status || "ativo";
+  const leadStage = lead.current_stage || "";
+  const conversationTime =
+    typeof lead.conversation_time_minutes === "number"
+      ? `${Math.round(lead.conversation_time_minutes)} min`
+      : "—";
+  const createdAt = lead.created_at
+    ? new Date(lead.created_at).toLocaleDateString("pt-BR")
+    : "—";
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -247,10 +175,10 @@ export default function LeadDetailPage({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{lead.name || lead.phone}</h1>
-          {lead.name && <p className="text-muted-foreground">{lead.phone}</p>}
+          <h1 className="text-2xl font-bold">{leadName}</h1>
+          {lead.name && <p className="text-muted-foreground">{leadPhone}</p>}
         </div>
-        <ScoreBadge score={lead.temperature_score} />
+        <ScoreBadge score={temperature} />
       </div>
 
       {/* Actions */}
@@ -299,12 +227,14 @@ export default function LeadDetailPage({
           <CardContent className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Status</span>
-              <Badge variant="outline">{lead.status}</Badge>
+              <Badge variant={leadStatus === "converted" ? "default" : leadStatus === "lost" ? "outline" : "default"} className={leadStatus === "converted" ? "bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400" : leadStatus === "lost" ? undefined : "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"}>
+                {leadStatus === "converted" ? "Convertido" : leadStatus === "lost" ? "Perdido" : "Ativo"}
+              </Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Etapa do Funil</span>
               <Select
-                value={lead.current_stage || ""}
+                value={leadStage}
                 onValueChange={handleStageChange}
               >
                 <SelectTrigger className="w-44 h-8 text-xs">
@@ -324,15 +254,13 @@ export default function LeadDetailPage({
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 <span>
-                  {lead.conversation_time_minutes !== null
-                    ? `${Math.round(lead.conversation_time_minutes)} min`
-                    : "—"}
+                  {conversationTime}
                 </span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Criado em</span>
-              <span>{new Date(lead.created_at).toLocaleDateString("pt-BR")}</span>
+              <span>{createdAt}</span>
             </div>
           </CardContent>
         </Card>
@@ -431,7 +359,7 @@ export default function LeadDetailPage({
             <DialogTitle>Confirmar alteração de status</DialogTitle>
             <DialogDescription>
               Deseja marcar o lead{" "}
-              <strong>{lead.name || lead.phone}</strong> como{" "}
+              <strong>{leadName}</strong> como{" "}
               <strong>
                 {statusDialog === "converted" ? "convertido" : "perdido"}
               </strong>

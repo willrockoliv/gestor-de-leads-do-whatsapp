@@ -45,10 +45,13 @@ import {
 
 
 function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null || score === undefined) return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">—</Badge>;
-  if (score >= 70) return <Badge className="bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400 border border-transparent font-semibold px-3 py-1">Quente</Badge>;
-  if (score >= 40) return <Badge className="bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400 border border-transparent font-semibold px-3 py-1">Morno</Badge>;
-  return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 border border-transparent font-semibold px-3 py-1">Frio</Badge>;
+  if (score === null || score === undefined)
+    return <Badge variant="outline">—</Badge>;
+  if (score >= 70)
+    return <Badge variant="default" className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400">Quente</Badge>;
+  if (score >= 40)
+    return <Badge variant="default" className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">Morno</Badge>;
+  return <Badge variant="outline">Frio</Badge>;
 }
 
 // O componente LeadsPage deve ser implementado aqui, com o JSX correto, hooks e lógica.
@@ -160,17 +163,17 @@ export default function LeadsPage() {
 
   if (loading) {
     return (
-      <div className="grid gap-4 py-8">
+      <div className="grid gap-6 py-10 px-2 sm:px-8 md:px-14 lg:px-28 xl:px-44 2xl:px-72 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh]">
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
             className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm p-6 flex flex-col gap-4 animate-pulse"
           >
             <div className="flex flex-row items-center justify-between pb-2">
-              <div className="h-4 w-32 rounded bg-slate-100 dark:bg-slate-800" />
-              <div className="h-5 w-5 rounded-full bg-slate-100 dark:bg-slate-800" />
+              <div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-800" />
+              <div className="h-5 w-5 rounded-full bg-slate-200 dark:bg-slate-800" />
             </div>
-            <div className="h-6 w-40 rounded bg-slate-100 dark:bg-slate-800" />
+            <div className="h-6 w-40 rounded bg-slate-200 dark:bg-slate-800" />
           </div>
         ))}
       </div>
@@ -178,15 +181,15 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Leads</h1>
+    <div className="space-y-8 px-2 sm:px-8 md:px-14 lg:px-28 xl:px-44 2xl:px-72 py-10 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh]">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">Leads</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={refresh}>
+          <Button variant="outline" size="sm" onClick={refresh} className="transition-all border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800">
             <RefreshCw className="mr-2 h-4 w-4" />
             Atualizar
           </Button>
-          <Button size="sm" onClick={handleAnalyzeAll} disabled={analyzingAll}>
+          <Button size="sm" onClick={handleAnalyzeAll} disabled={analyzingAll} className="relative flex items-center justify-center min-w-[140px] bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 shadow-sm">
             {analyzingAll ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -198,7 +201,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 mb-4">
         <Input
           placeholder="Buscar por nome ou telefone..."
           value={search}
@@ -229,15 +232,15 @@ export default function LeadsPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome / Telefone</TableHead>
-              <TableHead>Etapa</TableHead>
-              <TableHead>Temperatura</TableHead>
-              <TableHead>Tempo de Conversa</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="text-slate-700 dark:text-slate-200">Nome / Telefone</TableHead>
+              <TableHead className="text-slate-700 dark:text-slate-200">Etapa</TableHead>
+              <TableHead className="text-slate-700 dark:text-slate-200">Temperatura</TableHead>
+              <TableHead className="text-slate-700 dark:text-slate-200">Tempo de Conversa</TableHead>
+              <TableHead className="text-right text-slate-700 dark:text-slate-200">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -262,7 +265,9 @@ export default function LeadsPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{lead.current_stage || "Sem etapa"}</Badge>
+                    <Badge variant="outline">
+                      {lead.current_stage || "Sem etapa"}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <ScoreBadge score={lead.temperature_score} />
