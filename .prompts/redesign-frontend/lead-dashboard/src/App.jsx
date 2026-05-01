@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Sun, Moon, RefreshCw, MessageCircle, Flame, Snowflake, 
   Thermometer, CheckCircle2, AlertCircle, Clock, Search, Filter, 
-  ArrowRight, Sparkles, Send, User, LayoutList
+  ArrowRight, Sparkles, Send, User, LayoutList, X
 } from 'lucide-react';
 
 // --- MOCK DATA ---
@@ -61,9 +61,12 @@ const INITIAL_LEADS = [
 const FUNNEL_STAGES = ["Todos", "Descoberta", "Orçamento Enviado", "Em Negociação"];
 
 export default function App() {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('dark'); // Inicia no dark mode para combinar com os prints
   const [leads, setLeads] = useState(INITIAL_LEADS);
-  const [selectedLeadId, setSelectedLeadId] = useState(INITIAL_LEADS[0].id);
+  
+  // Começamos com null para a tela iniciar expandida
+  const [selectedLeadId, setSelectedLeadId] = useState(null); 
+  
   const [isGlobalProcessing, setIsGlobalProcessing] = useState(false);
   const [activeStage, setActiveStage] = useState("Todos");
 
@@ -121,25 +124,28 @@ export default function App() {
     return filtered.sort((a, b) => b.temperature - a.temperature);
   }, [leads, activeStage]);
 
-  // Se mudar de aba e o lead atual não estiver lá, seleciona o primeiro da nova lista
+  // Se o lead selecionado desaparecer da lista devido ao filtro, fecha o painel
   useEffect(() => {
-    if (filteredLeads.length > 0 && !filteredLeads.find(l => l.id === selectedLeadId)) {
-      setSelectedLeadId(filteredLeads[0].id);
+    if (selectedLeadId && !filteredLeads.find(l => l.id === selectedLeadId)) {
+      setSelectedLeadId(null);
     }
-  }, [activeStage, filteredLeads, selectedLeadId]);
+  }, [filteredLeads, selectedLeadId]);
 
   const selectedLead = leads.find(l => l.id === selectedLeadId);
+
+  // Animação CSS helper
+  const easeTransition = "transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]";
 
   return (
     <div className={theme}>
       {/* App Wrapper */}
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans transition-colors duration-300">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-slate-50 font-sans transition-colors duration-300 overflow-x-hidden">
         
         {/* Header / Navbar */}
-        <header className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <header className="sticky top-0 z-20 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-slate-100 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-slate-100 flex items-center justify-center shadow-sm">
                 <Sparkles className="w-5 h-5 text-white dark:text-slate-900" />
               </div>
               <span className="font-semibold text-lg tracking-tight">LeadIQ</span>
@@ -148,15 +154,15 @@ export default function App() {
             <div className="flex items-center gap-4">
               <button 
                 onClick={toggleTheme}
-                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors text-slate-500 dark:text-slate-400"
               >
                 {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </button>
               
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+              <div className="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
               
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center ring-2 ring-white dark:ring-[#0B1120]">
                   <User className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </div>
               </div>
@@ -177,7 +183,7 @@ export default function App() {
             <button
               onClick={handleAnalyzeAll}
               disabled={isGlobalProcessing}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-sm font-medium shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-sm font-medium shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${isGlobalProcessing ? 'animate-spin' : ''}`} />
               {isGlobalProcessing ? 'Analisando Fila...' : 'Atualizar Todos'}
@@ -186,7 +192,7 @@ export default function App() {
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+            <div className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none backdrop-blur-sm">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-4">
                 <span className="text-sm font-medium">Leads Ativos</span>
                 <MessageCircle className="w-4 h-4" />
@@ -194,7 +200,7 @@ export default function App() {
               <span className="text-3xl font-semibold text-slate-900 dark:text-slate-50">{leads.length}</span>
             </div>
             
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+            <div className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none backdrop-blur-sm">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-4">
                 <span className="text-sm font-medium">Prioridade Alta (Quentes)</span>
                 <Flame className="w-4 h-4 text-teal-600 dark:text-teal-400" />
@@ -204,7 +210,7 @@ export default function App() {
               </span>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+            <div className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none backdrop-blur-sm">
               <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-4">
                 <span className="text-sm font-medium">Etapa: Negociação</span>
                 <Clock className="w-4 h-4" />
@@ -215,14 +221,14 @@ export default function App() {
             </div>
           </div>
 
-          {/* Main Grid: List vs Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* DYNAMIC FLEX LAYOUT: List (Left) vs Details (Right) */}
+          <div className="flex flex-col lg:flex-row items-start w-full relative">
             
-            {/* Left Column: Leads List & Funnel Tabs */}
-            <div className="lg:col-span-5 flex flex-col gap-4">
+            {/* LEFT COLUMN: Leads List & Funnel Tabs */}
+            <div className={`${easeTransition} flex flex-col gap-4 flex-shrink-0 ${selectedLeadId ? 'w-full lg:w-[42%] lg:pr-6' : 'w-full'}`}>
               
-              {/* SEGMENTED CONTROL / TABS (Conforme seu sketch) */}
-              <div className="bg-slate-200/50 dark:bg-slate-900 rounded-xl p-1.5 flex overflow-x-auto hide-scrollbar gap-1 border border-slate-200/50 dark:border-slate-800 shadow-inner">
+              {/* SEGMENTED CONTROL / TABS */}
+              <div className="bg-slate-200/60 dark:bg-[#131C2D] rounded-xl p-1.5 flex overflow-x-auto hide-scrollbar gap-1 border border-slate-200/50 dark:border-slate-800/50 shadow-inner">
                 {FUNNEL_STAGES.map((stage) => {
                   const isActive = activeStage === stage;
                   const count = stage === "Todos" 
@@ -234,10 +240,10 @@ export default function App() {
                       key={stage}
                       onClick={() => setActiveStage(stage)}
                       className={`
-                        relative flex-1 min-w-[120px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ease-out
+                        relative flex-1 min-w-[120px] flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ease-out
                         ${isActive 
-                          ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5' 
-                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                          ? 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-slate-50 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5' 
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/30'
                         }
                       `}
                     >
@@ -245,8 +251,8 @@ export default function App() {
                       <span className={`
                         px-1.5 py-0.5 rounded-md text-xs
                         ${isActive 
-                          ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' 
-                          : 'bg-slate-200/50 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
+                          ? 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300' 
+                          : 'bg-slate-200/50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500'
                         }
                       `}>
                         {count}
@@ -262,135 +268,157 @@ export default function App() {
                   filteredLeads.map((lead) => (
                     <button
                       key={lead.id}
-                      onClick={() => setSelectedLeadId(lead.id)}
-                      className={`text-left p-4 rounded-xl border transition-all duration-300 transform origin-top ${
+                      onClick={() => setSelectedLeadId(selectedLeadId === lead.id ? null : lead.id)} // Clicar novamente no mesmo fecha a aba
+                      className={`text-left p-5 rounded-2xl border transition-all duration-300 transform origin-top group ${
                         selectedLeadId === lead.id 
-                          ? 'bg-white dark:bg-slate-900 border-teal-500/30 dark:border-teal-500/30 shadow-md ring-1 ring-teal-500/10' 
-                          : 'bg-white/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm hover:shadow'
+                          ? 'bg-white dark:bg-slate-900 border-teal-500/40 dark:border-teal-500/40 shadow-md ring-1 ring-teal-500/10 dark:ring-teal-500/20' 
+                          : 'bg-white/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm hover:shadow dark:hover:bg-slate-900/80'
                       }`}
                     >
-                      <div className="flex justify-between items-start mb-3">
+                      <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="font-medium text-slate-900 dark:text-slate-50">{lead.name}</h3>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">{lead.number}</p>
+                          <h3 className={`font-semibold transition-colors ${selectedLeadId === lead.id ? 'text-teal-700 dark:text-teal-400' : 'text-slate-900 dark:text-slate-50'}`}>
+                            {lead.name}
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">{lead.number}</p>
                         </div>
                         {getTemperatureBadge(lead.temperature)}
                       </div>
                       
-                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-4">
-                        <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md font-medium">
-                          <LayoutList className="w-3 h-3 text-slate-400" />
+                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-2 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+                        <span className={`flex items-center gap-1.5 px-2 py-1 rounded-md font-medium transition-colors ${
+                          selectedLeadId === lead.id ? 'bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400' : 'bg-slate-100 dark:bg-slate-800/50'
+                        }`}>
+                          <LayoutList className="w-3.5 h-3.5 opacity-70" />
                           {lead.stage}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {lead.lastMessageAt}
+                        <span className="flex items-center gap-1.5 font-medium opacity-80">
+                          <Clock className="w-3.5 h-3.5" /> {lead.lastMessageAt}
                         </span>
                       </div>
                     </button>
                   ))
                 ) : (
-                  <div className="text-center py-12 px-4 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl">
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">Nenhum lead nesta etapa.</p>
+                  <div className="text-center py-16 px-4 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl bg-white/30 dark:bg-slate-900/20">
+                    <LayoutList className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Nenhum lead nesta etapa.</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Right Column: Lead Details */}
-            <div className="lg:col-span-7">
-              {selectedLead ? (
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none overflow-hidden flex flex-col h-full min-h-[500px]">
-                  
-                  {/* Lead Header */}
-                  <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900">
-                    <div>
-                      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">{selectedLead.name}</h2>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-mono">{selectedLead.number}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                       <div className="text-right mr-2 hidden sm:block">
-                        <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Score</p>
-                        {getTemperatureBadge(selectedLead.temperature)}
-                      </div>
-                      <button 
-                        onClick={() => handleAnalyzeSingle(selectedLead.id)}
-                        disabled={selectedLead.isProcessing || isGlobalProcessing}
-                        className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition-all disabled:opacity-50 group"
-                        title="Reanalisar Lead"
-                      >
-                        <RefreshCw className={`w-4 h-4 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors ${selectedLead.isProcessing ? 'animate-spin text-teal-600 dark:text-teal-400' : ''}`} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Insights Content */}
-                  <div className="p-6 flex-1 flex flex-col gap-8 relative">
+            {/* RIGHT COLUMN: Lead Details (Slides in and out) */}
+            <div 
+              className={`${easeTransition} overflow-hidden lg:pl-2 ${
+                selectedLeadId 
+                  ? 'w-full lg:w-[58%] opacity-100 max-h-[3000px] mt-8 lg:mt-0' 
+                  : 'w-0 opacity-0 max-h-0 lg:max-h-[3000px] m-0 p-0'
+              }`}
+            >
+              {/* Inner wrapper is essential to prevent text squishing during width transition */}
+              <div className="w-full lg:w-[calc(100vw*0.58-2rem)] lg:max-w-[700px] xl:max-w-[800px] pb-8">
+                {selectedLead && (
+                  <div className="bg-white dark:bg-slate-900/95 rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-xl dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] overflow-hidden flex flex-col min-h-[500px]">
                     
-                    {/* Loading Overlay */}
-                    {selectedLead.isProcessing && (
-                      <div className="absolute inset-0 z-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm flex items-center justify-center">
-                        <div className="flex flex-col items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700">
-                          <RefreshCw className="w-8 h-8 animate-spin text-teal-600 dark:text-teal-400" />
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Atualizando análise pela IA...</span>
+                    {/* Lead Header */}
+                    <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">{selectedLead.name}</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-mono">{selectedLead.number}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="text-right hidden sm:block">
+                          <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">Score</p>
+                          {getTemperatureBadge(selectedLead.temperature)}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 border-l border-slate-200 dark:border-slate-700 pl-4">
+                          <button 
+                            onClick={() => handleAnalyzeSingle(selectedLead.id)}
+                            disabled={selectedLead.isProcessing || isGlobalProcessing}
+                            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition-all disabled:opacity-50 group"
+                            title="Reanalisar Lead"
+                          >
+                            <RefreshCw className={`w-4 h-4 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors ${selectedLead.isProcessing ? 'animate-spin text-teal-600 dark:text-teal-400' : ''}`} />
+                          </button>
+                          
+                          {/* Close Sidebar Button */}
+                          <button 
+                            onClick={() => setSelectedLeadId(null)}
+                            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            title="Fechar detalhes"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
                         </div>
                       </div>
-                    )}
-
-                    {/* Resumo */}
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2 uppercase tracking-wider">
-                        <MessageCircle className="w-4 h-4" /> Resumo da Conversa
-                      </h3>
-                      <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed bg-slate-50 dark:bg-slate-800/30 p-5 rounded-xl border border-slate-100 dark:border-slate-800/50">
-                        {selectedLead.summary}
-                      </p>
                     </div>
 
-                    {/* Dica da IA */}
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-semibold text-teal-600 dark:text-teal-400 flex items-center gap-2 uppercase tracking-wider">
-                        <Sparkles className="w-4 h-4" /> Dica Estratégica
-                      </h3>
-                      <div className="flex items-start gap-3 bg-teal-50/50 dark:bg-teal-500/5 p-5 rounded-xl border border-teal-100 dark:border-teal-500/20">
-                        <AlertCircle className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-                        <p className="text-teal-900 dark:text-teal-100 text-sm leading-relaxed">
-                          {selectedLead.tip}
+                    {/* Insights Content */}
+                    <div className="p-6 md:p-8 flex-1 flex flex-col gap-8 relative">
+                      
+                      {/* Loading Overlay */}
+                      {selectedLead.isProcessing && (
+                        <div className="absolute inset-0 z-10 bg-white/70 dark:bg-[#0B1120]/60 backdrop-blur-sm flex items-center justify-center">
+                          <div className="flex flex-col items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700">
+                            <RefreshCw className="w-8 h-8 animate-spin text-teal-600 dark:text-teal-400" />
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Atualizando análise pela IA...</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Resumo */}
+                      <div className="space-y-3">
+                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2 uppercase tracking-widest">
+                          <MessageCircle className="w-4 h-4" /> Resumo da Conversa
+                        </h3>
+                        <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed bg-slate-50 dark:bg-slate-800/30 p-5 rounded-xl border border-slate-100 dark:border-slate-800/50 shadow-sm">
+                          {selectedLead.summary}
                         </p>
                       </div>
+
+                      {/* Dica da IA */}
+                      <div className="space-y-3">
+                        <h3 className="text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-2 uppercase tracking-widest">
+                          <Sparkles className="w-4 h-4" /> Dica Estratégica
+                        </h3>
+                        <div className="flex items-start gap-3 bg-teal-50/80 dark:bg-teal-900/20 p-5 rounded-xl border border-teal-100 dark:border-teal-500/20 shadow-sm">
+                          <AlertCircle className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                          <p className="text-teal-900 dark:text-teal-100 text-sm leading-relaxed">
+                            {selectedLead.tip}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Sugestão de Resposta */}
+                      <div className="space-y-3 mt-auto">
+                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2 uppercase tracking-widest">
+                          <Send className="w-4 h-4" /> Sugestão de Resposta
+                        </h3>
+                        <div className="bg-slate-900 dark:bg-[#0B1120] p-5 md:p-6 rounded-xl shadow-inner relative group border border-slate-800 dark:border-slate-800/80">
+                          <p className="text-slate-200 dark:text-slate-300 text-sm leading-relaxed font-medium italic">
+                            "{selectedLead.suggestedReply}"
+                          </p>
+                        </div>
+                      </div>
+
                     </div>
 
-                    {/* Sugestão de Resposta */}
-                    <div className="space-y-3 mt-auto">
-                      <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2 uppercase tracking-wider">
-                        <Send className="w-4 h-4" /> Sugestão de Resposta
-                      </h3>
-                      <div className="bg-slate-800 dark:bg-slate-950 p-5 rounded-xl shadow-inner relative group border border-slate-900 dark:border-slate-800">
-                        <p className="text-slate-200 dark:text-slate-300 text-sm leading-relaxed font-medium">
-                          "{selectedLead.suggestedReply}"
-                        </p>
-                      </div>
+                    {/* Action Footer */}
+                    <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                      <button 
+                        onClick={() => window.open(`https://wa.me/${selectedLead.number.replace(/\D/g, '')}?text=${encodeURIComponent(selectedLead.suggestedReply)}`, '_blank')}
+                        disabled={selectedLead.isProcessing}
+                        className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-teal-600 dark:hover:bg-teal-500 dark:text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md hover:-translate-y-0.5"
+                      >
+                        Enviar no WhatsApp <ArrowRight className="w-4 h-4" />
+                      </button>
                     </div>
 
                   </div>
-
-                  {/* Action Footer */}
-                  <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                    <button 
-                      onClick={() => window.open(`https://wa.me/${selectedLead.number.replace(/\D/g, '')}?text=${encodeURIComponent(selectedLead.suggestedReply)}`, '_blank')}
-                      disabled={selectedLead.isProcessing}
-                      className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 px-6 py-3 rounded-xl text-sm font-semibold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md hover:-translate-y-0.5"
-                    >
-                      Enviar no WhatsApp <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                </div>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800">
-                  <User className="w-16 h-16 mb-4 opacity-20" />
-                  <p className="font-medium text-slate-500">Selecione um lead para ver as análises.</p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
           </div>
