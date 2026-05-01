@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+
 import Link from "next/link";
 import {
   getDashboardStats,
@@ -112,7 +113,7 @@ export default function DashboardPage() {
   // Hero visual premium
   return (
     <div className="space-y-10 px-2 sm:px-8 md:px-14 lg:px-28 xl:px-44 2xl:px-72 py-10 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh]">
-      {/* Hero Section */}
+      {/* Hero Section (original) */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10 mb-8">
         <div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-2">

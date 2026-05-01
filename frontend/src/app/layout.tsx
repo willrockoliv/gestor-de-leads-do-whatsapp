@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
+import AppWithPreloader from "@/components/ui/AppWithPreloader";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
@@ -16,10 +17,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+
 export const metadata: Metadata = {
   title: "Gestor de Leads do WhatsApp",
   description: "Gerencie e priorize seus leads do WhatsApp com inteligência artificial",
 };
+
+
+
 
 export default function RootLayout({
   children,
@@ -31,7 +36,9 @@ export default function RootLayout({
       <body className={`min-h-full flex flex-col ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            {children}
+            <AppWithPreloader>
+              {children}
+            </AppWithPreloader>
             <Toaster richColors position="top-right" />
           </AuthProvider>
         </ThemeProvider>

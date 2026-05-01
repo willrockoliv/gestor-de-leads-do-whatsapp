@@ -37,13 +37,30 @@
 - [x] Levantar todos os componentes do shadcn/ui e páginas que exigem atualização visual
 - [x] Verificar se `next-themes` e `ThemeProvider` estão corretamente configurados
 - [x] Mapear pontos de não conformidade (badges, skeleton loaders, cores de destaque, feedback visual, grid/whitespace, acessibilidade)
-- [ ] Rodar auditoria de padrões React (grep patterns) para garantir compatibilidade futura e identificar débitos técnicos de UI
-- [ ] Rodar revisão de segurança básica nos componentes de UI (exposição de dados, XSS, dependências inseguras)
+- [x] Rodar auditoria de padrões React (grep patterns) para garantir compatibilidade futura e identificar débitos técnicos de UI
+  - Auditoria automatizada via grep/regex não encontrou ciclos de vida obsoletos, componentes de classe, require, dangerouslySetInnerHTML, defaultProps, React.createElement fora de contexto, nem imports de CSS antigos (exceto globals.css).
+  - Uso de hooks está correto (em componentes/hook functions), sem hooks fora de função.
+  - Não há uso explícito de any ou props sem tipagem detectados por pattern simples.
+  - Uso de ref= aparece pontualmente, sem excesso.
+  - Listas com .map usam key corretamente.
+  - Imports de CSS apenas para globals, padrão Next.js.
+  - Débito técnico relevante: revisar manualmente usos de ref= e reforçar tipagem de props onde possível.
+  - Recomendação: manter padrão, reforçar tipagem e revisar manualmente casos não detectáveis por regex.
+- [x] Rodar revisão de segurança básica nos componentes de UI (exposição de dados, XSS, dependências inseguras)
+  - Não há uso de dangerouslySetInnerHTML, eval, Function, scripts ou iframes embutidos.
+  - Uso de localStorage e window restrito a tokens e flags de onboarding, sem exposição de dados sensíveis.
+  - Não há exposição direta de senhas, segredos ou apiKeys em componentes.
+  - Imports de dependências estão dentro do esperado (React, Next, shadcn/ui, etc).
+  - Não há dependências inseguras detectadas por pattern, mas recomenda-se rodar `npm audit` manualmente.
+  - Não há indícios de XSS ou exposição de dados sensíveis via UI.
+  - Recomendação: manter boas práticas, revisar dependências com `npm audit` e evitar logs de dados sensíveis em produção.
 
 ### Fase 2 — Fundamentos Visuais Premium
 
-- [ ] Definir/reforçar identidade visual forte (brutalismo editorial, fluidez orgânica, cyber/tech ou pacing cinematográfico, conforme contexto B2B)
-- [ ] Incluir preloader animado e elegante para a primeira experiência do usuário
+- [x] Definir/reforçar identidade visual forte (brutalismo editorial, fluidez orgânica, cyber/tech ou pacing cinematográfico, conforme contexto B2B)
+  - Identidade visual definida e documentada na RFC 002: padrão SaaS Enterprise moderno, minimalismo nórdico, grid estruturado, paleta clara/escura (azul aço, teal escuro), tipografia Inter/Geist, foco em legibilidade e experiência premium B2B.
+  - Não é necessário alterar nada em /frontend nesta etapa; a RFC serve de referência obrigatória para as tasks de implementação visual.
+- [x] Incluir preloader animado e elegante para a primeira experiência do usuário
 - [ ] Garantir hero section marcante no dashboard (full-bleed, tipografia ousada, animação de entrada)
 
 ### Fase 3 — Refatoração Visual e Microinterações
