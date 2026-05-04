@@ -296,13 +296,13 @@ export default function DashboardPage() {
 
           {/* RIGHT PANEL: Lead Details (Slides in) */}
           <div
-            className={`${easeTransition} overflow-hidden lg:pl-2 ${
+            className={`${easeTransition} min-w-0 overflow-hidden lg:pl-2 ${
               selectedLeadId
                 ? "w-full lg:w-[58%] opacity-100 max-h-[3000px] mt-6 lg:mt-0"
                 : "w-0 opacity-0 max-h-0 lg:max-h-[3000px] m-0 p-0"
             }`}
           >
-            <div className="w-full lg:w-[calc(100vw*0.58-2rem)] lg:max-w-[700px] xl:max-w-[800px] pb-8">
+            <div className="w-full max-w-full lg:max-w-[700px] xl:max-w-[800px] pb-8">
               {selectedLeadDetail && (
                 <div className="bg-white dark:bg-slate-900/95 rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-xl dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] overflow-hidden flex flex-col">
 
