@@ -11,7 +11,8 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 ## .github/memories/exec-plans/completed/ - planos completados
 
-- (vazio)
+- 2026-04-30-plan-frontendRedesign.prompt.md
+  - Redesign completo do frontend com design system Nordic Minimalist, correções de hidratação/tipografia, validação manual obrigatória no Integrated Browser, padronização compose-only e descontinuação dos E2E Playwright legados.
 
 ## .github/memories/exec-plans/progress/ - progresso das implementaçoes com aprendizados e anotações importantes
 
