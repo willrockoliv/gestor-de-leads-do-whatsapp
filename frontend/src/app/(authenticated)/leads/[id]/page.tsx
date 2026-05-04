@@ -16,8 +16,9 @@ import {
 } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { TemperatureBadge } from "@/components/ui/temperature-badge";
 import {
   Select,
   SelectContent,
@@ -37,15 +38,6 @@ import {
   XCircle,
   Clock,
 } from "lucide-react";
-
-function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <Badge variant="outline">—</Badge>;
-  if (score >= 70)
-    return <Badge variant="default" className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400 text-lg">{score}</Badge>;
-  if (score >= 40)
-    return <Badge variant="default" className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 text-lg">{score}</Badge>;
-  return <Badge variant="outline" className="text-lg">{score}</Badge>;
-}
 
 export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -79,6 +71,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   }, [id]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 
@@ -136,8 +129,8 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="grid gap-4 py-8">
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm p-8 flex flex-col gap-6 animate-pulse max-w-2xl mx-auto">
+      <div className="grid gap-4 py-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+        <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none p-8 flex flex-col gap-6 animate-pulse">
           <div className="h-8 w-1/2 rounded bg-slate-100 dark:bg-slate-800 mb-4" />
           <div className="h-6 w-1/3 rounded bg-slate-100 dark:bg-slate-800 mb-2" />
           <div className="h-4 w-1/4 rounded bg-slate-100 dark:bg-slate-800 mb-6" />
@@ -149,12 +142,12 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   if (!lead) {
-    return <p className="text-center text-muted-foreground py-20">Lead não encontrado</p>;
+    return <p className="text-center text-slate-500 dark:text-slate-400 py-20">Lead não encontrado</p>;
   }
 
   // Protege campos opcionais e padroniza nomes
   const analysis = lead.latest_analysis ?? null;
-  const temperature = lead.temperature_score ?? lead.temperature ?? null;
+  const temperature = lead.temperature_score ?? null;
   const leadName = lead.name || lead.phone || "—";
   const leadPhone = lead.phone || "—";
   const leadStatus = lead.status || "ativo";
@@ -168,17 +161,17 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     : "—";
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh]">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{leadName}</h1>
-          {lead.name && <p className="text-muted-foreground">{leadPhone}</p>}
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">{leadName}</h1>
+          {lead.name && <p className="text-slate-500 dark:text-slate-400 font-mono">{leadPhone}</p>}
         </div>
-        <ScoreBadge score={temperature} />
+        <TemperatureBadge score={temperature} />
       </div>
 
       {/* Actions */}
@@ -227,7 +220,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           <CardContent className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Status</span>
-              <Badge variant={leadStatus === "converted" ? "default" : leadStatus === "lost" ? "outline" : "default"} className={leadStatus === "converted" ? "bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400" : leadStatus === "lost" ? undefined : "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"}>
+              <Badge variant={leadStatus === "converted" ? "default" : leadStatus === "lost" ? "outline" : "default"} className={leadStatus === "converted" ? "bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400" : leadStatus === "lost" ? "bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300" : "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"}>
                 {leadStatus === "converted" ? "Convertido" : leadStatus === "lost" ? "Perdido" : "Ativo"}
               </Badge>
             </div>
@@ -275,15 +268,15 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               <p>{analysis.conversation_summary}</p>
               <Separator />
               <div>
-                <p className="text-muted-foreground font-medium mb-1">Dicas Qualitativas</p>
+                <p className="text-teal-600 dark:text-teal-400 font-medium mb-1">Dicas Qualitativas</p>
                 <p>{analysis.qualitative_tips}</p>
               </div>
               <Separator />
               <div>
-                <p className="text-muted-foreground font-medium mb-1">Resposta Sugerida</p>
-                <p className="bg-muted rounded-md p-2 text-xs">{analysis.suggested_reply}</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium mb-1">Resposta Sugerida</p>
+                <p className="bg-slate-900 dark:bg-[#0B1120] text-slate-200 dark:text-slate-300 rounded-xl p-3 text-xs italic border border-slate-800 dark:border-slate-800/80">{analysis.suggested_reply}</p>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Última análise: {new Date(analysis.created_at).toLocaleString("pt-BR")}
               </p>
             </CardContent>
@@ -294,7 +287,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               <CardTitle className="text-base">Resumo da IA</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Nenhuma análise realizada. Clique em &quot;Atualizar Análise&quot; para gerar.
               </p>
             </CardContent>
@@ -312,7 +305,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         </CardHeader>
         <CardContent>
           {messages.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
               Nenhuma mensagem registrada
             </p>
           ) : (
@@ -327,16 +320,16 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                   <div
                     className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                       msg.direction === "outbound"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                        ? "bg-slate-900 dark:bg-teal-600 text-white"
+                        : "bg-slate-100 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200"
                     }`}
                   >
                     <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                     <p
                       className={`text-xs mt-1 ${
                         msg.direction === "outbound"
-                          ? "text-primary-foreground/70"
-                          : "text-muted-foreground"
+                          ? "text-white/70"
+                          : "text-slate-500 dark:text-slate-400"
                       }`}
                     >
                       {new Date(msg.timestamp).toLocaleString("pt-BR")}

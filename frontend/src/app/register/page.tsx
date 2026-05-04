@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { register as apiRegister } from "@/lib/api";
@@ -9,13 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 
 
@@ -47,11 +40,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0B1120] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Criar Conta</CardTitle>
-          <CardDescription>Configure seu gestor de leads</CardDescription>
+          <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">Criar Conta</CardTitle>
+          <CardDescription className="text-slate-500 dark:text-slate-400">Configure seu gestor de leads</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,9 +86,9 @@ export default function RegisterPage() {
               {loading ? "Criando conta..." : "Cadastrar"}
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
             Já tem conta?{" "}
-            <Link href="/login" className="text-primary underline">
+            <Link href="/login" className="text-teal-600 dark:text-teal-400 underline">
               Entrar
             </Link>
           </p>

@@ -83,19 +83,19 @@ export default function SettingsPage() {
     }
   }
 
-  const onboardingGuard = useOnboardingGuard();
+  useOnboardingGuard();
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-20 min-h-[60vh]">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold">Configurações</h1>
+    <div className="space-y-6 max-w-3xl px-4 sm:px-6 lg:px-8 py-8 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh]">
+      <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">Configurações</h1>
 
       {/* Business Info */}
       <Card>
@@ -103,8 +103,8 @@ export default function SettingsPage() {
           <CardTitle>Negócio</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm">
-            <span className="text-muted-foreground">Nome: </span>
+          <p className="text-sm text-slate-700 dark:text-slate-300">
+            <span className="text-slate-500 dark:text-slate-400">Nome: </span>
             {tenant?.name}
           </p>
         </CardContent>

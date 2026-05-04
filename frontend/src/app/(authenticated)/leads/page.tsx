@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { TemperatureBadge } from "@/components/ui/temperature-badge";
+import { SegmentedTabs } from "@/components/ui/segmented-tabs";
 import {
   Select,
   SelectTrigger,
@@ -44,17 +46,7 @@ import {
 } from "lucide-react";
 
 
-function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null || score === undefined)
-    return <Badge variant="outline">—</Badge>;
-  if (score >= 70)
-    return <Badge variant="default" className="bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400">Quente</Badge>;
-  if (score >= 40)
-    return <Badge variant="default" className="bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">Morno</Badge>;
-  return <Badge variant="outline">Frio</Badge>;
-}
-
-// O componente LeadsPage deve ser implementado aqui, com o JSX correto, hooks e lógica.
+// O componente LeadsPage deve preservar estado e integrações de API; apenas o visual foi atualizado.
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<LeadListItem[]>([]);
@@ -99,6 +91,7 @@ export default function LeadsPage() {
   }, [stageFilter, sortOrder]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 
@@ -163,11 +156,11 @@ export default function LeadsPage() {
 
   if (loading) {
     return (
-      <div className="grid gap-6 py-10 px-2 sm:px-8 md:px-14 lg:px-28 xl:px-44 2xl:px-72 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh]">
+      <div className="grid gap-6 py-10 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh] max-w-7xl mx-auto">
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm p-6 flex flex-col gap-4 animate-pulse"
+            className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none p-6 flex flex-col gap-4 animate-pulse"
           >
             <div className="flex flex-row items-center justify-between pb-2">
               <div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-800" />
@@ -181,15 +174,18 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="space-y-8 px-2 sm:px-8 md:px-14 lg:px-28 xl:px-44 2xl:px-72 py-10 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh]">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">Leads</h1>
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-8 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh] max-w-7xl mx-auto">
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">Leads</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Gerencie a fila com foco nos contatos mais quentes.</p>
+        </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={refresh} className="transition-all border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <Button variant="outline" size="sm" onClick={refresh}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Atualizar
           </Button>
-          <Button size="sm" onClick={handleAnalyzeAll} disabled={analyzingAll} className="relative flex items-center justify-center min-w-[140px] bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-blue-400 dark:focus-visible:ring-blue-600 shadow-sm">
+          <Button size="sm" onClick={handleAnalyzeAll} disabled={analyzingAll} className="relative flex items-center justify-center min-w-[140px]">
             {analyzingAll ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -200,16 +196,25 @@ export default function LeadsPage() {
         </div>
       </div>
 
+      <SegmentedTabs
+        tabs={[
+          { label: "Todos", count: leads.length },
+          ...funnelStages.map((s) => ({ label: s, count: leads.filter((l) => l.current_stage === s).length }))
+        ]}
+        activeTab={stageFilter === "all" ? "Todos" : stageFilter}
+        onTabChange={(tab) => setStageFilter(tab === "Todos" ? "all" : tab)}
+      />
+
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-4">
+      <div className="flex flex-wrap gap-3 mb-2">
         <Input
           placeholder="Buscar por nome ou telefone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-64"
+          className="w-full sm:w-80"
         />
         <Select value={stageFilter} onValueChange={(v) => v && setStageFilter(v)}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Etapa" />
           </SelectTrigger>
           <SelectContent>
@@ -232,10 +237,10 @@ export default function LeadsPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-x-auto">
+      <div className="rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-white dark:bg-slate-900/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none overflow-x-auto backdrop-blur-sm">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-slate-50 dark:bg-[#131C2D] hover:bg-slate-50 dark:hover:bg-[#131C2D]">
               <TableHead className="text-slate-700 dark:text-slate-200">Nome / Telefone</TableHead>
               <TableHead className="text-slate-700 dark:text-slate-200">Etapa</TableHead>
               <TableHead className="text-slate-700 dark:text-slate-200">Temperatura</TableHead>
@@ -252,16 +257,16 @@ export default function LeadsPage() {
               </TableRow>
             ) : (
               filteredLeads.map((lead) => (
-                <TableRow key={lead.id}>
+                <TableRow key={lead.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors">
                   <TableCell>
                     <Link
                       href={`/leads/${lead.id}`}
-                      className="font-medium hover:underline"
+                      className="font-medium text-slate-900 dark:text-slate-50 hover:underline"
                     >
                       {lead.name || lead.phone}
                     </Link>
                     {lead.name && (
-                      <p className="text-xs text-muted-foreground">{lead.phone}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">{lead.phone}</p>
                     )}
                   </TableCell>
                   <TableCell>
@@ -270,7 +275,7 @@ export default function LeadsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <ScoreBadge score={lead.temperature_score} />
+                    <TemperatureBadge score={lead.temperature_score} />
                   </TableCell>
                   <TableCell>
                     {lead.conversation_time_minutes !== null

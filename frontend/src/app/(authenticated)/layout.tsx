@@ -12,8 +12,6 @@ import {
   Users,
   Settings,
   LogOut,
-  Sun,
-  Moon,
 } from "lucide-react";
 import ThemeToggle from "@/components/theme-toggle";
 
@@ -49,10 +47,10 @@ export default function AuthenticatedLayout({
   if (!user) return null;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-[#0B1120]">
       {/* Sidebar */}
-      <aside className="hidden w-64 flex-col border-r bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800 md:flex rounded-r-2xl shadow-sm">
-        <div className="flex h-14 items-center border-b border-slate-100 dark:border-slate-800 px-4 justify-between">
+      <aside className="hidden w-64 flex-col border-r border-slate-200 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/70 backdrop-blur-sm md:flex shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+        <div className="flex h-16 items-center border-b border-slate-100 dark:border-slate-800/60 px-4 justify-between">
           <Link href="/dashboard" className="font-semibold text-lg text-slate-900 dark:text-slate-50">
             📱 Gestor de Leads
           </Link>
@@ -63,10 +61,10 @@ export default function AuthenticatedLayout({
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 ${
                 pathname === href || pathname.startsWith(href + "/")
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground"
+                  ? "bg-white dark:bg-[#1E293B] text-slate-900 dark:text-slate-50 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/30"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -74,11 +72,11 @@ export default function AuthenticatedLayout({
             </Link>
           ))}
         </nav>
-        <div className="border-t p-3 space-y-3">
+        <div className="border-t border-slate-100 dark:border-slate-800/60 p-3 space-y-3">
           <WhatsAppStatusIndicator />
           <Separator />
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</span>
             <Button
               variant="ghost"
               size="icon"
@@ -95,8 +93,8 @@ export default function AuthenticatedLayout({
           {/* Main content */}
           <div className="flex flex-1 flex-col">
             {/* Mobile header */}
-            <header className="flex h-14 items-center justify-between border-b px-4 md:hidden">
-              <Link href="/dashboard" className="font-semibold">
+            <header className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-800/60 px-4 md:hidden bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md sticky top-0 z-20">
+              <Link href="/dashboard" className="font-semibold text-slate-900 dark:text-slate-50">
                 📱 Gestor de Leads
               </Link>
               <nav className="flex items-center gap-2">
@@ -104,10 +102,10 @@ export default function AuthenticatedLayout({
                   <Link
                     key={href}
                     href={href}
-                    className={`rounded-md p-2 ${
+                    className={`rounded-lg p-2 transition-colors ${
                       pathname === href || pathname.startsWith(href + "/")
-                        ? "bg-accent"
-                        : ""
+                        ? "bg-slate-200 dark:bg-slate-800/60"
+                        : "hover:bg-slate-100 dark:hover:bg-slate-800/40"
                     }`}
                   >
                     <Icon className="h-4 w-4" />

@@ -33,11 +33,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0B1120] p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Entrar</CardTitle>
-          <CardDescription>Gestor de Leads do WhatsApp</CardDescription>
+          <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">Entrar</CardTitle>
+          <CardDescription className="text-slate-500 dark:text-slate-400">Gestor de Leads do WhatsApp</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -66,9 +66,9 @@ export default function LoginPage() {
               {loading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
             Não tem conta?{" "}
-            <Link href="/register" className="text-primary underline">
+            <Link href="/register" className="text-teal-600 dark:text-teal-400 underline">
               Cadastre-se
             </Link>
           </p>

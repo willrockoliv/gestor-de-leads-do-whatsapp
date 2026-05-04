@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import Preloader from "@/components/ui/preloader";
 
 export default function HomePage() {
   const router = useRouter();
@@ -19,8 +20,6 @@ export default function HomePage() {
   }, [user, isLoading, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <p className="text-muted-foreground">Carregando...</p>
-    </div>
+    <Preloader />
   );
 }

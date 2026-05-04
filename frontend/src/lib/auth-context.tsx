@@ -22,11 +22,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [token, setTokenState] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [token, setTokenState] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("token");
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return !!localStorage.getItem("token");
+  });
 
   const setToken = useCallback((t: string) => {
     localStorage.setItem("token", t);
+    setIsLoading(true);
     setTokenState(t);
   }, []);
 
@@ -34,28 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("token");
     setTokenState(null);
     setUser(null);
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem("token");
-    console.log("[auth-context] useEffect (token load)", { stored });
-    if (stored) {
-      setTokenState(stored);
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
+    if (!token) return;
 
-  useEffect(() => {
-    console.log("[auth-context] useEffect (token)", { token });
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
     getMe()
       .then((user) => {
-        console.log("[auth-context] getMe() success", user);
         setUser(user);
       })
       .catch((err) => {
@@ -64,7 +57,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => {
         setIsLoading(false);
-        console.log("[auth-context] isLoading set to false");
       });
   }, [token, logout]);
 
