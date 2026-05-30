@@ -1,45 +1,47 @@
 ---
 name: Security Review Guardrails
-description: Instrucao obrigatoria para agentes revisarem codigo e alteracoes com foco em seguranca da API, protecao de dados pessoais e dados sensiveis de lead, contrato e pagamento.
+description: Instrucao obrigatoria para agentes revisarem codigo e alteracoes com foco em seguranca da API, protecao de dados pessoais e dados sensiveis.
 applyTo: "**/*"
 ---
 
-# Security Review Obrigatorio para Todos os Agentes
+# Instrução de Segurança Obrigatória
 
 ## Objetivo
-Esta instrucao define um padrao obrigatorio para revisar seguranca em qualquer mudanca de codigo, configuracao, infraestrutura, testes e documentacao tecnica.
+Esta instrução define o padrão obrigatório para revisão de segurança em qualquer mudança de código, configuração, infraestrutura, testes e documentação técnica neste projeto de gestão de leads do WhatsApp.
 
-Contexto critico deste repositorio:
-- Dados pessoais (PII) sao processados durante onboarding e contratacao.
-- O sistema trata dados sensiveis em cadastro de lead, fluxo contratual e etapa de pagamento.
-- O frontend e cliente nao confiavel por definicao (Zero Trust Frontend).
-- Qualquer vazamento, exposicao indevida ou retencao desnecessaria e considerado falha critica.
+Contexto crítico deste repositório:
+- Dados pessoais (PII) e dados sensíveis de leads, incluindo conversas de WhatsApp, são processados durante ingestão de mensagens, análise por LLM, classificação de temperatura, geração de resumo e sugestões de resposta.
+- O sistema trata dados sensíveis em cadastro de lead, fluxo de análise de conversas de WhatsApp, ingestão de mensagens, integrações externas e logs de análise.
+- O frontend é cliente não confiável por definição (Zero Trust Frontend).
+- Qualquer vazamento, exposição indevida ou retenção desnecessária é considerado falha crítica.
 
 Regra de ouro:
 - Nunca assumir seguranca por padrao.
-- Sempre procurar ativamente risco de vazamento de dados e abuso de acesso.
+- **Sempre procurar ativamente** risco de vazamento de dados e abuso de acesso.
 - Em caso de duvida, tratar como incidente potencial e bloquear a entrega ate mitigacao.
 
-## Principio obrigatorio: Backend como fonte unica de verdade
-Regras mandatorias para toda implementacao e revisao:
-- Nunca confiar em validacao feita no frontend como controle de seguranca.
-- Validacoes, regras de negocio e autorizacao devem ser executadas e revalidadas no backend.
-- Valores financeiros (preco, desconto, total, parcelas, juros, moeda) devem ser definidos e recalculados no backend.
-- O backend nunca deve aceitar valor final de pagamento enviado pelo cliente como verdade.
-- Estados da jornada (pending, contract_pending, contract_signed, payment_pending, payment_completed, expired) so podem mudar por transicoes permitidas no backend.
-- Tokens e identificadores sensiveis nao devem depender de armazenamento persistente no navegador para seguranca.
 
-## Quando esta instrucao deve ser aplicada
+## Princípio obrigatório: Backend como fonte única de verdade
+Regras mandatórias para toda implementação e revisão:
+- Nunca confiar em validação feita no frontend como controle de segurança.
+- Validações, regras de negócio, permissões e consistência de dados de leads, mensagens e análises devem ser executadas e revalidadas no backend.
+- O backend nunca deve aceitar valores finais enviados pelo cliente como verdade.
+- Funil de etapas é dinâmico e validado por tenant, não hardcoded.
+- Apenas leads com status ativo podem ter mensagens processadas e analisadas.
+- Tokens, identificadores sensíveis e dados de sessão não devem depender de armazenamento persistente no navegador para segurança.
+
+
+## Quando esta instrução deve ser aplicada
 Aplicar em 100% dos casos abaixo:
-- Revisao de PR.
-- Revisao de diff local.
-- Geracao de codigo novo.
-- Refatoracao.
-- Alteracoes de schema, migracoes e consultas SQL.
-- Alteracoes em logs, observabilidade e tratamento de erros.
-- Alteracoes de configuracoes, secrets, CI/CD, Docker e deploy.
-- Alteracoes em autenticacao, autorizacao, sessao e webhooks.
-- Alteracoes em onboarding, contrato, pagamento e calculo de valores.
+- Revisão de PR.
+- Revisão de diff local.
+- Geração de código novo.
+- Refatoração.
+- Alterações de schema, migrações e consultas ao banco de dados.
+- Alterações em logs, observabilidade e tratamento de erros.
+- Alterações de configurações, segredos, CI/CD, Docker e deploy.
+- Alterações em autenticação, autorização, sessão e webhooks.
+- Alterações em ingestão/análise de leads, classificação, integrações externas e ingestão de mensagens.
 
 ## Politica de bloqueio
 Se houver risco alto ou critico sem mitigacao comprovada, o agente deve:
@@ -50,128 +52,189 @@ Se houver risco alto ou critico sem mitigacao comprovada, o agente deve:
 5. Registrar os detalhes e sugestões em `.github/memories/exec-plans/security/pending`, bem como o status da issue
 6. após todas os achados serem mitigados, atualizar o status para resolvido e mover o registro para `.github/memories/exec-plans/security/resolved`.
 
-## Checklist minimo obrigatorio por revisao
+
+
+## Checklist mínimo obrigatório por revisão
 O agente deve confirmar explicitamente cada item:
 
-1. Controle de acesso, autenticacao e autorizacao
-- Endpoints administrativos exigem autenticacao forte e autorizacao por papel.
-- Nao ha elevacao de privilegio por parametro manipulavel no request.
-- Nao ha IDOR (acesso a recurso de outro usuario por troca de ID).
-- JWT de onboarding e admin possuem segredos separados, expiracao curta e claims minimas.
-- Fluxo de refresh de token nao amplia privilegios e respeita expiracao/revogacao.
+1. Controle de acesso, autenticação e autorização
+- Endpoints administrativos e de análise exigem autenticação forte e autorização por papel.
+- Não há elevação de privilégio por parâmetro manipulável no request.
+- Não há IDOR (acesso a lead, análise, mensagem ou recurso de outro usuário/tenant por troca de ID).
+- JWT de usuário e admin possuem segredos separados, expiração curta e claims mínimas.
+- Fluxo de refresh de token não amplia privilégios e respeita expiração/revogação.
 
-2. Protecao de dados pessoais e dados sensiveis
-- PII nao e logado em texto claro.
-- Dados sensiveis nao aparecem em excecoes, traces e mensagens de erro.
-- Campos sensiveis sao mascarados ou truncados ao registrar eventos.
-- Exposicao em respostas de API segue principio do minimo necessario.
-- Dados de pagamento sensiveis (cartao, PAN, CVV) nao transitam nem persistem no backend em texto claro.
-- Tokens de pagamento e IDs externos sao tratados como sensiveis em logs e erros.
+2. Supply chain e dependências
+- Auditoria obrigatória de dependências Python e Node (ex: `pip-audit`, `npm audit`) em todo PR que altere requirements.txt, package.json, poetry.lock, package-lock.json ou outros lockfiles.
+- Proibido dependências de fontes não oficiais e dependências sem manutenção ativa.
+- Atualização periódica de dependências críticas e revisão de changelogs de segurança.
+- Instalação de dependências npm, pip e poetry deve seguir obrigatoriamente:
+	- `ignore-scripts=true` (npm, poetry): nunca permitir execução automática de scripts pós-install.
+	- `min-release-age=7` (npm, poetry): só permitir instalação de pacotes publicados há pelo menos 7 dias.
+	- Lockfiles (`package-lock.json`, `poetry.lock`, `requirements.txt`) devem sempre fixar versão exata (`1.2.3`), nunca usar `^`, `~`, `>=`, `latest` ou intervalos.
+	- `allow-git=none` ou equivalente: proibido dependências que puxam direto de repositórios git (npm, poetry, pip).
+	- Proibido dependências com scripts de preinstall/postinstall customizados.
+	- Proibido dependências deprecated, com alertas de segurança, ou sem atualização há mais de 1 ano.
+	- Sempre revisar e aprovar manualmente dependências novas ou atualizadas em PRs.
+	- Proibido dependências que requerem permissões elevadas, binários nativos não auditados ou que alterem variáveis de ambiente sensíveis.
+	- Exigir configuração de `audit-level=high` (npm) e bloqueio de merge se vulnerabilidade alta/crítica for detectada.
+	- Proibir dependências que instalam binários de fontes externas ou executam downloads dinâmicos no postinstall.
 
-3. Segredos e credenciais
-- Nenhum segredo hardcoded em codigo, testes, templates ou fixtures.
-- Variaveis de ambiente criticas nao possuem fallback inseguro.
-- Tokens/chaves nao sao impressos em logs, inclusive em debug.
-- Segredos de JWT, webhook HMAC e credenciais de providers devem ser distintos por ambiente.
+3. Logs e observabilidade
+- Garantir que logs sensíveis não sejam enviados para stdout/stderr em produção (usar sinks seguros).
+- Mascaramento de PII em logs de debug, inclusive em staging.
+- Proibido logs de payloads completos de requisições contendo dados sensíveis.
 
-4. Entrada de dados e injecao
-- Validacao de entrada com schemas robustos.
-- Queries SQL sem concatenacao insegura de strings.
-- Protecao contra command injection, path traversal e template injection.
+4. CORS e headers de segurança
+- Checklist explícito para revisão de CORS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy e outros headers de segurança.
+- Proibido CORS permissivo em produção.
+
+5. Uploads e arquivos
+- Se houver upload de arquivos (imagens, áudios, documentos), exigir validação de tipo, tamanho e análise de conteúdo.
+- Proibido execução de arquivos enviados pelo usuário.
+
+6. Prompts e LLM
+- Checklist para revisão de prompts enviados a LLMs, garantindo que não contenham dados sensíveis desnecessários.
+- Proibido uso de dados reais de produção em prompts de testes/dev.
+
+7. Gestão de segredos
+- Exigir uso de secrets managers (ex: Docker secrets, AWS Secrets Manager) em produção.
+- Proibido exposição de segredos em arquivos versionados, inclusive exemplos.
+
+8. Frontend
+- Garantir que tokens JWT, segredos ou dados sensíveis nunca sejam expostos em variáveis globais, HTML ou JS acessível ao cliente.
+- Validar que erros de frontend não revelem stack traces ou detalhes internos do backend.
+
+9. MFA e acesso administrativo
+- Recomendar (ou exigir) MFA para acessos administrativos e operações críticas.
+
+10. Infraestrutura
+- Checklist para Dockerfile e docker-compose: não expor portas desnecessárias, não rodar como root, fixar versões de base image.
+- Proibir variáveis sensíveis em logs de build.
+
+11. Testes de segurança automatizados
+- Exigir cobertura de testes para fluxos negativos (autorização, autenticação, rate limit, replay, etc).
+- Cobertura de testes para supply chain (ex: CI falha se `pip-audit`/`npm audit` reportar vulnerabilidade alta/crítica).
+
+12. Proteção de dados pessoais e dados sensíveis
++ PII (nome, telefone, mensagens e conversas de WhatsApp, etc.) não deve aparecer em logs em texto claro.
++ Dados sensíveis não aparecem em exceções, traces e mensagens de erro.
++ Campos sensíveis são mascarados ou truncados ao registrar eventos.
++ Exposição em respostas de API segue princípio do mínimo necessário.
++ Tokens de integração (ex: WhatsApp, LLM, provedores externos) e IDs externos são tratados como sensíveis em logs e erros.
++ Prompts de LLM não devem vazar dados sensíveis para logs, respostas ou terceiros.
+
+13. Segredos e credenciais
+- Nenhum segredo hardcoded em código, testes, templates ou fixtures.
+- Variáveis de ambiente críticas não possuem fallback inseguro.
+- Tokens/chaves não são impressos em logs, inclusive em debug.
+- Segredos de JWT, webhook HMAC e credenciais de provedores devem ser distintos por ambiente.
+
+14. Entrada de dados e injeção
+- Validação de entrada com schemas robustos (Pydantic, FastAPI).
+- Queries SQL sem concatenação insegura de strings (usar SQLAlchemy com bind params).
+- Proteção contra command injection, path traversal e template injection.
 - Webhooks validam assinatura e autenticidade antes de processar payload.
-- Webhooks validam idempotencia e protecao contra replay quando aplicavel.
+- Webhooks validam idempotência e proteção contra replay quando aplicável.
 
-5. Integridade de negocio e valores financeiros
-- Regras de preco, descontos e total sao calculadas no backend com fonte oficial (plano/settings).
-- Nao existe confianca em valores vindos do frontend para contrato ou pagamento.
-- Alteracoes de status de contrato/pagamento exigem pre-condicoes de estado no backend.
-- Operacoes de pagamento e webhooks criticos possuem comportamento idempotente.
+15. Integridade de negócio
++ Regras de negócio, permissões e consistência de dados de leads, mensagens e análises são validadas no backend.
++ Não existe confiança em valores vindos do frontend para qualquer decisão de negócio.
++ Alterações manuais de status/etapa de lead devem ser auditáveis e autorizadas.
++ Webhooks críticos possuem comportamento idempotente.
++ Apenas leads ativos podem ter mensagens processadas e analisadas.
++ Watchdog deve resetar locks de processamento travados.
++ O backend nunca processa análise automaticamente por evento/flood, apenas por gatilho manual.
 
-6. Criptografia e transporte
-- Trafego de dados sensiveis apenas sobre HTTPS/TLS no ambiente alvo.
-- Assinaturas HMAC/segredo de webhook sao verificadas com comparacao segura.
-- Nao usar algoritmos criptograficos fracos ou obsoletos.
+16. Criptografia e transporte
+- Tráfego de dados sensíveis apenas sobre HTTPS/TLS no ambiente alvo.
+- Assinaturas HMAC/segredo de webhook são verificadas com comparação segura.
+- Não usar algoritmos criptográficos fracos ou obsoletos.
 
-7. Seguranca da API contra abuso e tentativas de invasao
-- Aplicar rate limiting por rota e por perfil de risco (login admin, onboarding por UUID, refresh, webhooks, endpoints publicos).
-- Aplicar limites de burst e janela (ex.: por IP, por usuario e por chave de API quando houver).
-- Proteger autenticacao contra brute force e credential stuffing (delay progressivo, lock temporario, bloqueio por IP quando necessario).
-- Evitar enumeracao de usuarios/UUID por mensagens de erro diferenciadas.
-- Definir limites de payload (tamanho/campos) e timeouts para reduzir DoS de aplicacao.
-- Restringir CORS ao minimo necessario e evitar configuracoes permissivas globais.
+17. Segurança da API contra abuso e tentativas de invasão
+- Aplicar rate limiting por rota e por perfil de risco (login admin, refresh, webhooks, endpoints públicos).
+- Aplicar limites de burst e janela (ex.: por IP, por usuário e por chave de API quando houver).
+- Proteger autenticação contra brute force e credential stuffing (delay progressivo, lock temporário, bloqueio por IP quando necessário).
+- Evitar enumeração de usuários/UUID por mensagens de erro diferenciadas.
+- Definir limites de payload (tamanho/campos) e timeouts para reduzir DoS de aplicação.
+- Restringir CORS ao mínimo necessário e evitar configurações permissivas globais.
 
-8. LGPD e minimizacao de dados
-- Coletar somente dados estritamente necessarios para o fluxo.
-- Definir e respeitar retencao minima para dados sensiveis e logs.
-- Evitar persistencia desnecessaria de dados sensiveis fora do fluxo essencial.
-- Garantir possibilidade de exclusao/anonimizacao quando aplicavel.
+18. LGPD e minimização de dados
+- Coletar somente dados estritamente necessários para o fluxo.
+- Definir e respeitar retenção mínima para dados sensíveis e logs.
+- Evitar persistência desnecessária de dados sensíveis fora do fluxo essencial.
+- Garantir possibilidade de exclusão/anonimização quando aplicável.
 
-9. Erros, observabilidade e auditoria
-- Mensagens para cliente nao revelam internals, queries ou segredos.
-- Logging estruturado com redacao de campos sensiveis.
-- Eventos criticos de seguranca sao auditaveis (quem, quando, o que).
+19. Erros, observabilidade e auditoria
+- Mensagens para cliente não revelam internals, queries ou segredos.
+- Logging estruturado com redação de campos sensíveis.
+- Eventos críticos de segurança são auditáveis (quem, quando, o que).
 - Correlation/request id sem incluir dados pessoais.
 
-10. Dependencias e superficie de ataque
-- Dependencias novas sao justificadas e avaliadas por risco.
-- Evitar bibliotecas sem manutencao ativa.
-- Imagens Docker e base runtime com versoes fixas e atualizadas.
-- Nao introduzir portas, CORS aberto ou configuracao permissiva sem motivo.
+20. Dependências e superfície de ataque
+- Dependências novas são justificadas e avaliadas por risco.
+- Evitar bibliotecas sem manutenção ativa.
+- Imagens Docker e base runtime com versões fixas e atualizadas.
+- Não introduzir portas, CORS aberto ou configuração permissiva sem motivo.
 
-11. Testes de seguranca
-- Testes cobrindo negativas de autenticacao/autorizacao.
+21. Testes de segurança
+- Testes cobrindo negativas de autenticação/autorização.
 - Testes cobrindo mascaramento de PII em logs.
-- Testes para assinatura invalida de webhook e payload adulterado.
-- Testes para garantir nao exposicao de campos sensiveis em respostas.
-- Testes para garantir que valores financeiros enviados pelo frontend sao ignorados/recalculados no backend.
+- Testes para assinatura inválida de webhook e payload adulterado.
+- Testes para garantir não exposição de campos sensíveis em respostas.
 - Testes de rate limiting em endpoints de maior risco.
-- Testes para brute force/lock temporario e nao enumeracao em login/recuperacao.
+- Testes para brute force/lock temporário e não enumeração em login/recuperação.
 
-## Regras especificas para onboarding, contrato e pagamento
-- Onboarding por UUID deve respeitar TTL no backend, sem depender de controle no cliente.
-- Nao confiar em campos editaveis de cadastro sem validacao de formato, consistencia e autorizacao no backend.
-- Em contrato, campos dinamicos (nome, documento, valor) devem ser derivados de dados validados no servidor.
-- Em pagamento, backend deve aceitar somente tokenizacao segura para cartao e recusar dados sensiveis brutos.
-- Webhooks de contrato e pagamento so podem atualizar estado apos validacao de assinatura + idempotencia.
-- Em integracoes externas, erros devem ser sanitizados antes de persistencia/retorno.
 
-## Padrao de revisao de alteracoes
+## Regras específicas para ingestão, análise e integrações externas
++ Não confiar em campos editáveis de cadastro de lead sem validação de formato, consistência e autorização no backend.
++ Em ingestão de mensagens, garantir que apenas leads ativos tenham mensagens processadas e analisadas.
++ Em análise de mensagens e conversas de WhatsApp, garantir que dados sensíveis não sejam expostos em logs, prompts ou respostas de LLM.
++ Alterações manuais de status/etapa de lead devem ser auditáveis e autorizadas.
++ Em integrações externas (ex: WhatsApp, LLM), erros devem ser sanitizados antes de persistência/retorno.
++ Webhooks só podem atualizar estado após validação de assinatura + idempotência.
++ Watchdog deve resetar locks de processamento travados.
++ O backend nunca processa análise automaticamente por evento/flood, apenas por gatilho manual.
+
+## Padrão de revisão de alterações
 Para cada arquivo alterado, o agente deve verificar:
-1. Qual dado sensivel entra, onde e processado e onde sai.
-2. Se existe risco de vazamento por log, erro, serializacao ou cache.
-3. Se os controles de autorizacao sao aplicados no nivel correto.
-4. Se existe validacao robusta na borda da aplicacao.
-5. Se o diff introduz bypass de seguranca por condicao alternativa.
-6. Se o backend continua como autoridade para regras de negocio e valores financeiros.
-7. Se existe protecao adequada contra abuso (rate limit, limites de payload, brute force).
+1. Qual dado sensível entra, onde é processado e onde sai.
+2. Se existe risco de vazamento por log, erro, serialização ou cache.
+3. Se os controles de autorização são aplicados no nível correto.
+4. Se existe validação robusta na borda da aplicação.
+5. Se o diff introduz bypass de segurança por condição alternativa.
+6. Se o backend continua como autoridade para integridade, permissões e consistência dos dados de negócio.
+7. Se existe proteção adequada contra abuso (rate limit, limites de payload, brute force).
 
-## Saida esperada do agente em revisoes
-O resultado da revisao deve sempre conter:
-- Lista de achados por severidade: Critico, Alto, Medio, Baixo.
-- Evidencia objetiva (arquivo, ponto de codigo e cenario exploravel).
-- Impacto de negocio e privacidade.
-- Correcao recomendada com prioridade.
+## Saída esperada do agente em revisões
+O resultado da revisão deve sempre conter:
+- Lista de achados por severidade: Crítico, Alto, Médio, Baixo.
+- Evidência objetiva (arquivo, ponto de código e cenário explorável).
+- Impacto de negócio e privacidade.
+- Correção recomendada com prioridade.
 - Status final: Aprovado com ressalvas ou Bloqueado.
 
-## Red flags de bloqueio imediato
-- Log de PII sem mascaramento.
-- Valor de pagamento aceito diretamente do frontend sem recalculo no backend.
-- Endpoint sem autenticacao onde deveria existir.
-- Segredo/token em repositorio.
-- Webhook sem validacao de assinatura.
-- Endpoint sensivel sem rate limiting e sem mitigacao equivalente.
-- Query com potencial SQL injection.
-- Mensagem de erro retornando stack trace ou detalhe interno sensivel.
 
-## Principios de implementacao segura (resumo)
+## Red flags de bloqueio imediato
++ Log de PII (nome, telefone, mensagem, conversa de WhatsApp, etc.) sem mascaramento.
++ Endpoint sensível (leads, análise, ingestão, webhooks) sem autenticação/autorização adequada.
++ Segredo/token em repositório.
++ Webhook sem validação de assinatura.
++ Endpoint sensível sem rate limiting e sem mitigação equivalente.
++ Query com potencial SQL injection.
++ Mensagem de erro retornando stack trace ou detalhe interno sensível.
+
+
+## Princípios de implementação segura (resumo)
 - Least privilege.
 - Defense in depth.
 - Secure by default.
 - Fail safe defaults.
-- Need to know e minimizacao de dados.
+- Need to know e minimização de dados.
 - Privacy by design.
 - Zero trust frontend.
 - Backend authoritative.
 
+
 ## Regra final
-Se nao for possivel provar que a mudanca e segura para dados pessoais e dados sensiveis de onboarding, contrato e pagamento, a mudanca nao deve ser considerada pronta.
+Se não for possível provar que a mudança é segura para dados pessoais e dados sensíveis de leads, onboarding, ingestão, análise e integrações externas, a mudança não deve ser considerada pronta.
