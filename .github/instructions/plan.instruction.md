@@ -1,50 +1,72 @@
 ---
-name: Gestão de Planos de Implementação
-description: Guia para criação, atualização e organização dos planos de implementação do projeto.
+name: Gestao de Planos de Implementacao
+description: Use quando criar, atualizar, concluir ou arquivar planos de implementacao em .github/memories/exec-plans. Define padrao de nome, checklist de tarefas, arquivo de progresso e manutencao do PLAN-INDEX.
 applyTo: .github/memories/exec-plans/**/*
 ---
 
-# Instruções para gestão de arquivos de planos de implementação
+# Gestao de planos de implementacao
 
-## Estrutura de diretórios
-- Em `.github/memories/exec-plans/` existem dois diretórios:
-  - `active/`: planos em andamento ou prontos para serem implementados.
-  - `completed/`: planos já implementados. Consulte-os para contexto histórico ou decisões anteriores.
+Estas regras valem para arquivos em `.github/memories/exec-plans/`.
 
-## Fluxo de gestão
-1. **Criação:**
-   - Crie o arquivo em `active/` usando o padrão `YYYY-MM-DD-nome-do-plano.md`.
-   - Inicie o plano com um breve resumo/objetivo no topo do arquivo.
-   - Estruture as tasks em bullet-points:
-     - `[ ]` para tasks não implementadas
-     - `[x]` para tasks concluídas
-2. **Execução:**
-   - Implemente sempre uma task por vez, seguindo a ordem do plano.
-   - Marque `[x]` imediatamente ao concluir uma task.
-   - Mantenha o plano sempre atualizado durante a execução.
-3. **Conclusão:**
-   - Ao finalizar todas as tasks, mova o arquivo de `active/` para `completed/`.
-   - Exemplo (terminal):
-     ```bash
-     mv .github/memories/exec-plans/active/2026-04-15-plano-inicial.md .github/memories/exec-plans/completed/
-     ```
-4. **Atualização do índice:**
-   - Sempre que criar, mover ou concluir um plano, atualize o arquivo `PLAN-INDEX.md`.
-   - Adicione uma breve descrição de cada plano no índice, resumindo seu objetivo.
+## Estrutura de diretorios
+- `active/`: planos em andamento ou prontos para iniciar.
+- `completed/`: planos finalizados.
+- `progress/`: diarios de progresso e aprendizados durante a execucao.
+- `archived/`: planos descontinuados, pausados por tempo indeterminado ou mantidos apenas para historico.
 
-## Boas práticas
-- Revise planos em `completed/` antes de iniciar novas features para evitar retrabalho.
-- Padronize o idioma (português) e o formato dos bullet-points.
-- Utilize descrições claras e objetivas para facilitar buscas e automações futuras.
+## Padrao de criacao
+1. Crie o plano em `active/` com o nome `YYYY-MM-DD-nome-do-plano.md`.
+2. Inicie com um objetivo curto e claro.
+3. Liste tarefas em checklist:
+   - `[ ]` tarefa pendente
+   - `[x]` tarefa concluida
+4. Sempre divida a implementação em fases e etapas claras, com dependências explícitas.
 
-## Exemplo de estrutura de plano
+## Regras de execucao
+1. Execute uma tarefa por vez, na ordem do plano, salvo justificativa explicita no proprio plano.
+2. Marque cada item como `[x]` assim que concluir.
+3. Mantenha um arquivo de progresso em `progress/` com o mesmo nome-base do plano e sufixo `-progress.md`.
+4. Registre no progresso:
+   - status da implementacao
+   - aprendizados
+   - debitos tecnicos
+   - decisoes importantes
+
+## Conclusao e arquivamento
+1. Quando todas as tarefas estiverem concluídas (`[x]`):
+   * Mova o plano de `active/` para `completed/`
+   * Atualize o arquivo de progresso com as implementações feitas, aprendizados e o que mais achar relevante
+   * Atualize as documentações `ARCHITECTURE.md` e `README.md` para incluir as mudanças relevantes
+2. Quando o plano for interrompido ou cancelado, mova para `archived/` e registre o motivo no arquivo de progresso
+
+Exemplos:
+
+```bash
+mv .github/memories/exec-plans/active/2026-04-15-plano-inicial.md \
+   .github/memories/exec-plans/completed/
+
+mv .github/memories/exec-plans/active/2026-04-15-plano-inicial.md \
+   .github/memories/exec-plans/archived/
 ```
-# Plano de Implementação: Nova Feature X
+
+## Atualizacao obrigatoria do indice
+- Sempre atualize `PLAN-INDEX.md` quando criar, mover, concluir ou arquivar um plano.
+- Inclua uma descricao curta do objetivo do plano.
+
+## Boas praticas
+- Revise planos em `completed/` e `archived/` antes de criar um novo para evitar retrabalho.
+- Mantenha o idioma em portugues.
+- Use textos curtos, objetivos e verificaveis.
+
+## Exemplo minimo
+
+```markdown
+# Plano de Implementacao: Nova Feature X
 
 Objetivo: Implementar a feature X conforme PRD.
 
 - [ ] Criar modelagem inicial
 - [ ] Implementar endpoint
-- [ ] Escrever testes unitários
+- [ ] Escrever testes unitarios
 - [x] Configurar CI
 ```

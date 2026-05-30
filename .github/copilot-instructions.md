@@ -49,6 +49,13 @@ applyTo: "**/*"
   - `docker compose exec frontend npm run lint`
   - `docker compose exec frontend npx tsc --noEmit`
 - Se o container não estiver ativo, suba antes com `docker compose up -d frontend`.
+- Caso precise rodar comandos Python, prefira usar o ambiente virtual do projeto no .python-version
+- Para rodar testes Python, use o ambiente virtual
+- Para subir o serviço backend, use o Docker Compose. Sempre evite rodar o backend diretamente no host para evitar conflitos de dependências.
+- Antes de abrir PR, sempre replique os checks do CI exatamente na mesma ordem.
+- Jamais instale dependências globalmente no host. Use ambientes virtuais ou Docker para isolar o ambiente de desenvolvimento.
+- Sempre que uma lib for adicionada ou removida, atualize o arquivo de dependências (`requirements.txt`, `pyproject.toml`) e rode os comandos de instalação e migração necessários.
+- Jamais utilize tag latest para nenhuma dependência, seja de Python, Node ou Docker. Sempre fixe a versão para garantir reprodutibilidade, evitar quebras inesperadas e por segurança.
 
 ### Ambiente e Dependências do Frontend
 - Para bootstrap ou rebuild do frontend, prefira `docker compose up --build -d` para manter host e container sincronizados.

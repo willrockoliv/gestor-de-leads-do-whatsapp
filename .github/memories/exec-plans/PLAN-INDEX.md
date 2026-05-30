@@ -23,3 +23,11 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 - 2026-04-21-plano-de-redesign-do-frontend.md
   - Redesign premium do frontend, foco em E2E Playwright, seed robusta, integração frontend-backend validada, Docker estável.
+
+## .github/memories/exec-plans/security/pending - revisoes e achados de seguranca pendentes de solução
+
+- ...
+
+## .github/memories/exec-plans/security/resolved - revisoes e achados de seguranca já resolvidos
+
+- ...
