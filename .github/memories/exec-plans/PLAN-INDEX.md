@@ -9,6 +9,9 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 - 2026-04-15-plano-inicial.md
   - Scaffolding do projeto, setup FastAPI, Next.js, Docker, CI, banco e testes básicos. Entregas incrementais por fases.
 
+- 2026-05-31-fase-6-integracao-whatsapp.md
+  - Integração com WhatsApp via Waha/Evolution API. Conexão com QR code, endpoints de controle de sessão, webhook de recebimento, testes E2E com mock server.
+
 ## .github/memories/exec-plans/completed/ - planos completados
 
 - 2026-04-30-plan-frontendRedesign.prompt.md
@@ -18,6 +21,9 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 - 2026-04-15-plano-inicial-progresso.md
   - Progresso incremental do plano inicial, checkpoints, entregas parciais, ajustes e diário de execução.
+
+- 2026-05-31-fase-6-integracao-whatsapp-progresso.md
+  - Diário de execução da Fase 6, decisões sobre escolha de serviço WhatsApp, debitos técnicos, aprendizados durante implementação.
 
 ## .github/memories/exec-plans/archived - planos arquivados
 
