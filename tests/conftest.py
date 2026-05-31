@@ -1,14 +1,15 @@
 
 import os
+
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///file::memory:?cache=shared&uri=true"
 
 import pytest
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 
 from app.core.database import Base, get_db
 from app.main import app as fastapi_app
-import app.models  # noqa: F401  — register all models with Base
 
 TEST_DATABASE_URL = os.environ["DATABASE_URL"]
 

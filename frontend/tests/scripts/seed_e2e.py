@@ -3,11 +3,13 @@ Script para popular o banco Postgres do Docker Compose com tenant, usuário e le
 Roda fora do ambiente de testes/pytest, usando a mesma conexão do backend.
 """
 import asyncio
+
 from sqlalchemy import text
-from app.core.config import get_settings
+
 from app.core.database import AsyncSessionLocal
-from app.models.models import Tenant, User, Lead
 from app.core.security import hash_password
+from app.models.models import Lead, Tenant, User
+
 
 async def seed():
     async with AsyncSessionLocal() as session:

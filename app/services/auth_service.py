@@ -1,9 +1,10 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import User, Tenant
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.security import (create_access_token, hash_password,
+                               verify_password)
+from app.models import Tenant, User
 from app.services.funnel_templates import get_funnel_template
 
 

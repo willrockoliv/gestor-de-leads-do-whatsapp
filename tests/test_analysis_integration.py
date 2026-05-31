@@ -1,13 +1,12 @@
 import json
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from sqlalchemy import select, update
 
-from app.models import Tenant, Lead, Message, Analysis, LeadStatus, MessageDirection
-
+from app.models import Analysis, Lead, LeadStatus, Message, MessageDirection
 
 MOCK_LLM_RESPONSE = json.dumps({
     "temperature_score": 80,
@@ -141,8 +140,8 @@ async def test_analyze_releases_lock_on_error(client, setup_lead):
 
 
 async def test_zombie_lock_reset(client, setup_lead):
-    from tests.conftest import AsyncSessionTest
     from app.services.analysis_service import reset_zombie_locks
+    from tests.conftest import AsyncSessionTest
 
     lead_id = uuid.UUID(setup_lead["lead_id"])
 
@@ -169,8 +168,8 @@ async def test_zombie_lock_reset(client, setup_lead):
 
 
 async def test_zombie_lock_skip_recent(client, setup_lead):
-    from tests.conftest import AsyncSessionTest
     from app.services.analysis_service import reset_zombie_locks
+    from tests.conftest import AsyncSessionTest
 
     lead_id = uuid.UUID(setup_lead["lead_id"])
 

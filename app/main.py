@@ -1,11 +1,12 @@
 import asyncio
 import logging
-
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.core.config import get_settings
-from app.routers import auth, tenants, webhooks, analysis, dashboard
+from app.routers import analysis, auth, dashboard, tenants, webhooks
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

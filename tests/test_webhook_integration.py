@@ -1,8 +1,9 @@
 import uuid
+
 import pytest
 from sqlalchemy import select
 
-from app.models import Tenant, Lead, Message, LeadStatus
+from app.models import Lead, LeadStatus, Message
 
 
 def _make_webhook_payload(phone: str = "5511999999999", content: str = "Oi", from_me: bool = False, push_name: str = "João"):

@@ -1,8 +1,9 @@
 import uuid
-import pytest
+
 from sqlalchemy import select
 
-from app.models import Tenant, User, Lead, Message, Analysis, LeadStatus, MessageDirection
+from app.models import (Analysis, Lead, LeadStatus, Message, MessageDirection,
+                        Tenant, User)
 
 
 async def test_tenant_persist(client):

@@ -3,11 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.schemas.auth import UserRegister, UserLogin, TokenResponse, UserResponse
-from app.schemas.tenant import FunnelUpdate, TenantResponse
-from app.services.auth_service import register_user, authenticate_user
+from app.models import User
+from app.schemas.auth import (TokenResponse, UserLogin, UserRegister,
+                              UserResponse)
+from app.services.auth_service import authenticate_user, register_user
 from app.services.funnel_templates import list_funnel_templates
-from app.models import User, Tenant
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Lead, Message, LeadStatus, MessageDirection
+from app.models import Lead, LeadStatus, Message, MessageDirection
 
 
 def extract_phone(remote_jid: str) -> str:

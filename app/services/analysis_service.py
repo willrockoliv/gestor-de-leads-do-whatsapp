@@ -3,10 +3,10 @@ import logging
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, text
 
-from app.models import Lead, Message, Analysis, Tenant, LeadStatus
+from app.models import Analysis, Lead, Message, Tenant
 from app.schemas.analysis import LLMAnalysisResult
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ async def acquire_lock(lead_id: uuid.UUID, db: AsyncSession) -> bool:
     """
     result = await db.execute(
         update(Lead)
-        .where(Lead.id == lead_id, Lead.is_processing == False)
+        .where(Lead.id == lead_id, Lead.is_processing == False) # noqa
         .values(is_processing=True, processing_started_at=datetime.now(timezone.utc))
         .returning(Lead.id)
     )
@@ -83,6 +83,7 @@ async def release_lock(lead_id: uuid.UUID, db: AsyncSession) -> None:
 async def call_llm(system_prompt: str, user_prompt: str) -> str:
     """Call LLM via litellm. Isolated for easy mocking in tests."""
     from litellm import acompletion
+
     from app.core.config import get_settings
 
     settings = get_settings()
@@ -165,7 +166,7 @@ async def reset_zombie_locks(db: AsyncSession, timeout_minutes: int = 5) -> int:
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=timeout_minutes)
     result = await db.execute(
         update(Lead)
-        .where(Lead.is_processing == True, Lead.processing_started_at < cutoff)
+        .where(Lead.is_processing == True, Lead.processing_started_at < cutoff)  # noqa
         .values(is_processing=False, processing_started_at=None)
         .returning(Lead.id)
     )

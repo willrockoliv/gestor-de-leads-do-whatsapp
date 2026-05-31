@@ -1,8 +1,5 @@
-from app.services.webhook_service import (
-    extract_phone,
-    extract_message_text,
-    ingest_message_sync,
-)
+from app.services.webhook_service import (extract_message_text, extract_phone,
+                                          ingest_message_sync)
 
 
 def test_extract_phone():

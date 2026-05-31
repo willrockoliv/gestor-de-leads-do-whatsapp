@@ -3,15 +3,16 @@ import hmac
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Request, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_db
-from app.schemas.webhook import WebhookPayload
-from app.services.webhook_service import extract_phone, extract_message_text, ingest_message
 from app.models import Tenant, WhatsAppSession
+from app.schemas.webhook import WebhookPayload
+from app.services.webhook_service import (extract_message_text, extract_phone,
+                                          ingest_message)
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

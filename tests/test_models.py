@@ -1,10 +1,7 @@
 import uuid
-from datetime import datetime, timezone
 
-from app.models import (
-    Tenant, User, WhatsAppSession, Lead, Message, Analysis,
-    LeadStatus, MessageDirection, SessionStatus,
-)
+from app.models import (Analysis, Lead, LeadStatus, Message, MessageDirection,
+                        SessionStatus, Tenant, User, WhatsAppSession)
 
 
 def test_tenant_creation():

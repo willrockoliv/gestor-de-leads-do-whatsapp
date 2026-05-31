@@ -2,13 +2,13 @@ import asyncio
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models import User, Lead, LeadStatus
+from app.models import Lead, LeadStatus, User
 from app.schemas.analysis import AnalysisResponse, AnalyzeBatchResponse
 from app.services.analysis_service import analyze_lead
 
@@ -63,7 +63,7 @@ async def analyze_all(
         select(Lead).where(
             Lead.tenant_id == current_user.tenant_id,
             Lead.status == LeadStatus.active,
-            Lead.is_processing == False,
+            Lead.is_processing == False, # noqa
         )
     )
     leads = result.scalars().all()

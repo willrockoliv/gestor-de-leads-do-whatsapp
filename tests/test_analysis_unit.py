@@ -1,11 +1,10 @@
 import json
+
 import pytest
 
-from app.services.analysis_service import (
-    build_analysis_prompt_sync,
-    parse_llm_response,
-)
 from app.schemas.analysis import LLMAnalysisResult
+from app.services.analysis_service import (build_analysis_prompt_sync,
+                                           parse_llm_response)
 
 
 def test_build_prompt_sync():

@@ -1,8 +1,9 @@
 import uuid
+
 import pytest
 from sqlalchemy import select
 
-from app.models import Lead, Message, Analysis, LeadStatus, MessageDirection
+from app.models import Analysis, Lead, LeadStatus, Message, MessageDirection
 
 
 @pytest.fixture

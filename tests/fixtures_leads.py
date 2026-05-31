@@ -1,8 +1,9 @@
 import pytest
-import uuid
-from app.core.security import hash_password
-from app.models.models import Tenant, User, Lead
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.security import hash_password
+from app.models.models import Lead, Tenant, User
+
 
 @pytest.fixture
 async def seed_tenant_user_lead(setup_database):

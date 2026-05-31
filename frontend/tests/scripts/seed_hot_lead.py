@@ -1,7 +1,10 @@
 import asyncio
+
 from sqlalchemy import select
+
 from app.core.database import AsyncSessionLocal
-from app.models.models import Tenant, Lead
+from app.models.models import Lead, Tenant
+
 
 async def main():
     async with AsyncSessionLocal() as session:

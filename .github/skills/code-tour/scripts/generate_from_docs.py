@@ -23,7 +23,6 @@ Examples:
 import json
 import re
 import sys
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -234,7 +233,7 @@ def generate_skeleton(repo_root: str = ".", persona: str = "new-joiner") -> dict
     return {
         "$schema": "https://aka.ms/codetour-schema",
         "title": f"[TODO: descriptive title for {persona} tour]",
-        "description": f"[TODO: one sentence — who this is for and what they'll understand]",
+        "description": "[TODO: one sentence — who this is for and what they'll understand]",
         "_skeleton_generated_by": "generate_from_docs.py",
         "_instructions": (
             "This is a skeleton. Fill in every [TODO: ...] with real content. "
@@ -277,7 +276,7 @@ def main():
         Path(output).write_text(out_json)
         print(f"✅ Skeleton written to {output}")
         print(f"   {len(skeleton['steps'])} steps generated from docs")
-        print(f"   Fill in all [TODO: ...] entries before sharing")
+        print("   Fill in all [TODO: ...] entries before sharing")
     else:
         print(out_json)
 
