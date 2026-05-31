@@ -66,6 +66,9 @@ O agente deve confirmar explicitamente cada item:
 
 2. Supply chain e dependências
 - Auditoria obrigatória de dependências Python e Node (ex: `pip-audit`, `npm audit`) em todo PR que altere requirements.txt, package.json, poetry.lock, package-lock.json ou outros lockfiles.
+- Verificação obrigatória de alertas do Dependabot via GitHub CLI:
+	- `gh api repos/willrockoliv/gestor-de-leads-do-whatsapp/dependabot/alerts?state=open`
+	- Nenhum alerta aberto deve permanecer sem justificativa e plano de correção registrado.
 - Proibido dependências de fontes não oficiais e dependências sem manutenção ativa.
 - Atualização periódica de dependências críticas e revisão de changelogs de segurança.
 - Instalação de dependências npm, pip e poetry deve seguir obrigatoriamente:
