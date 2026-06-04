@@ -13,7 +13,7 @@
 ### 6.1.1 Escolher e Integrar Serviço WhatsApp
 - [x] Avaliar Waha vs Evolution API (ambos suportam QR code, webhooks, e multi-instância) — **Waha escolhido**
 - [ ] Adicionar Waha ao `docker-compose.yml` com versão fixa (não usar `latest`)
-- [ ] Configurar variáveis de ambiente (WHATSAPP_API_URL, WHATSAPP_API_PORT, WHATSAPP_WEBHOOK_URL) nos arquivos .env e .env.example
+- [ ] Configurar variáveis de ambiente (WHATSAPP_API_URL, WHATSAPP_API_PORT, WHATSAPP_API_KEY, WHATSAPP_WEBHOOK_URL, WHATSAPP_WEBHOOK_HMAC_KEY) nos arquivos .env e .env.example
 - [ ] Validar que o container sobe sem erros
 
 ### 6.1.2 Estruturar Models e Esquemas
@@ -106,7 +106,7 @@
 
 ### 6.4.2 Configurar Webhook na API WhatsApp
 - [ ] Obter URL de webhook (ex: `https://seu-backend.com/api/webhooks/whatsapp`)
-- [ ] Configurar no serviço WhatsApp (Waha/Evolution) apontando para esse URL
+- [ ] Configurar no serviço WhatsApp (Waha) apontando para esse URL
 - [ ] Documentar em `.env.example` a variável `WHATSAPP_WEBHOOK_URL`
 - [ ] Documentar em `README.md` como configurar o webhook
 
@@ -117,7 +117,7 @@
 ## Fase 6.5 — Testes End-to-End com Sessão Simulada
 
 ### 6.5.1 Mock do Serviço WhatsApp para Testes
-- [ ] Criar mock HTTP server que simula Waha/Evolution API
+- [ ] Criar mock HTTP server que simula Waha API
 - [ ] Endpoints mock: `POST /sessions`, `GET /sessions/{id}/qrcode`, `GET /sessions/{id}/status`
 - [ ] Fixture pytest que sobe mock server e sobrescreve `WHATSAPP_API_URL` em testes
 - [ ] Simular transições de estado: PENDING → QR_CODE_READY → CONNECTING → CONNECTED
@@ -171,10 +171,11 @@
 - [ ] Troubleshooting: "QR code não aparece", "Webhook não recebe mensagens"
 
 ### 6.6.3 Atualizar `.env.example`
-- [ ] `WHATSAPP_API_URL` (ex: `http://localhost:9000`)
+- [ ] `WHATSAPP_API_URL` (ex: `http://localhost`)
+- [ ] `WHATSAPP_API_PORT`
 - [ ] `WHATSAPP_API_KEY` (se necessário)
 - [ ] `WHATSAPP_WEBHOOK_URL` (ex: `https://seu-backend.com/api/webhooks/whatsapp`)
-- [ ] `WHATSAPP_WEBHOOK_SECRET` (HMAC secret)
+- [ ] `WHATSAPP_WEBHOOK_HMAC_KEY` (HMAC secret)
 
 ### 6.6.4 Atualizar `.github/memories/exec-plans/progress/` com aprendizados
 - [ ] Registrar decisões: qual serviço WhatsApp foi escolhido e por quê
