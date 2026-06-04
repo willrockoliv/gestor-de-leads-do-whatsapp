@@ -12,6 +12,9 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 - 2026-05-31-fase-6-integracao-whatsapp.md
   - Integração com WhatsApp via Waha/Evolution API. Conexão com QR code, endpoints de controle de sessão, webhook de recebimento, testes E2E com mock server.
 
+- 2026-06-04-desacoplamento-provider-whatsapp.md
+  - Desacoplamento do provider WhatsApp com DI no FastAPI, adapter dedicado e preservação de compatibilidade dos endpoints atuais.
+
 ## .github/memories/exec-plans/completed/ - planos completados
 
 - 2026-04-30-plan-frontendRedesign.prompt.md
@@ -24,6 +27,9 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 - 2026-05-31-fase-6-integracao-whatsapp-progresso.md
   - Diário de execução da Fase 6, decisões sobre escolha de serviço WhatsApp, debitos técnicos, aprendizados durante implementação.
+
+- 2026-06-04-desacoplamento-provider-whatsapp-progress.md
+  - Progresso do plano de desacoplamento do provider WhatsApp, incluindo decisões de arquitetura, débitos técnicos e validação por fases.
 
 ## .github/memories/exec-plans/archived - planos arquivados
 
