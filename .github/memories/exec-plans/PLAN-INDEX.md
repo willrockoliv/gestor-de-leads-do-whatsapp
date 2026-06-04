@@ -12,6 +12,9 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 - 2026-05-31-fase-6-integracao-whatsapp.md
   - Integração com WhatsApp via Waha/Evolution API. Conexão com QR code, endpoints de controle de sessão, webhook de recebimento, testes E2E com mock server.
 
+- 2026-06-04-migracao-frontend-sem-npm.md
+  - Migracao do frontend para SPA em HTML/CSS/JavaScript puro, sem npm no runtime, com cutover big-bang e paridade funcional total.
+
 ## .github/memories/exec-plans/completed/ - planos completados
 
 - 2026-04-30-plan-frontendRedesign.prompt.md
@@ -24,6 +27,9 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 - 2026-05-31-fase-6-integracao-whatsapp-progresso.md
   - Diário de execução da Fase 6, decisões sobre escolha de serviço WhatsApp, debitos técnicos, aprendizados durante implementação.
+
+- 2026-06-04-migracao-frontend-sem-npm-progress.md
+  - Diario de progresso da migracao do frontend sem npm, com status, aprendizados, debitos tecnicos e decisoes.
 
 ## .github/memories/exec-plans/archived - planos arquivados
 
