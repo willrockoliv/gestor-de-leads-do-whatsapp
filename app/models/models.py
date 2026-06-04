@@ -21,8 +21,12 @@ class MessageDirection(str, enum.Enum):
 
 
 class SessionStatus(str, enum.Enum):
-    connected = "connected"
-    disconnected = "disconnected"
+    PENDING = "PENDING"
+    QR_CODE_READY = "QR_CODE_READY"
+    CONNECTING = "CONNECTING"
+    CONNECTED = "CONNECTED"
+    DISCONNECTED = "DISCONNECTED"
+    ERROR = "ERROR"
 
 
 class Tenant(Base):
@@ -55,9 +59,14 @@ class WhatsAppSession(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tenants.id"), index=True)
+    session_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     status: Mapped[SessionStatus] = mapped_column(
-        Enum(SessionStatus), default=SessionStatus.disconnected
+        Enum(SessionStatus), default=SessionStatus.DISCONNECTED
     )
+    qr_code: Mapped[str | None] = mapped_column(Text, nullable=True)
+    qr_code_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    phone_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    connected_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     connected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     tenant: Mapped["Tenant"] = relationship(back_populates="whatsapp_sessions")

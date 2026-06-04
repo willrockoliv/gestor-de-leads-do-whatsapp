@@ -51,6 +51,11 @@ tests/                 # Testes backend unitários e integração (pytest)
 - **Auth:** Registro, login, JWT, multi-tenant.
 - **Tenants:** CRUD e configuração de funil dinâmico.
 - **Webhooks:** Recebe eventos do WhatsApp, cria leads e armazena mensagens.
+- **WhatsApp Session:**
+    - `/whatsapp/connect`: inicia/recupera sessão WAHA do tenant.
+    - `/whatsapp/qrcode`: retorna QR code atual para conexão.
+    - `/whatsapp/status`: sincroniza e retorna estado da sessão.
+    - `WhatsAppSessionService`: integração assíncrona com WAHA (retry/backoff, sync, mapeamento de estados).
 - **Analysis:**
   - `/leads/{id}/analyze`: análise individual de lead com lock otimista, chamada LLM, parsing e persistência.
   - `/leads/analyze-all`: análise em lote com controle de concorrência.
@@ -114,6 +119,7 @@ tests/                 # Testes backend unitários e integração (pytest)
 
 - **Onboarding:** cadastro → seleção de template de funil → início da operação.
 - **Ingestão:** webhook recebe mensagem → cria lead se novo → armazena mensagem.
+- **Integração WhatsApp (WAHA):** usuário inicia conexão → backend cria sessão WAHA → frontend busca QR code → WAHA envia eventos via webhook → backend valida HMAC e persiste mensagens.
 - **Análise:** botão de análise → lock otimista → chamada LLM → parsing → persistência → unlock.
 - **Dashboard:** exibe leads priorizados, agrupamento visual por contexto comercial e KPIs.
 - **Gestão Manual:** usuário pode alterar etapa/status manualmente, sobrescrevendo inferência da IA.
@@ -162,7 +168,42 @@ erDiagram
     TENANT ||--o{ LEAD : possui
     LEAD ||--o{ MESSAGE : possui
     LEAD ||--o{ ANALYSIS : possui
+    TENANT ||--o{ WHATSAPP_SESSION : possui
     USER }o--|| TENANT : pertence
+
+### Integração WhatsApp (QR + Webhook)
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant FE as Frontend
+    participant BE as Backend
+    participant WAHA as WAHA API
+
+    U->>FE: Clicar em conectar WhatsApp
+    FE->>BE: POST /whatsapp/connect
+    BE->>WAHA: POST /api/sessions
+    WAHA-->>BE: session_id/status
+    FE->>BE: GET /whatsapp/qrcode
+    BE->>WAHA: GET /api/{session}/auth/qr
+    WAHA-->>BE: qrCode
+    BE-->>FE: qr_code
+    WAHA->>BE: POST /webhooks/whatsapp (event message)
+    BE->>BE: valida HMAC + session_id + tenant
+    BE->>BE: persiste Lead/Message
+```
+
+Estados de sessão mapeados no backend:
+- `PENDING`
+- `QR_CODE_READY`
+- `CONNECTING`
+- `CONNECTED`
+- `DISCONNECTED`
+- `ERROR`
+
+Observação de infraestrutura:
+- WAHA CORE suporta somente sessão `default` (sessão única).
+- Para isolamento real de 1 sessão por tenant em produção, é necessário WAHA PLUS ou isolamento por instância.
 ```
 
 ## 8. RFCs

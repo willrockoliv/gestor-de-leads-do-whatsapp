@@ -21,7 +21,11 @@ class Settings(BaseSettings):
 
     # WhatsApp
     WHATSAPP_WEBHOOK_SECRET: str = ""
+    WHATSAPP_WEBHOOK_HMAC_KEY: str = ""
     WHATSAPP_API_URL: str = "http://waha:3000"
+    WHATSAPP_API_PORT: int = 3000
+    WHATSAPP_API_KEY: str = ""
+    WHATSAPP_WEBHOOK_URL: str = ""
 
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]

@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 import logging
 from datetime import datetime, timezone
 
@@ -9,8 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_db
-from app.models import Tenant, WhatsAppSession
-from app.schemas.webhook import WebhookPayload
+from app.models import WhatsAppSession
 from app.services.webhook_service import (extract_message_text, extract_phone,
                                           ingest_message)
 
@@ -20,17 +20,24 @@ settings = get_settings()
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
 
-def verify_webhook_signature(payload_body: bytes, signature: str | None) -> bool:
-    """Verify HMAC signature from WhatsApp API webhook."""
-    if not settings.WHATSAPP_WEBHOOK_SECRET:
-        return True  # Skip verification if no secret configured (dev mode)
+def _webhook_hmac_secret() -> str:
+    return settings.WHATSAPP_WEBHOOK_HMAC_KEY or settings.WHATSAPP_WEBHOOK_SECRET
+
+
+def verify_webhook_signature(
+    payload_body: bytes,
+    signature: str | None,
+    algorithm: str | None,
+) -> bool:
+    secret = _webhook_hmac_secret()
+    if not secret:
+        return True
     if not signature:
         return False
-    expected = hmac.new(
-        settings.WHATSAPP_WEBHOOK_SECRET.encode(),
-        payload_body,
-        hashlib.sha256,
-    ).hexdigest()
+    if algorithm and algorithm.lower() != "sha512":
+        return False
+
+    expected = hmac.new(secret.encode(), payload_body, hashlib.sha512).hexdigest()
     return hmac.compare_digest(expected, signature)
 
 
@@ -40,50 +47,64 @@ async def webhook_whatsapp(
     db: AsyncSession = Depends(get_db),
 ):
     body = await request.body()
-    signature = request.headers.get("x-webhook-signature")
+    signature = request.headers.get("X-Webhook-Hmac") or request.headers.get("x-webhook-hmac")
+    algorithm = request.headers.get("X-Webhook-Hmac-Algorithm") or request.headers.get("x-webhook-hmac-algorithm")
 
-    if not verify_webhook_signature(body, signature):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature")
+    if not verify_webhook_signature(body, signature, algorithm):
+        logger.warning("webhook refused: invalid signature")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid signature")
 
-    payload = WebhookPayload.model_validate_json(body)
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON payload") from exc
+    event_name = payload.get("event")
+    if event_name not in ("message.upsert", "message", "message.any"):
+        return {"status": "ignored", "reason": f"event {event_name} not handled"}
 
-    if payload.event != "message.upsert":
-        return {"status": "ignored", "reason": f"event {payload.event} not handled"}
+    session_id = payload.get("session") or payload.get("instance")
+    if not session_id:
+        logger.warning("webhook refused: missing session id")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing session")
 
-    # Find the tenant by instance name (WhatsApp session)
-    instance_name = payload.instance
-    if instance_name:
-        result = await db.execute(
-            select(WhatsAppSession).where(WhatsAppSession.id == instance_name)
-        )
-        session = result.scalar_one_or_none()
-        if session:
-            tenant_id = session.tenant_id
-        else:
-            # Fallback: get first tenant (single-tenant dev mode)
-            result = await db.execute(select(Tenant).limit(1))
-            tenant = result.scalar_one_or_none()
-            if not tenant:
-                raise HTTPException(status_code=400, detail="No tenant found")
-            tenant_id = tenant.id
-    else:
-        result = await db.execute(select(Tenant).limit(1))
-        tenant = result.scalar_one_or_none()
-        if not tenant:
-            raise HTTPException(status_code=400, detail="No tenant found")
-        tenant_id = tenant.id
+    result = await db.execute(
+        select(WhatsAppSession).where(WhatsAppSession.session_id == session_id)
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        logger.warning("webhook refused: unknown session_id=%s", session_id)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unknown session")
 
-    phone = extract_phone(payload.data.key.remoteJid)
-    content = extract_message_text(payload.data.message)
-    from_me = payload.data.key.fromMe
-    push_name = payload.data.pushName
+    metadata = payload.get("metadata") or {}
+    metadata_tenant_id = metadata.get("tenant_id")
+    if metadata_tenant_id and str(session.tenant_id) != str(metadata_tenant_id):
+        logger.warning("webhook refused: tenant mismatch session_id=%s", session_id)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant mismatch")
 
+    data = payload.get("data") or payload.get("payload") or {}
+    key = data.get("key") or {}
+    remote_jid = key.get("remoteJid") or data.get("from")
+    if not remote_jid:
+        return {"status": "ignored", "reason": "payload without remoteJid"}
+
+    phone = extract_phone(remote_jid)
+    content = extract_message_text(data.get("message"))
+    from_me = bool(key.get("fromMe", data.get("fromMe", False)))
+    push_name = data.get("pushName")
+
+    ts_raw = data.get("messageTimestamp") or payload.get("timestamp")
     ts = None
-    if payload.data.messageTimestamp:
-        ts = datetime.fromtimestamp(payload.data.messageTimestamp, tz=timezone.utc)
+    if ts_raw:
+        try:
+            ts_int = int(ts_raw)
+            if ts_int > 10_000_000_000:
+                ts_int = ts_int // 1000
+            ts = datetime.fromtimestamp(ts_int, tz=timezone.utc)
+        except (TypeError, ValueError):
+            ts = None
 
     msg = await ingest_message(
-        tenant_id=tenant_id,
+        tenant_id=session.tenant_id,
         phone=phone,
         push_name=push_name,
         content=content,

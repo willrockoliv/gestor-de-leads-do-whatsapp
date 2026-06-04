@@ -109,6 +109,10 @@ cd frontend && npm install && npm run dev
 | `LLM_MODEL` | Modelo a usar via LiteLLM | `gpt-4o-mini` |
 | `WHATSAPP_WEBHOOK_SECRET` | Secret HMAC do webhook | — |
 | `WHATSAPP_API_URL` | URL da API WhatsApp | `http://waha:3000` |
+| `WHATSAPP_API_PORT` | Porta da API WhatsApp | `3000` |
+| `WHATSAPP_API_KEY` | Chave de autenticação do WAHA (`X-Api-Key`) | — |
+| `WHATSAPP_WEBHOOK_URL` | URL pública usada pelo WAHA para envio de eventos | — |
+| `WHATSAPP_WEBHOOK_HMAC_KEY` | Chave HMAC usada pelo WAHA em `X-Webhook-Hmac` | — |
 | `CORS_ORIGINS` | Origens permitidas (JSON list) | `["http://localhost:3000"]` |
 | `DEBUG` | Modo debug | `false` |
 | `NEXT_PUBLIC_API_URL` | URL da API (frontend) | `http://localhost:8000` |
@@ -161,7 +165,25 @@ frontend/           # Next.js 16 + TypeScript + Tailwind + shadcn/ui
 ### Webhook
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST | `/webhooks/whatsapp` | Recebe eventos `message.upsert` |
+| POST | `/webhooks/whatsapp` | Recebe eventos do WAHA com validação HMAC |
+
+### WhatsApp Session
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/whatsapp/connect` | Cria/inicia sessão WhatsApp do tenant |
+| GET | `/whatsapp/qrcode` | Retorna QR code atual da sessão |
+| GET | `/whatsapp/status` | Retorna status da sessão e telefone conectado |
+
+### Troubleshooting WhatsApp
+
+- QR code não aparece:
+	- valide se `WHATSAPP_API_URL` e `WHATSAPP_API_KEY` estão corretos para o backend.
+	- confira se o WAHA está online e respondendo em `/api/server/status`.
+	- em WAHA CORE, apenas sessão `default` é suportada; múltiplos tenants podem conflitar.
+- Webhook não recebe mensagens:
+	- confirme `WHATSAPP_WEBHOOK_URL` acessível pelo container WAHA.
+	- valide se o evento inclui `session`/`instance` e se a sessão existe no banco.
+	- confirme se `WHATSAPP_WEBHOOK_HMAC_KEY` (quando habilitado) está igual nos dois lados.
 
 ### Análise (LLM)
 | Método | Rota | Descrição |

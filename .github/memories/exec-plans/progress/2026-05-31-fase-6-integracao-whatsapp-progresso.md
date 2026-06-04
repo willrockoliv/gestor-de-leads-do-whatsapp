@@ -9,34 +9,46 @@
 ## ✅ Tarefas Concluídas
 
 - [x] 6.1.1 Escolha de Serviço WhatsApp — **Waha selecionado** (2026-05-31)
+- [x] 6.1.1 Setup no `docker-compose.yml` com imagem WAHA fixada (2026-06-04)
+- [x] 6.1.1 Configuração de variáveis de ambiente WhatsApp/WAHA em `.env.example` e config backend (2026-06-04)
+- [x] 6.1.2 Expansão de `WhatsAppSession` + enum `SessionStatus` + migration Alembic `002` (2026-06-04)
+- [x] 6.1.2 Schemas `WhatsAppSessionResponse`, `QRCodeResponse`, `ConnectionStatusResponse` (2026-06-04)
+- [x] 6.2.1 Implementação do `WhatsAppSessionService` com `httpx` async, retry/backoff e logs estruturados (2026-06-04)
+- [x] 6.2.2 Task de sync a cada 30s com atualização de status e reset de `Lead.is_processing` em desconexão (2026-06-04)
+- [x] 6.3.1 Endpoint `POST /whatsapp/connect` com isolamento por tenant (2026-06-04)
+- [x] 6.3.2 Endpoint `GET /whatsapp/qrcode` com regeneração quando expirado (2026-06-04)
+- [x] 6.3.3 Endpoint `GET /whatsapp/status` com sincronização sob demanda (2026-06-04)
+- [x] 6.3.4 Rate limit em `/whatsapp/connect` e `/whatsapp/qrcode` com `Retry-After` (2026-06-04)
+- [x] 6.4.1 Webhook WAHA com validação HMAC `sha512` (`X-Webhook-Hmac`) e validação de sessão/tenant (2026-06-04)
+- [x] 6.4.2 Documentação base no `README.md` e `.env.example` para webhook/integração (2026-06-04)
+- [x] Testes automatizados verdes após alterações: `86 passed` (2026-06-04)
 
 ---
 
 ## 🔄 Tarefas em Progresso
 
-_(nenhuma iniciada)_
+- [ ] 6.1.1 Validar subida real do container WAHA sem erros no ambiente local
+- [ ] 6.5.x Cobertura E2E completa com mock server dedicado de WAHA
+- [ ] 6.6.1 Atualização da arquitetura (`.github/ARCHITECTURE.md`)
+- [ ] 6.6.4 Registro final de aprendizados e débito técnico pós-validação em runtime
 
 ---
 
 ## ⏳ Tarefas Pendentes
 
 ### Fase 6.1 — Setup da Infraestrutura WhatsApp
-- [ ] 6.1.1 Escolher e Integrar Serviço WhatsApp (Waha vs Evolution API)
-- [ ] 6.1.2 Estruturar Models e Esquemas
+- [ ] 6.1.1 Validar que o container sobe sem erros
+- [ ] 6.1.2 Ajustes finos pós-migration em ambiente PostgreSQL real (se necessário)
 
 ### Fase 6.2 — Service de Sessão WhatsApp
-- [ ] 6.2.1 Implementar `WhatsAppSessionService`
-- [ ] 6.2.2 Background Task para Sincronização de Sessão
+- [ ] 6.2.1 Testar integração real contra WAHA rodando via Docker
+- [ ] 6.2.2 Ajustar estratégia de sync para cenários de alta carga (hardening)
 
 ### Fase 6.3 — Endpoints de Controle de Sessão
-- [ ] 6.3.1 `POST /whatsapp/connect` — Iniciar Conexão
-- [ ] 6.3.2 `GET /whatsapp/qrcode` — Obter QR Code
-- [ ] 6.3.3 `GET /whatsapp/status` — Status da Sessão
-- [ ] 6.3.4 Rate Limiting nos Endpoints
+- [ ] 6.3.x Validar fluxo real connect -> qrcode -> status com WAHA online
 
 ### Fase 6.4 — Validação e Segurança do Webhook
-- [ ] 6.4.1 Atualizar Validação de Webhook WhatsApp
-- [ ] 6.4.2 Configurar Webhook na API WhatsApp
+- [ ] 6.4.2 Validar entrega real de eventos webhook no backend local
 
 ### Fase 6.5 — Testes End-to-End com Sessão Simulada
 - [ ] 6.5.1 Mock do Serviço WhatsApp para Testes
@@ -47,8 +59,8 @@ _(nenhuma iniciada)_
 
 ### Fase 6.6 — Documentação e Atualização do Projeto
 - [ ] 6.6.1 Atualizar `.github/ARCHITECTURE.md`
-- [ ] 6.6.2 Atualizar `README.md`
-- [ ] 6.6.3 Atualizar `.env.example`
+- [x] 6.6.2 Atualizar `README.md`
+- [x] 6.6.3 Atualizar `.env.example`
 - [ ] 6.6.4 Atualizar arquivo de progresso com aprendizados
 
 ---
@@ -82,6 +94,71 @@ _Frontend pode iniciar testes de integração assim que os endpoints 6.3.1-6.3.3
 - Mock de API WhatsApp pode precisar ser elaborado dependendo da complexidade da API real
 - Rate limiting em-memory (MVP) pode precisar de Redis em produção
 - Background task de sync pode precisar de ajuste de intervalo conforme carga real
+- Migração `002` precisa ser testada em banco PostgreSQL real (além da suite com SQLite)
+- Webhook atualmente valida HMAC `sha512` e sessão, mas replay protection por timestamp/request-id ainda pode ser endurecida na Fase 8
+
+### Checkpoint 2026-06-04
+
+- Backend implementado para Fase 6.1 a 6.4 com foco em segurança e isolamento por tenant.
+- Novos arquivos principais criados:
+	- `app/routers/whatsapp.py`
+	- `app/services/whatsapp_session_service.py`
+	- `app/schemas/whatsapp.py`
+	- `alembic/versions/002_whatsapp_session_phase6.py`
+	- `tests/test_whatsapp_session_integration.py`
+- Webhook migrado para contrato WAHA (HMAC em header oficial + validação de sessão).
+- Testes executados com sucesso: `pytest -q` -> `86 passed`.
+
+### Checkpoint Runtime 2026-06-04 (Docker + WAHA)
+
+- `docker compose up -d waha backend` validado com sucesso (containers em `Up`).
+- Migração `001 -> 002` aplicada corretamente no boot do backend.
+- Backend `GET /health` respondendo `{"status":"ok"}`.
+- WAHA autenticando via `X-Api-Key` e respondendo `200` em `/api/server/status`.
+- Fluxo `POST /whatsapp/connect` validado em runtime com criação de sessão `default`.
+
+Achado importante:
+- WAHA CORE retorna `422` para sessões diferentes de `default`.
+- Implementação foi ajustada para detectar tier CORE e usar `default`.
+- Implementação também ficou idempotente para `session already exists` no WAHA.
+
+Risco/impacto:
+- Em ambiente CORE, não é possível cumprir "1 sessão por tenant" (somente sessão única compartilhada).
+- Endpoint agora retorna `409` com mensagem explícita quando houver tentativa de conectar tenant adicional em CORE.
+
+Próxima ação recomendada:
+- Definir decisão de produto/infra para multi-tenant: migrar para WAHA PLUS ou isolar tenants por instância WAHA.
+
+### Checkpoint 6.5 concluído (2026-06-04)
+
+- Suite E2E simulada da Fase 6.5 implementada em `tests/test_whatsapp_e2e_mock.py` com mock HTTP server do WAHA.
+- Coberturas implementadas:
+	- Fluxo completo de conexão: connect -> qrcode -> CONNECTING -> CONNECTED
+	- Recebimento de mensagem via webhook com persistência de lead/message
+	- Desconexão detectada + liberação de lock (`Lead.is_processing = false`)
+	- Rate limiting com `Retry-After` e recuperação após janela
+- Mocks incluem endpoints de sessão e status para manter contrato estável durante testes.
+
+Validação:
+- `pytest -q tests/test_whatsapp_e2e_mock.py` -> `4 passed`
+- `pytest -q tests/test_whatsapp_e2e_mock.py tests/test_whatsapp_session_integration.py tests/test_webhook_integration.py` -> `18 passed`
+- `pytest -q` -> `91 passed`
+
+Débitos técnicos atuais:
+- Em WAHA CORE, a limitação de sessão única (`default`) impede o comportamento real de 1 sessão por tenant.
+- Para produção multi-tenant sem workaround, necessário WAHA PLUS ou isolamento por instância.
+
+### Checkpoint 6.6.1/6.6.2 (2026-06-04)
+
+- `.github/ARCHITECTURE.md` atualizado com:
+	- seção da integração WhatsApp,
+	- fluxo QR/Webhook,
+	- diagrama de sequência,
+	- estados de sessão,
+	- observação de limitação WAHA CORE.
+- `README.md` atualizado com troubleshooting operacional para:
+	- QR code não aparece,
+	- webhook sem recebimento.
 
 ---
 
