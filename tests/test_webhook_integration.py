@@ -207,3 +207,38 @@ async def test_webhook_unknown_session_returns_403(client, tenant_in_db, monkeyp
     resp = await client.post("/webhooks/whatsapp", content=json.dumps(payload), headers=headers)
     assert resp.status_code == 403
     assert resp.json()["detail"] == "Unknown session"
+
+
+async def test_webhook_invalid_json_returns_400(client, tenant_in_db):
+    resp = await client.post(
+        "/webhooks/whatsapp",
+        content="{invalid-json",
+        headers={"Content-Type": "application/json"},
+    )
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Invalid JSON payload"
+
+
+async def test_webhook_replay_same_payload_is_ignored(client, tenant_in_db):
+    from tests.conftest import AsyncSessionTest
+
+    phone = "5511000000007"
+    payload = _make_webhook_payload(
+        session_id=tenant_in_db["session_id"],
+        phone=phone,
+        content="Mensagem com retry",
+    )
+
+    first = await client.post("/webhooks/whatsapp", content=json.dumps(payload))
+    second = await client.post("/webhooks/whatsapp", content=json.dumps(payload))
+
+    assert first.status_code == 200
+    assert first.json()["status"] == "ok"
+    assert second.status_code == 200
+    assert second.json()["status"] == "ignored"
+    assert second.json()["reason"] == "replay detected"
+
+    async with AsyncSessionTest() as session:
+        lead = (await session.execute(select(Lead).where(Lead.phone == phone))).scalar_one()
+        msgs = (await session.execute(select(Message).where(Message.lead_id == lead.id))).scalars().all()
+        assert len(msgs) == 1

@@ -137,10 +137,11 @@ async def test_connect_rate_limit(client, auth_user, monkeypatch):
 
 
 async def test_connect_core_conflict_returns_409(client, auth_user, monkeypatch):
+    from app.providers.whatsapp import WhatsAppProviderConflictError
     from app.services.whatsapp_session_service import WhatsAppSessionService
 
     async def fake_create_session(self, tenant_id):
-        raise RuntimeError(
+        raise WhatsAppProviderConflictError(
             "WAHA CORE only supports a single shared session (default). "
             "Upgrade to WAHA PLUS for one session per tenant."
         )

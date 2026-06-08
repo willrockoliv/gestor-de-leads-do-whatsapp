@@ -7,9 +7,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import pytest
 from sqlalchemy import select
 
+from app.main import app as fastapi_app
 from app.models import Lead, LeadStatus, Message, SessionStatus, WhatsAppSession
+from app.providers.whatsapp import ProviderSessionStatus, get_whatsapp_provider
+from app.providers.whatsapp import waha as provider_module
+from app.providers.whatsapp.interface import (WhatsAppProviderConflictError,
+                                              WhatsAppProviderUnavailableError)
 from app.routers import whatsapp as whatsapp_router
-from app.services import whatsapp_session_service as service_module
 from app.services.whatsapp_session_service import sync_whatsapp_sessions
 from tests.conftest import AsyncSessionTest
 
@@ -130,10 +134,10 @@ def mock_waha(monkeypatch):
     thread.start()
 
     base_url = f"http://{host}:{port}"
-    monkeypatch.setattr(service_module.settings, "WHATSAPP_API_URL", base_url)
-    monkeypatch.setattr(service_module.settings, "WHATSAPP_API_KEY", "")
-    monkeypatch.setattr(service_module.settings, "WHATSAPP_WEBHOOK_URL", "http://test/webhooks/whatsapp")
-    monkeypatch.setattr(service_module.settings, "WHATSAPP_WEBHOOK_HMAC_KEY", "")
+    monkeypatch.setattr(provider_module.settings, "WHATSAPP_API_URL", base_url)
+    monkeypatch.setattr(provider_module.settings, "WHATSAPP_API_KEY", "")
+    monkeypatch.setattr(provider_module.settings, "WHATSAPP_WEBHOOK_URL", "http://test/webhooks/whatsapp")
+    monkeypatch.setattr(provider_module.settings, "WHATSAPP_WEBHOOK_HMAC_KEY", "")
     whatsapp_router._limiter._store.clear()
 
     try:
@@ -266,3 +270,106 @@ async def test_e2e_rate_limiting_connect(client, auth_user, mock_waha):
 
     recovered = await client.post("/whatsapp/connect", headers=headers)
     assert recovered.status_code == 200
+
+
+async def test_connect_with_provider_dependency_override(client, auth_user):
+    class FakeProvider:
+        async def resolve_session_id(self, tenant_id):
+            return f"fake-{tenant_id}"
+
+        async def create_session(self, db, tenant_id, session_id: str):
+            return None
+
+        async def fetch_qr_code(self, session_id: str):
+            return "fake-qr"
+
+        async def fetch_session_status(self, session_id: str):
+            return ProviderSessionStatus(status=SessionStatus.CONNECTED, phone_number="5511990000000")
+
+        async def stop_session(self, session_id: str):
+            return None
+
+        def normalize_webhook_payload(self, payload: dict):
+            return None
+
+    fastapi_app.dependency_overrides[get_whatsapp_provider] = lambda: FakeProvider()
+    try:
+        headers = {"Authorization": f"Bearer {auth_user['token']}"}
+        resp = await client.post("/whatsapp/connect", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json()["session_id"].startswith("fake-")
+    finally:
+        fastapi_app.dependency_overrides.pop(get_whatsapp_provider, None)
+
+
+async def test_connect_returns_502_when_provider_unavailable(client, auth_user):
+    class DownProvider:
+        async def resolve_session_id(self, tenant_id):
+            return f"tenant-{tenant_id}"
+
+        async def create_session(self, db, tenant_id, session_id: str):
+            raise WhatsAppProviderUnavailableError("provider down")
+
+        async def fetch_qr_code(self, session_id: str):
+            return None
+
+        async def fetch_session_status(self, session_id: str):
+            return ProviderSessionStatus(status=SessionStatus.DISCONNECTED)
+
+        async def stop_session(self, session_id: str):
+            return None
+
+        def normalize_webhook_payload(self, payload: dict):
+            return None
+
+    fastapi_app.dependency_overrides[get_whatsapp_provider] = lambda: DownProvider()
+    try:
+        headers = {"Authorization": f"Bearer {auth_user['token']}"}
+        resp = await client.post("/whatsapp/connect", headers=headers)
+        assert resp.status_code == 502
+        assert resp.json()["detail"] == "Falha ao criar sessão no serviço WhatsApp"
+    finally:
+        fastapi_app.dependency_overrides.pop(get_whatsapp_provider, None)
+
+
+async def test_connect_returns_409_on_core_default_conflict(client):
+    class CoreConflictProvider:
+        async def resolve_session_id(self, tenant_id):
+            return "default"
+
+        async def create_session(self, db, tenant_id, session_id: str):
+            raise WhatsAppProviderConflictError(
+                "WAHA CORE only supports a single shared session (default). "
+                "Upgrade to WAHA PLUS for one session per tenant."
+            )
+
+        async def fetch_qr_code(self, session_id: str):
+            return None
+
+        async def fetch_session_status(self, session_id: str):
+            return ProviderSessionStatus(status=SessionStatus.DISCONNECTED)
+
+        async def stop_session(self, session_id: str):
+            return None
+
+        def normalize_webhook_payload(self, payload: dict):
+            return None
+
+    fastapi_app.dependency_overrides[get_whatsapp_provider] = lambda: CoreConflictProvider()
+    try:
+        register = await client.post(
+            "/auth/register",
+            json={
+                "email": f"core-conflict-{uuid.uuid4().hex[:8]}@test.com",
+                "password": "12345678",
+                "business_name": "CORE Conflict",
+            },
+        )
+        token = register.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        resp = await client.post("/whatsapp/connect", headers=headers)
+        assert resp.status_code == 409
+        assert "CORE only supports a single shared session" in resp.json()["detail"]
+    finally:
+        fastapi_app.dependency_overrides.pop(get_whatsapp_provider, None)
