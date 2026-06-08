@@ -2,6 +2,8 @@ import hashlib
 import hmac
 import json
 import logging
+import time
+from collections import defaultdict, deque
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -11,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.models import WhatsAppSession
+from app.providers.whatsapp import get_whatsapp_provider
 from app.services.webhook_service import (extract_message_text, extract_phone,
                                           ingest_message)
 
@@ -18,6 +21,27 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
+
+
+class ReplayGuard:
+    def __init__(self):
+        self._store: dict[str, deque[float]] = defaultdict(deque)
+
+    def seen_recently(self, key: str, window_seconds: int) -> bool:
+        now = time.time()
+        bucket = self._store[key]
+
+        while bucket and now - bucket[0] >= window_seconds:
+            bucket.popleft()
+
+        if bucket:
+            return True
+
+        bucket.append(now)
+        return False
+
+
+_replay_guard = ReplayGuard()
 
 
 def _webhook_hmac_secret() -> str:
@@ -45,6 +69,7 @@ def verify_webhook_signature(
 async def webhook_whatsapp(
     request: Request,
     db: AsyncSession = Depends(get_db),
+    provider=Depends(get_whatsapp_provider),
 ):
     body = await request.body()
     signature = request.headers.get("X-Webhook-Hmac") or request.headers.get("x-webhook-hmac")
@@ -62,10 +87,20 @@ async def webhook_whatsapp(
     if event_name not in ("message.upsert", "message", "message.any"):
         return {"status": "ignored", "reason": f"event {event_name} not handled"}
 
-    session_id = payload.get("session") or payload.get("instance")
-    if not session_id:
-        logger.warning("webhook refused: missing session id")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing session")
+    normalized = provider.normalize_webhook_payload(payload)
+    if normalized is None:
+        session_id = payload.get("session") or payload.get("instance")
+        if not session_id:
+            logger.warning("webhook refused: missing session id")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing session")
+        return {"status": "ignored", "reason": "payload without remoteJid"}
+
+    session_id = normalized.session_id
+    replay_fingerprint = hashlib.sha256(body).hexdigest()
+    replay_key = f"{session_id}:{normalized.message_id or ''}:{replay_fingerprint}"
+    if _replay_guard.seen_recently(replay_key, window_seconds=300):
+        logger.warning("webhook ignored: replay detected session_id=%s", session_id)
+        return {"status": "ignored", "reason": "replay detected"}
 
     result = await db.execute(
         select(WhatsAppSession).where(WhatsAppSession.session_id == session_id)
@@ -75,24 +110,17 @@ async def webhook_whatsapp(
         logger.warning("webhook refused: unknown session_id=%s", session_id)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unknown session")
 
-    metadata = payload.get("metadata") or {}
-    metadata_tenant_id = metadata.get("tenant_id")
+    metadata_tenant_id = normalized.metadata_tenant_id
     if metadata_tenant_id and str(session.tenant_id) != str(metadata_tenant_id):
         logger.warning("webhook refused: tenant mismatch session_id=%s", session_id)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant mismatch")
 
-    data = payload.get("data") or payload.get("payload") or {}
-    key = data.get("key") or {}
-    remote_jid = key.get("remoteJid") or data.get("from")
-    if not remote_jid:
-        return {"status": "ignored", "reason": "payload without remoteJid"}
+    phone = extract_phone(normalized.remote_jid)
+    content = extract_message_text(normalized.content_payload)
+    from_me = normalized.from_me
+    push_name = normalized.push_name
 
-    phone = extract_phone(remote_jid)
-    content = extract_message_text(data.get("message"))
-    from_me = bool(key.get("fromMe", data.get("fromMe", False)))
-    push_name = data.get("pushName")
-
-    ts_raw = data.get("messageTimestamp") or payload.get("timestamp")
+    ts_raw = normalized.timestamp_raw
     ts = None
     if ts_raw:
         try:

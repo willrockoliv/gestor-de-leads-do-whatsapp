@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     WHATSAPP_API_URL: str = "http://waha:3000"
     WHATSAPP_API_PORT: int = 3000
     WHATSAPP_API_KEY: str = ""
+    WHATSAPP_PROVIDER: str = "waha"
     WHATSAPP_WEBHOOK_URL: str = ""
 
     # CORS

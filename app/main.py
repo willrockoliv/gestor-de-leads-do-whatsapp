@@ -33,13 +33,16 @@ async def watchdog_loop():
 async def whatsapp_sync_loop():
     """Background task to sync WhatsApp session status every 30 seconds."""
     from app.core.database import AsyncSessionLocal
+    from app.providers.whatsapp import get_whatsapp_provider
     from app.services.whatsapp_session_service import sync_whatsapp_sessions
+
+    provider = get_whatsapp_provider()
 
     while True:
         try:
             await asyncio.sleep(30)
             async with AsyncSessionLocal() as db:
-                changed = await sync_whatsapp_sessions(db)
+                changed = await sync_whatsapp_sessions(db, provider=provider)
                 if changed:
                     logger.info("WhatsApp sync: %s sessions updated", changed)
         except asyncio.CancelledError:
