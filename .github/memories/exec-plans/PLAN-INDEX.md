@@ -12,13 +12,13 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 - 2026-05-31-fase-6-integracao-whatsapp.md
   - Integração com WhatsApp via Waha/Evolution API. Conexão com QR code, endpoints de controle de sessão, webhook de recebimento, testes E2E com mock server.
 
-- 2026-06-04-desacoplamento-provider-whatsapp.md
-  - Desacoplamento do provider WhatsApp com DI no FastAPI, adapter dedicado e preservação de compatibilidade dos endpoints atuais.
-
 ## .github/memories/exec-plans/completed/ - planos completados
 
 - 2026-04-30-plan-frontendRedesign.prompt.md
   - Redesign completo do frontend com design system Nordic Minimalist, correções de hidratação/tipografia, validação manual obrigatória no Integrated Browser, padronização compose-only e descontinuação dos E2E Playwright legados.
+
+- 2026-06-04-desacoplamento-provider-whatsapp.md
+  - Desacoplamento do provider WhatsApp com DI no FastAPI, adapter dedicado, seleção por configuração (`WHATSAPP_PROVIDER`) e critérios de saída concluídos.
 
 ## .github/memories/exec-plans/progress/ - progresso das implementaçoes com aprendizados e anotações importantes
 

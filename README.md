@@ -111,6 +111,7 @@ cd frontend && npm install && npm run dev
 | `WHATSAPP_API_URL` | URL da API WhatsApp | `http://waha:3000` |
 | `WHATSAPP_API_PORT` | Porta da API WhatsApp | `3000` |
 | `WHATSAPP_API_KEY` | Chave de autenticação do WAHA (`X-Api-Key`) | — |
+| `WHATSAPP_PROVIDER` | Provider WhatsApp selecionado na factory | `waha` |
 | `WHATSAPP_WEBHOOK_URL` | URL pública usada pelo WAHA para envio de eventos | — |
 | `WHATSAPP_WEBHOOK_HMAC_KEY` | Chave HMAC usada pelo WAHA em `X-Webhook-Hmac` | — |
 | `CORS_ORIGINS` | Origens permitidas (JSON list) | `["http://localhost:3000"]` |
@@ -123,6 +124,7 @@ cd frontend && npm install && npm run dev
 app/
 ├── core/           # Config, database, segurança (JWT)
 ├── models/         # SQLAlchemy models (Tenant, User, Lead, Message, Analysis)
+├── providers/      # Contratos/factory/adapters de providers externos (ex: WhatsApp)
 ├── schemas/        # Pydantic schemas (request/response)
 ├── services/       # Lógica de negócio (auth, webhook, analysis, funnel)
 ├── routers/        # Endpoints FastAPI
@@ -176,6 +178,9 @@ frontend/           # Next.js 16 + TypeScript + Tailwind + shadcn/ui
 
 ### Troubleshooting WhatsApp
 
+- Provider não inicializa:
+	- verifique `WHATSAPP_PROVIDER` no `.env` (valor atual suportado: `waha`).
+	- se usar valor não suportado, a API retorna erro de configuração ao resolver dependency.
 - QR code não aparece:
 	- valide se `WHATSAPP_API_URL` e `WHATSAPP_API_KEY` estão corretos para o backend.
 	- confira se o WAHA está online e respondendo em `/api/server/status`.

@@ -14,6 +14,7 @@
 app/
     core/              # Configuração, database, segurança
     models/            # Modelos ORM (Tenant, User, Lead, Message, Analysis, WhatsAppSession)
+    providers/         # Contratos/factory/adapters de integrações externas (WhatsApp, etc.)
     routers/           # Rotas FastAPI (auth, tenants, webhooks, analysis, dashboard)
     schemas/           # Schemas Pydantic (validação e resposta)
     services/          # Lógica de negócio (análise, auth, webhooks, funil)
@@ -55,7 +56,8 @@ tests/                 # Testes backend unitários e integração (pytest)
     - `/whatsapp/connect`: inicia/recupera sessão WAHA do tenant.
     - `/whatsapp/qrcode`: retorna QR code atual para conexão.
     - `/whatsapp/status`: sincroniza e retorna estado da sessão.
-    - `WhatsAppSessionService`: integração assíncrona com WAHA (retry/backoff, sync, mapeamento de estados).
+    - `WhatsAppSessionService`: orchestration agnóstico a provider.
+    - `app/providers/whatsapp/`: contrato (`interface.py`), factory (`factory.py`) e adapter WAHA (`waha.py`).
 - **Analysis:**
   - `/leads/{id}/analyze`: análise individual de lead com lock otimista, chamada LLM, parsing e persistência.
   - `/leads/analyze-all`: análise em lote com controle de concorrência.
@@ -120,6 +122,7 @@ tests/                 # Testes backend unitários e integração (pytest)
 - **Onboarding:** cadastro → seleção de template de funil → início da operação.
 - **Ingestão:** webhook recebe mensagem → cria lead se novo → armazena mensagem.
 - **Integração WhatsApp (WAHA):** usuário inicia conexão → backend cria sessão WAHA → frontend busca QR code → WAHA envia eventos via webhook → backend valida HMAC e persiste mensagens.
+- **Seleção de Provider:** backend resolve provider via `WHATSAPP_PROVIDER` na factory, sem alterar endpoints públicos.
 - **Análise:** botão de análise → lock otimista → chamada LLM → parsing → persistência → unlock.
 - **Dashboard:** exibe leads priorizados, agrupamento visual por contexto comercial e KPIs.
 - **Gestão Manual:** usuário pode alterar etapa/status manualmente, sobrescrevendo inferência da IA.
@@ -178,10 +181,13 @@ sequenceDiagram
     participant U as Usuario
     participant FE as Frontend
     participant BE as Backend
+    participant PF as Provider Factory
     participant WAHA as WAHA API
 
     U->>FE: Clicar em conectar WhatsApp
     FE->>BE: POST /whatsapp/connect
+    BE->>PF: Resolve provider (WHATSAPP_PROVIDER)
+    PF-->>BE: Adapter WhatsApp
     BE->>WAHA: POST /api/sessions
     WAHA-->>BE: session_id/status
     FE->>BE: GET /whatsapp/qrcode
