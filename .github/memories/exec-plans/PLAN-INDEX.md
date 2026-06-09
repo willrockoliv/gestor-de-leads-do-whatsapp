@@ -38,8 +38,16 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 ## .github/memories/exec-plans/security/pending - revisoes e achados de seguranca pendentes de solução
 
-- ...
+- 2026-06-09-supply-chain-audit-findings.md
+  - Achados de supply chain da Fase 6.8.5 (npm audit/pip-audit/Dependabot), com status bloqueado por vulnerabilidade alta residual no ecossistema frontend.
+
+- 2026-06-09-whatsapp-threat-model.md
+  - DFD, ativos sensíveis, ameaças por severidade e plano de mitigação da Fase 6.8.1 para fluxo WhatsApp.
 
 ## .github/memories/exec-plans/security/resolved - revisoes e achados de seguranca já resolvidos
 
-- ...
+- 2026-06-09-python-multipart-remediation.md
+  - Correção de dependência inválida e mitigação de vulnerabilidades do python-multipart, com evidência de `pip-audit` limpo.
+
+- 2026-06-09-fast-uri-override-remediation.md
+  - Mitigação de vulnerabilidade alta transitiva no frontend via override para `fast-uri@3.1.2`, removendo achados high/critical no `npm audit` local.

@@ -20,6 +20,11 @@ Observação importante (2026-06-04):
 - WAHA CORE aceita apenas sessão `default` (sessão única), impedindo "1 sessão por tenant" no runtime multi-tenant.
 - Para cumprir 100% do RF de sessão por tenant em produção, será necessário WAHA PLUS (ou estratégia alternativa de isolamento por instância).
 
+Atualização de direcionamento (2026-06-08):
+- Plano de desacoplamento concluído: `.github/memories/exec-plans/completed/2026-06-04-desacoplamento-provider-whatsapp.md`.
+- WAHA fica despriorizado como provider por enquanto.
+- A estratégia agora é planejar e selecionar novo provider (TBD) aproveitando a arquitetura desacoplada já implementada.
+
 ### 6.1.2 Estruturar Models e Esquemas
 - [x] Expandir model `WhatsAppSession` com campos: `session_id` (unique, string), `qr_code` (text, nullable), `qr_code_expires_at` (datetime, nullable), `phone_number` (string, nullable), `connected_since` (datetime, nullable)
 - [x] Adicionar enum `SessionStatus` com valores: `PENDING`, `QR_CODE_READY`, `CONNECTING`, `CONNECTED`, `DISCONNECTED`, `ERROR`
@@ -49,7 +54,7 @@ Observação importante (2026-06-04):
 
 ### 6.2.2 Background Task para Sincronização de Sessão
 - [x] Task `sync_whatsapp_sessions()` que roda a cada 30s
-- [ ] Sincroniza sessão ativa de cada tenant com estado do serviço Waha (1 sessão por tenant no MVP)
+- [ ] Sincroniza sessão ativa de cada tenant com estado do provider ativo (Waha despriorizado; conclusão depende do novo provider TBD)
 - [x] Detecta desconexões inesperadas e atualiza `Lead.is_processing = false` para leads em processamento
 - [x] Log de mudanças de estado
 - [x] Tratamento de erro (não interrompe loop em caso de falha)
@@ -195,6 +200,15 @@ Objetivo desta fase:
 - Resolver o gap entre implementação atual e requisito de "1 sessão por tenant" em produção.
 - Eliminar ambiguidades operacionais entre WAHA CORE e WAHA PLUS.
 
+Status atual (2026-06-08):
+- Em espera (on hold) para WAHA.
+- Caminhos 6.7.2 e 6.7.3 não serão executados por enquanto.
+- Próximo planejamento: provider alternativo (TBD) usando o contrato desacoplado já concluído.
+
+Atualização (2026-06-09):
+- Fase 6.7 encerrada sem implementação adicional neste ciclo, por decisão de produto/arquitetura.
+- O trabalho segue diretamente para a Fase 6.8 (hardening e segurança).
+
 ### 6.7.1 Decisão Arquitetural Obrigatória (Go/No-Go)
 - [ ] Formalizar decisão técnica: WAHA PLUS compartilhado x WAHA CORE isolado por instância por tenant
 - [ ] Criar ADR com critérios: custo, isolamento, escalabilidade, operação, tempo de resposta a incidentes
@@ -232,53 +246,56 @@ Objetivo desta fase:
 - Fechar lacunas de segurança antes de produção, com foco em PII, webhooks, abuso de API e isolamento por tenant.
 
 ### 6.8.1 Threat Modeling e Escopo de Risco
-- [ ] Criar DFD do fluxo WhatsApp (connect, qrcode, status, webhook, persistência)
-- [ ] Mapear ativos sensíveis (telefone, conteúdo de mensagem, tokens, session_id)
-- [ ] Classificar ameaças por severidade (spoofing, replay, IDOR, DoS, vazamento de PII)
-- [ ] Registrar plano de mitigação por risco em `.github/memories/exec-plans/security/pending`
+- [x] Criar DFD do fluxo WhatsApp (connect, qrcode, status, webhook, persistência)
+- [x] Mapear ativos sensíveis (telefone, conteúdo de mensagem, tokens, session_id)
+- [x] Classificar ameaças por severidade (spoofing, replay, IDOR, DoS, vazamento de PII)
+- [x] Registrar plano de mitigação por risco em `.github/memories/exec-plans/security/pending`
 
 ### 6.8.2 Hardening de Webhook e API
-- [ ] Adicionar proteção anti-replay no webhook (timestamp + nonce/request-id + TTL)
-- [ ] Adicionar idempotência explícita para eventos repetidos do provedor
-- [ ] Aplicar limite de payload e timeout por endpoint sensível
-- [ ] Reforçar rate limiting para webhook/login/refresh conforme perfil de risco
-- [ ] Garantir erros sanitizados sem stack trace/detalhes internos
+- [x] Adicionar proteção anti-replay no webhook (timestamp + nonce/request-id + TTL)
+- [x] Adicionar idempotência explícita para eventos repetidos do provedor
+- [x] Aplicar limite de payload por endpoint sensível (timeout pendente)
+- [x] Reforçar rate limiting para webhook/login conforme perfil de risco (refresh pendente: endpoint ainda não existe)
+- [x] Garantir erros sanitizados sem stack trace/detalhes internos
 
 ### 6.8.3 Autorização e Isolamento por Tenant
-- [ ] Revisar endpoints WhatsApp para garantir ausência de IDOR
-- [ ] Garantir que `tenant_id` efetivo venha exclusivamente do contexto autenticado
-- [ ] Adicionar testes negativos cross-tenant (acesso indevido deve retornar 403/404)
-- [ ] Revisar regras de negócio no backend para não confiar em estado enviado pelo cliente
+- [x] Revisar endpoints WhatsApp para garantir ausência de IDOR
+- [x] Garantir que `tenant_id` efetivo venha exclusivamente do contexto autenticado
+- [x] Adicionar testes negativos cross-tenant (acesso indevido deve retornar 403/404)
+- [x] Revisar regras de negócio no backend para não confiar em estado enviado pelo cliente
 
 ### 6.8.4 Proteção de PII, Logs e Segredos
-- [ ] Auditar logs para remover/mascarar telefone, mensagem e identificadores sensíveis
-- [ ] Implementar utilitário central de redaction para logs estruturados
-- [ ] Garantir que segredos não apareçam em logs de erro/debug
-- [ ] Revisar `.env.example` para evitar exemplos inseguros e documentar uso de secrets manager
+- [x] Auditar logs para remover/mascarar telefone, mensagem e identificadores sensíveis
+- [x] Implementar utilitário central de redaction para logs estruturados
+- [x] Garantir que segredos não apareçam em logs de erro/debug
+- [x] Revisar `.env.example` para evitar exemplos inseguros e documentar uso de secrets manager
 
 ### 6.8.5 Supply Chain e Dependências
-- [ ] Executar `pip-audit` e `npm audit` com bloqueio para severidade alta/crítica
-- [ ] Verificar alertas Dependabot abertos e registrar plano de correção
-- [ ] Garantir política de versões fixas e sem dependências de fonte não oficial
-- [ ] Incluir gate de CI para falhar merge em vulnerabilidade alta/crítica
+- [x] Executar `pip-audit` e `npm audit` com bloqueio para severidade alta/crítica
+- [x] Verificar alertas Dependabot abertos e registrar plano de correção
+- [x] Garantir política de versões fixas e sem dependências de fonte não oficial
+- [x] Incluir gate de CI para falhar merge em vulnerabilidade alta/crítica
 
 ### 6.8.6 Segurança de Infra e Transporte
-- [ ] Revisar CORS para configuração mínima por ambiente (sem permissivo global)
-- [ ] Revisar headers de segurança (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
-- [ ] Revisar Docker/Docker Compose: imagens fixas, usuário não-root, portas mínimas expostas
-- [ ] Validar tráfego HTTPS/TLS em ambiente alvo e rotação de chaves HMAC
+- [x] Revisar CORS para configuração mínima por ambiente (sem permissivo global)
+- [x] Revisar headers de segurança (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
+- [x] Revisar Docker/Docker Compose: imagens fixas, usuário não-root, portas mínimas expostas
+- [x] Documentar variáveis de security headers e recomendações dev/prod no README
+
+Observação (2026-06-09):
+- Item de validação HTTPS/TLS em ambiente alvo removido deste ciclo por escopo atual somente em dev local (sem produção ativa).
 
 ### 6.8.7 Testes de Segurança Automatizados
-- [ ] Criar testes para assinatura inválida, payload adulterado e replay
-- [ ] Criar testes para brute force/rate limiting em endpoints críticos
-- [ ] Criar testes para não exposição de PII em respostas e logs
-- [ ] Atualizar pipeline para rodar suíte de segurança como etapa obrigatória
+- [x] Criar testes para assinatura inválida, payload adulterado e replay
+- [x] Criar testes para brute force/rate limiting em endpoints críticos (login e webhook)
+- [x] Criar testes para não exposição de PII em respostas e logs
+- [x] Atualizar pipeline para rodar suíte de segurança como etapa obrigatória
 
 ### 6.8.8 Fechamento e Governança
-- [ ] Consolidar achados por severidade: Crítico, Alto, Médio, Baixo
-- [ ] Bloquear merge/deploy enquanto houver risco alto/crítico sem mitigação
-- [ ] Mover itens mitigados para `.github/memories/exec-plans/security/resolved`
-- [ ] Emitir status final: "Aprovado com ressalvas" ou "Bloqueado"
+- [x] Consolidar achados por severidade: Crítico, Alto, Médio, Baixo
+- [x] Bloquear merge/deploy enquanto houver risco alto/crítico sem mitigação
+- [x] Mover itens mitigados para `.github/memories/exec-plans/security/resolved`
+- [x] Emitir status final: "Bloqueado" (Dependabot remoto ainda com alerts high abertos; reavaliar após novo scan)
 
 **RFs:** RF03  
 **RNFs:** RNF02, RNF03
