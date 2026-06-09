@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.redaction import mask_identifier, sanitize_error_message
 from app.models import Lead, SessionStatus, WhatsAppSession
 from app.providers.whatsapp import (WhatsAppProvider,
                                     WhatsAppProviderAlreadyExistsError,
@@ -42,7 +43,11 @@ class WhatsAppSessionService:
         await self.db.commit()
         await self.db.refresh(session)
 
-        logger.info("whatsapp session created tenant_id=%s session_id=%s", tenant_id, session_id)
+        logger.info(
+            "whatsapp session created tenant_id=%s session_id=%s",
+            mask_identifier(tenant_id),
+            mask_identifier(session_id),
+        )
         return session
 
     async def get_qr_code(self, session: WhatsAppSession) -> WhatsAppSession:
@@ -102,8 +107,8 @@ async def sync_whatsapp_sessions(db: AsyncSession, provider: WhatsAppProvider | 
                 changed += 1
                 logger.info(
                     "whatsapp session status changed tenant_id=%s session_id=%s old=%s new=%s",
-                    session.tenant_id,
-                    session.session_id,
+                    mask_identifier(session.tenant_id),
+                    mask_identifier(session.session_id),
                     old_status.value,
                     session.status.value,
                 )
@@ -117,9 +122,9 @@ async def sync_whatsapp_sessions(db: AsyncSession, provider: WhatsAppProvider | 
         except Exception as exc:
             logger.error(
                 "failed to sync whatsapp session tenant_id=%s session_id=%s error=%s",
-                session.tenant_id,
-                session.session_id,
-                exc,
+                mask_identifier(session.tenant_id),
+                mask_identifier(session.session_id),
+                sanitize_error_message(exc),
             )
 
     return changed

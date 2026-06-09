@@ -151,3 +151,88 @@ async def test_connect_core_conflict_returns_409(client, auth_user, monkeypatch)
     resp = await client.post("/whatsapp/connect", headers={"Authorization": f"Bearer {auth_user['token']}"})
     assert resp.status_code == 409
     assert "WAHA CORE only supports a single shared session" in resp.json()["detail"]
+
+
+async def test_status_does_not_leak_other_tenant_session(client, auth_user):
+    from tests.conftest import AsyncSessionTest
+
+    other = await client.post(
+        "/auth/register",
+        json={
+            "email": f"other-{uuid.uuid4().hex[:8]}@test.com",
+            "password": "senha123",
+            "business_name": "Loja Other",
+        },
+    )
+    other_token = other.json()["access_token"]
+    other_me = await client.get("/auth/me", headers={"Authorization": f"Bearer {other_token}"})
+    other_tenant_id = uuid.UUID(other_me.json()["tenant_id"])
+
+    async with AsyncSessionTest() as session:
+        wa = WhatsAppSession(
+            tenant_id=other_tenant_id,
+            session_id=f"tenant-{other_tenant_id}",
+            status=SessionStatus.CONNECTED,
+            phone_number="5511990000000",
+            connected_since=datetime.now(timezone.utc),
+        )
+        session.add(wa)
+        await session.commit()
+
+    resp = await client.get("/whatsapp/status", headers={"Authorization": f"Bearer {auth_user['token']}"})
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "DISCONNECTED"
+    assert resp.json().get("phone") is None
+
+
+async def test_qrcode_does_not_access_other_tenant_session(client, auth_user):
+    from tests.conftest import AsyncSessionTest
+
+    other = await client.post(
+        "/auth/register",
+        json={
+            "email": f"other2-{uuid.uuid4().hex[:8]}@test.com",
+            "password": "senha123",
+            "business_name": "Loja Other2",
+        },
+    )
+    other_token = other.json()["access_token"]
+    other_me = await client.get("/auth/me", headers={"Authorization": f"Bearer {other_token}"})
+    other_tenant_id = uuid.UUID(other_me.json()["tenant_id"])
+
+    async with AsyncSessionTest() as session:
+        wa = WhatsAppSession(
+            tenant_id=other_tenant_id,
+            session_id=f"tenant-{other_tenant_id}",
+            status=SessionStatus.QR_CODE_READY,
+            qr_code="data:image/png;base64,other",
+            qr_code_expires_at=datetime.now(timezone.utc) + timedelta(minutes=3),
+        )
+        session.add(wa)
+        await session.commit()
+
+    resp = await client.get("/whatsapp/qrcode", headers={"Authorization": f"Bearer {auth_user['token']}"})
+    assert resp.status_code == 404
+    assert resp.json()["detail"] == "Nenhuma sessão WhatsApp ativa"
+
+
+async def test_connect_ignores_client_supplied_tenant_fields(client, auth_user, monkeypatch):
+    from app.services.whatsapp_session_service import WhatsAppSessionService
+
+    async def fake_create_session(self, tenant_id):
+        return WhatsAppSession(
+            tenant_id=tenant_id,
+            session_id=f"tenant-{tenant_id}",
+            status=SessionStatus.PENDING,
+        )
+
+    monkeypatch.setattr(WhatsAppSessionService, "create_session", fake_create_session)
+
+    resp = await client.post(
+        "/whatsapp/connect",
+        json={"tenant_id": str(uuid.uuid4()), "status": "CONNECTED"},
+        headers={"Authorization": f"Bearer {auth_user['token']}"},
+    )
+    assert resp.status_code == 200
+    # Endpoint authority must come from authenticated context, not request body fields.
+    assert auth_user["tenant_id"] in resp.json()["session_id"]

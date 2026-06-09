@@ -2,10 +2,12 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 
 from app.core.config import get_settings
+from app.core.redaction import sanitize_error_message
 from app.routers import analysis, auth, dashboard, tenants, webhooks, whatsapp
 
 logger = logging.getLogger(__name__)
@@ -27,7 +29,7 @@ async def watchdog_loop():
         except asyncio.CancelledError:
             break
         except Exception as e:
-            logger.error(f"Watchdog error: {e}")
+            logger.error("Watchdog error: %s", sanitize_error_message(e))
 
 
 async def whatsapp_sync_loop():
@@ -48,7 +50,7 @@ async def whatsapp_sync_loop():
         except asyncio.CancelledError:
             break
         except Exception as e:
-            logger.error(f"WhatsApp sync error: {e}")
+            logger.error("WhatsApp sync error: %s", sanitize_error_message(e))
 
 
 @asynccontextmanager
@@ -70,11 +72,32 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG, lifespan=lifespan)
 
+
+def _hsts_value() -> str:
+    value = f"max-age={settings.SECURITY_HSTS_MAX_AGE}"
+    if settings.SECURITY_HSTS_INCLUDE_SUBDOMAINS:
+        value += "; includeSubDomains"
+    if settings.SECURITY_HSTS_PRELOAD:
+        value += "; preload"
+    return value
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next) -> Response:
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = settings.SECURITY_REFERRER_POLICY
+    response.headers["Permissions-Policy"] = settings.SECURITY_PERMISSIONS_POLICY
+    response.headers["Content-Security-Policy"] = settings.SECURITY_CSP
+    response.headers["Strict-Transport-Security"] = _hsts_value()
+    return response
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

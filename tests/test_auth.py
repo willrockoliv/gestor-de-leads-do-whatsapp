@@ -96,6 +96,31 @@ async def test_get_funnel_templates(client):
     assert "imobiliaria" in data
 
 
+async def test_login_rate_limit_returns_429(client, monkeypatch):
+    from app.routers import auth
+
+    monkeypatch.setattr(auth.settings, "AUTH_LOGIN_RATE_LIMIT", 2)
+    monkeypatch.setattr(auth.settings, "AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS", 60)
+    auth._login_limiter.clear()
+
+    await client.post("/auth/register", json={
+        "email": "ratelimit@example.com",
+        "password": "senha123",
+        "business_name": "Loja RL",
+    })
+
+    payload = {"email": "ratelimit@example.com", "password": "senhaerrada"}
+    r1 = await client.post("/auth/login", json=payload)
+    r2 = await client.post("/auth/login", json=payload)
+    r3 = await client.post("/auth/login", json=payload)
+
+    assert r1.status_code == 401
+    assert r2.status_code == 401
+    assert r3.status_code == 429
+    assert r3.json()["detail"] == "Too many login attempts"
+    assert "Retry-After" in r3.headers
+
+
 async def test_update_funnel(client):
     reg = await client.post("/auth/register", json={
         "email": "funnel@example.com",

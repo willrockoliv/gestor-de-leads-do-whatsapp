@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.redaction import mask_identifier, sanitize_error_message
 from app.core.security import get_current_user
 from app.models import SessionStatus, User, WhatsAppSession
 from app.providers.whatsapp import (WhatsAppProviderConflictError,
@@ -75,11 +76,19 @@ async def connect_whatsapp(
         session = await service.create_session(current_user.tenant_id)
     except WhatsAppProviderConflictError as exc:
         message = str(exc)
-        logger.error("whatsapp connect failed tenant_id=%s error=%s", current_user.tenant_id, message)
+        logger.error(
+            "whatsapp connect failed tenant_id=%s error=%s",
+            mask_identifier(current_user.tenant_id),
+            sanitize_error_message(message),
+        )
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message) from exc
     except WhatsAppProviderError as exc:
         message = str(exc)
-        logger.error("whatsapp connect failed tenant_id=%s error=%s", current_user.tenant_id, message)
+        logger.error(
+            "whatsapp connect failed tenant_id=%s error=%s",
+            mask_identifier(current_user.tenant_id),
+            sanitize_error_message(message),
+        )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Falha ao criar sessão no serviço WhatsApp",
@@ -120,7 +129,11 @@ async def get_whatsapp_qrcode(
         try:
             session = await service.get_qr_code(session)
         except WhatsAppProviderError as exc:
-            logger.error("whatsapp qrcode failed tenant_id=%s error=%s", current_user.tenant_id, exc)
+            logger.error(
+                "whatsapp qrcode failed tenant_id=%s error=%s",
+                mask_identifier(current_user.tenant_id),
+                sanitize_error_message(exc),
+            )
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Falha ao obter QR code no serviço WhatsApp",
@@ -142,7 +155,11 @@ async def get_whatsapp_status(
     try:
         session = await service.check_connection_status(session)
     except WhatsAppProviderError as exc:
-        logger.error("whatsapp status failed tenant_id=%s error=%s", current_user.tenant_id, exc)
+        logger.error(
+            "whatsapp status failed tenant_id=%s error=%s",
+            mask_identifier(current_user.tenant_id),
+            sanitize_error_message(exc),
+        )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Falha ao consultar status no serviço WhatsApp",

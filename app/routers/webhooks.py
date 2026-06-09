@@ -3,7 +3,6 @@ import hmac
 import json
 import logging
 import time
-from collections import defaultdict, deque
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -12,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.rate_limit import SlidingWindowRateLimiter
+from app.core.redaction import mask_identifier
 from app.models import WhatsAppSession
 from app.providers.whatsapp import get_whatsapp_provider
 from app.services.webhook_service import (extract_message_text, extract_phone,
@@ -25,23 +26,17 @@ router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
 class ReplayGuard:
     def __init__(self):
-        self._store: dict[str, deque[float]] = defaultdict(deque)
+        self._limiter = SlidingWindowRateLimiter()
 
     def seen_recently(self, key: str, window_seconds: int) -> bool:
-        now = time.time()
-        bucket = self._store[key]
-
-        while bucket and now - bucket[0] >= window_seconds:
-            bucket.popleft()
-
-        if bucket:
+        allowed, _ = self._limiter.hit(key, limit=1, window_seconds=window_seconds)
+        if not allowed:
             return True
-
-        bucket.append(now)
         return False
 
 
 _replay_guard = ReplayGuard()
+_webhook_limiter = SlidingWindowRateLimiter()
 
 
 def _webhook_hmac_secret() -> str:
@@ -65,15 +60,64 @@ def verify_webhook_signature(
     return hmac.compare_digest(expected, signature)
 
 
+def _parse_timestamp_seconds(value: str | None) -> int | None:
+    if not value:
+        return None
+    try:
+        parsed = int(value.strip())
+    except (TypeError, ValueError):
+        return None
+    if parsed > 10_000_000_000:
+        parsed = parsed // 1000
+    return parsed
+
+
+def _is_timestamp_stale(ts_seconds: int, ttl_seconds: int) -> bool:
+    now = int(time.time())
+    return abs(now - ts_seconds) > ttl_seconds
+
+
 @router.post("/whatsapp")
 async def webhook_whatsapp(
     request: Request,
     db: AsyncSession = Depends(get_db),
     provider=Depends(get_whatsapp_provider),
 ):
+    client_ip = request.client.host if request.client else "unknown"
+    allowed, retry_after = _webhook_limiter.hit(
+        f"webhook:{client_ip}",
+        limit=settings.WHATSAPP_WEBHOOK_RATE_LIMIT,
+        window_seconds=settings.WHATSAPP_WEBHOOK_RATE_LIMIT_WINDOW_SECONDS,
+    )
+    if not allowed:
+        logger.warning("webhook refused: rate limit exceeded ip=%s", client_ip)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     body = await request.body()
+    if len(body) > settings.WHATSAPP_WEBHOOK_MAX_PAYLOAD_BYTES:
+        logger.warning("webhook refused: payload too large size=%s", len(body))
+        raise HTTPException(status_code=status.HTTP_413_CONTENT_TOO_LARGE, detail="Payload too large")
+
     signature = request.headers.get("X-Webhook-Hmac") or request.headers.get("x-webhook-hmac")
     algorithm = request.headers.get("X-Webhook-Hmac-Algorithm") or request.headers.get("x-webhook-hmac-algorithm")
+    request_id = request.headers.get("X-Webhook-Id") or request.headers.get("x-webhook-id")
+    request_ts_raw = request.headers.get("X-Webhook-Timestamp") or request.headers.get("x-webhook-timestamp")
+    request_ts = _parse_timestamp_seconds(request_ts_raw)
+
+    if settings.WHATSAPP_WEBHOOK_REQUIRE_REPLAY_HEADERS and (not request_id or request_ts is None):
+        logger.warning("webhook refused: missing replay headers")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing replay protection headers")
+
+    if request_ts is not None and _is_timestamp_stale(
+        request_ts,
+        settings.WHATSAPP_WEBHOOK_REPLAY_TTL_SECONDS,
+    ):
+        logger.warning("webhook refused: stale timestamp")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Stale webhook timestamp")
 
     if not verify_webhook_signature(body, signature, algorithm):
         logger.warning("webhook refused: invalid signature")
@@ -97,9 +141,13 @@ async def webhook_whatsapp(
 
     session_id = normalized.session_id
     replay_fingerprint = hashlib.sha256(body).hexdigest()
-    replay_key = f"{session_id}:{normalized.message_id or ''}:{replay_fingerprint}"
-    if _replay_guard.seen_recently(replay_key, window_seconds=300):
-        logger.warning("webhook ignored: replay detected session_id=%s", session_id)
+    replay_nonce = request_id or f"{normalized.message_id or ''}:{replay_fingerprint}"
+    replay_key = f"{session_id}:{replay_nonce}"
+    if _replay_guard.seen_recently(
+        replay_key,
+        window_seconds=settings.WHATSAPP_WEBHOOK_REPLAY_TTL_SECONDS,
+    ):
+        logger.warning("webhook ignored: replay detected session_id=%s", mask_identifier(session_id))
         return {"status": "ignored", "reason": "replay detected"}
 
     result = await db.execute(
@@ -107,12 +155,12 @@ async def webhook_whatsapp(
     )
     session = result.scalar_one_or_none()
     if not session:
-        logger.warning("webhook refused: unknown session_id=%s", session_id)
+        logger.warning("webhook refused: unknown session_id=%s", mask_identifier(session_id))
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unknown session")
 
     metadata_tenant_id = normalized.metadata_tenant_id
     if metadata_tenant_id and str(session.tenant_id) != str(metadata_tenant_id):
-        logger.warning("webhook refused: tenant mismatch session_id=%s", session_id)
+        logger.warning("webhook refused: tenant mismatch session_id=%s", mask_identifier(session_id))
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant mismatch")
 
     phone = extract_phone(normalized.remote_jid)
