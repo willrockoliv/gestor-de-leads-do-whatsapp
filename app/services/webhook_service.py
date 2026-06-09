@@ -71,11 +71,29 @@ async def ingest_message(
         lead.name = push_name
 
     direction = MessageDirection.outbound if from_me else MessageDirection.inbound
+    effective_timestamp = timestamp or datetime.now(timezone.utc)
+
+    # Idempotency guard for provider retries with same logical message.
+    if timestamp is not None:
+        duplicate_result = await db.execute(
+            select(Message)
+            .where(
+                Message.lead_id == lead.id,
+                Message.direction == direction,
+                Message.content == content,
+                Message.timestamp == timestamp,
+            )
+            .limit(1)
+        )
+        duplicate = duplicate_result.scalar_one_or_none()
+        if duplicate is not None:
+            return duplicate
+
     msg = Message(
         lead_id=lead.id,
         direction=direction,
         content=content,
-        timestamp=timestamp or datetime.now(timezone.utc),
+        timestamp=effective_timestamp,
     )
     db.add(msg)
     await db.commit()

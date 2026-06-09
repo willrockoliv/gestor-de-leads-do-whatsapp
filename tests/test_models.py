@@ -30,9 +30,10 @@ def test_whatsapp_session_creation():
     session = WhatsAppSession(
         id=uuid.uuid4(),
         tenant_id=uuid.uuid4(),
-        status=SessionStatus.disconnected,
+        session_id="tenant-test-session",
+        status=SessionStatus.DISCONNECTED,
     )
-    assert session.status == SessionStatus.disconnected
+    assert session.status == SessionStatus.DISCONNECTED
 
 
 def test_lead_creation():

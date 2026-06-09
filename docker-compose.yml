@@ -10,9 +10,16 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/leads
       - DEBUG=true
+      - WHATSAPP_API_URL=http://waha:3000
+      - WHATSAPP_API_PORT=3000
+      - WHATSAPP_API_KEY=${WHATSAPP_API_KEY:-}
+      - WHATSAPP_WEBHOOK_URL=${WHATSAPP_WEBHOOK_URL:-http://backend:8000/webhooks/whatsapp}
+      - WHATSAPP_WEBHOOK_HMAC_KEY=${WHATSAPP_WEBHOOK_HMAC_KEY:-}
     depends_on:
       db:
         condition: service_healthy
+      waha:
+        condition: service_started
 
   db:
     image: postgres:16-alpine
@@ -29,6 +36,17 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  waha:
+    image: devlikeapro/waha:latest-2026.5.1
+    ports:
+      - "3001:3000"
+    environment:
+      - WAHA_API_KEY=${WHATSAPP_API_KEY:-}
+      - WHATSAPP_HOOK_URL=${WHATSAPP_WEBHOOK_URL:-http://backend:8000/webhooks/whatsapp}
+      - WHATSAPP_HOOK_EVENTS=message,message.any,session.status
+      - WHATSAPP_HOOK_HMAC_KEY=${WHATSAPP_WEBHOOK_HMAC_KEY:-}
+      - WHATSAPP_SWAGGER_ENABLED=true
 
   frontend:
     image: node:20-alpine

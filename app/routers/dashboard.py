@@ -273,17 +273,3 @@ async def dashboard_stats(
         avg_temperature=round(row.avg_temp, 1) if row.avg_temp else None,
     )
 
-
-@router.get("/whatsapp/status")
-async def whatsapp_status(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    from app.models import WhatsAppSession
-    result = await db.execute(
-        select(WhatsAppSession).where(WhatsAppSession.tenant_id == current_user.tenant_id).limit(1)
-    )
-    session = result.scalar_one_or_none()
-    if not session:
-        return {"status": "disconnected", "message": "Nenhuma sessão configurada"}
-    return {"status": session.status.value, "connected_at": str(session.connected_at) if session.connected_at else None}

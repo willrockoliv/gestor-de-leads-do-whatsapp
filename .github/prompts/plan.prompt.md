@@ -1,7 +1,8 @@
 ---
-name: Gestao de Planos de Implementacao
+name: plan
 description: Use quando criar, atualizar, concluir ou arquivar planos de implementacao em .github/memories/exec-plans. Define padrao de nome, checklist de tarefas, arquivo de progresso e manutencao do PLAN-INDEX.
-applyTo: .github/memories/exec-plans/**/*
+agent: agent
+argument-hint: Describe what you want to plan or research
 ---
 
 # Gestao de planos de implementacao
@@ -70,3 +71,4 @@ Objetivo: Implementar a feature X conforme PRD.
 - [ ] Escrever testes unitarios
 - [x] Configurar CI
 ```
+

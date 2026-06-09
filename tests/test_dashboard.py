@@ -238,4 +238,4 @@ async def test_whatsapp_status_no_session(client, auth_with_leads):
     token = auth_with_leads["token"]
     resp = await client.get("/whatsapp/status", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
-    assert resp.json()["status"] == "disconnected"
+    assert resp.json()["status"] == "DISCONNECTED"
