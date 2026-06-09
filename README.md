@@ -118,6 +118,23 @@ cd frontend && npm install && npm run dev
 | `DEBUG` | Modo debug | `false` |
 | `NEXT_PUBLIC_API_URL` | URL da API (frontend) | `http://localhost:8000` |
 
+### Security Headers (backend)
+
+As variáveis abaixo controlam os headers de segurança enviados pela API.
+
+| Variável | Descrição | Default |
+|----------|-----------|---------|
+| `SECURITY_CSP` | Política CSP da API (`Content-Security-Policy`) | `default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'` |
+| `SECURITY_REFERRER_POLICY` | Header `Referrer-Policy` | `no-referrer` |
+| `SECURITY_PERMISSIONS_POLICY` | Header `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
+| `SECURITY_HSTS_MAX_AGE` | Valor base do `Strict-Transport-Security` em segundos | `31536000` |
+| `SECURITY_HSTS_INCLUDE_SUBDOMAINS` | Adiciona `includeSubDomains` no HSTS | `true` |
+| `SECURITY_HSTS_PRELOAD` | Adiciona `preload` no HSTS | `false` |
+
+Recomendação por ambiente:
+- Desenvolvimento local (sem TLS): mantenha defaults e avalie HSTS conforme necessidade do browser local.
+- Produção (com HTTPS): mantenha HSTS ativo e só habilite `SECURITY_HSTS_PRELOAD=true` após validação formal do domínio para preload.
+
 ## Estrutura do Projeto
 
 ```
