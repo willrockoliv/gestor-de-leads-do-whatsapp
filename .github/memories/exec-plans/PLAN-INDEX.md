@@ -9,9 +9,6 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 - 2026-04-15-plano-inicial.md
   - Scaffolding do projeto, setup FastAPI, Next.js, Docker, CI, banco e testes básicos. Entregas incrementais por fases.
 
-- 2026-05-31-fase-6-integracao-whatsapp.md
-  - Integração com WhatsApp via Waha/Evolution API. Conexão com QR code, endpoints de controle de sessão, webhook de recebimento, testes E2E com mock server.
-
 ## .github/memories/exec-plans/completed/ - planos completados
 
 - 2026-04-30-plan-frontendRedesign.prompt.md
@@ -19,6 +16,9 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 - 2026-06-04-desacoplamento-provider-whatsapp.md
   - Desacoplamento do provider WhatsApp com DI no FastAPI, adapter dedicado, seleção por configuração (`WHATSAPP_PROVIDER`) e critérios de saída concluídos.
+
+- 2026-05-31-fase-6-integracao-whatsapp.md
+  - Integração WhatsApp concluída no ciclo (QR code/status/webhook/testes/hardening). Pendências de multi-tenant real despriorizadas para próximo ciclo.
 
 ## .github/memories/exec-plans/progress/ - progresso das implementaçoes com aprendizados e anotações importantes
 
@@ -38,11 +38,7 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 ## .github/memories/exec-plans/security/pending - revisoes e achados de seguranca pendentes de solução
 
-- 2026-06-09-supply-chain-audit-findings.md
-  - Achados de supply chain da Fase 6.8.5 (npm audit/pip-audit/Dependabot), com status bloqueado por vulnerabilidade alta residual no ecossistema frontend.
-
-- 2026-06-09-whatsapp-threat-model.md
-  - DFD, ativos sensíveis, ameaças por severidade e plano de mitigação da Fase 6.8.1 para fluxo WhatsApp.
+- Nenhum achado pendente no momento.
 
 ## .github/memories/exec-plans/security/resolved - revisoes e achados de seguranca já resolvidos
 
@@ -51,3 +47,9 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 - 2026-06-09-fast-uri-override-remediation.md
   - Mitigação de vulnerabilidade alta transitiva no frontend via override para `fast-uri@3.1.2`, removendo achados high/critical no `npm audit` local.
+
+- 2026-06-09-supply-chain-audit-findings.md
+  - Fechamento da Fase 6.8.5 com `0 high` e `0 critical` no Dependabot remoto; pendências medium/low seguem em backlog de hardening.
+
+- 2026-06-09-whatsapp-threat-model.md
+  - Threat model da Fase 6.8.1 consolidado, com mitigação dos riscos altos validada e monitoramento contínuo de riscos residuais.

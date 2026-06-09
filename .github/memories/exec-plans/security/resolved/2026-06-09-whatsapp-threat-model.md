@@ -1,6 +1,6 @@
-# Security Pending — WhatsApp Threat Model (2026-06-09)
+# Security Resolved — WhatsApp Threat Model (2026-06-09)
 
-Status: TRIAGED
+Status: RESOLVED (com monitoramento contínuo)
 Scope: Fase 6.8.1 (Threat modeling e escopo de risco)
 
 ## DFD (alto nível)
@@ -49,8 +49,9 @@ flowchart LR
 - Mitigação: rate limiting em `/whatsapp/connect`, `/whatsapp/qrcode`, `/webhooks/whatsapp`, `/auth/login`.
 
 2. Dependências vulneráveis (supply chain)
-- Mitigação parcial: pip-audit limpo; npm high/critical removidos localmente com override.
-- Pendência: fechamento de alerts high no Dependabot remoto.
+- Mitigação aplicada e validada: `pip-audit` limpo; `npm` high/critical mitigados com atualização de `next` e override de `fast-uri`.
+- Estado atual: Dependabot remoto com `0 high` e `0 critical` (`12 medium`, `1 low`).
+- Pendência remanescente: tratamento contínuo de medium/low em ciclo de hardening.
 
 ### Baixo
 1. Configuração fraca por ambiente (headers/CORS)
@@ -60,9 +61,14 @@ flowchart LR
 - Alto/IDOR: testes negativos cross-tenant em endpoints WhatsApp.
 - Alto/Replay: manter validação anti-replay e monitoramento de eventos recusados.
 - Alto/PII: manter testes de não exposição e revisão contínua de logs.
-- Médio/Supply chain: triagem contínua Dependabot até zero high aberto.
+- Médio/Supply chain: triagem contínua Dependabot para redução incremental de medium/low.
+
+## Critério de fechamento atendido
+- Riscos altos mapeados com mitigação implementada e validada por testes.
+- Sem bloqueadores high/critical no Dependabot remoto.
+- Riscos residuais registrados como monitoramento operacional contínuo, sem impedimento para fechamento da Fase 6.8.
 
 ## Evidências associadas
 - Testes de webhook/segurança e rate limiting no backend.
 - Ajustes de redaction e headers de segurança.
-- Registro de supply chain em `security/pending/2026-06-09-supply-chain-audit-findings.md`.
+- Registro de supply chain em `security/resolved/2026-06-09-supply-chain-audit-findings.md`.

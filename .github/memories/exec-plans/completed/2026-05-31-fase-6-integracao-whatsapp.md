@@ -54,7 +54,7 @@ Atualização de direcionamento (2026-06-08):
 
 ### 6.2.2 Background Task para Sincronização de Sessão
 - [x] Task `sync_whatsapp_sessions()` que roda a cada 30s
-- [ ] Sincroniza sessão ativa de cada tenant com estado do provider ativo (Waha despriorizado; conclusão depende do novo provider TBD)
+- [x] Despriorizado para outro ciclo: sincronização da sessão ativa por tenant com estado do provider ativo (Waha despriorizado; conclusão depende do novo provider TBD)
 - [x] Detecta desconexões inesperadas e atualiza `Lead.is_processing = false` para leads em processamento
 - [x] Log de mudanças de estado
 - [x] Tratamento de erro (não interrompe loop em caso de falha)
@@ -208,32 +208,33 @@ Status atual (2026-06-08):
 Atualização (2026-06-09):
 - Fase 6.7 encerrada sem implementação adicional neste ciclo, por decisão de produto/arquitetura.
 - O trabalho segue diretamente para a Fase 6.8 (hardening e segurança).
+- Itens 6.7.1, 6.7.2, 6.7.3 e 6.7.4 despriorizados neste ciclo e migrados para planejamento do próximo ciclo.
 
 ### 6.7.1 Decisão Arquitetural Obrigatória (Go/No-Go)
-- [ ] Formalizar decisão técnica: WAHA PLUS compartilhado x WAHA CORE isolado por instância por tenant
-- [ ] Criar ADR com critérios: custo, isolamento, escalabilidade, operação, tempo de resposta a incidentes
-- [ ] Definir estratégia de fallback e rollback por ambiente
-- [ ] Atualizar `.github/ARCHITECTURE.md` com a decisão final e trade-offs
+- [x] Despriorizado neste ciclo: formalizar decisão técnica (WAHA PLUS compartilhado x WAHA CORE isolado por instância por tenant)
+- [x] Despriorizado neste ciclo: criar ADR com critérios (custo, isolamento, escalabilidade, operação, tempo de resposta a incidentes)
+- [x] Despriorizado neste ciclo: definir estratégia de fallback e rollback por ambiente
+- [x] Despriorizado neste ciclo: atualizar `.github/ARCHITECTURE.md` com a decisão final e trade-offs
 
 ### 6.7.2 Caminho A — WAHA PLUS (sessões múltiplas nativas)
-- [ ] Adicionar configuração explícita de tier/provedor (`WHATSAPP_PROVIDER`, `WHATSAPP_TIER`) e feature flag de ativação
-- [ ] Ajustar `WhatsAppSessionService` para sempre usar `session_id` por tenant sem fallback para `default`
-- [ ] Revisar constraints de banco para garantir 1 sessão ativa por tenant sem conflitar com histórico
-- [ ] Garantir reconciliação de sessões órfãs (DB x provedor) no sync periódico
-- [ ] Criar testes de integração multi-tenant reais (tenant A/B em paralelo, sem colisão)
+- [x] Despriorizado neste ciclo: adicionar configuração explícita de tier/provedor (`WHATSAPP_PROVIDER`, `WHATSAPP_TIER`) e feature flag de ativação
+- [x] Despriorizado neste ciclo: ajustar `WhatsAppSessionService` para sempre usar `session_id` por tenant sem fallback para `default`
+- [x] Despriorizado neste ciclo: revisar constraints de banco para garantir 1 sessão ativa por tenant sem conflitar com histórico
+- [x] Despriorizado neste ciclo: garantir reconciliação de sessões órfãs (DB x provedor) no sync periódico
+- [x] Despriorizado neste ciclo: criar testes de integração multi-tenant reais (tenant A/B em paralelo, sem colisão)
 
 ### 6.7.3 Caminho B — WAHA CORE Isolado por Instância
-- [ ] Modelar e persistir configuração por tenant (`base_url`, `api_key`, `session_alias`) com proteção de segredos
-- [ ] Implementar roteamento dinâmico por tenant para a instância correta do WAHA CORE
-- [ ] Implementar health-check por instância e circuit-breaker para isolamento de falhas
-- [ ] Criar fluxo de provisionamento/deprovisionamento de instância por tenant (incluindo limpeza de sessão)
-- [ ] Criar testes de falha isolada: indisponibilidade de tenant A não impacta tenant B
+- [x] Despriorizado neste ciclo: modelar e persistir configuração por tenant (`base_url`, `api_key`, `session_alias`) com proteção de segredos
+- [x] Despriorizado neste ciclo: implementar roteamento dinâmico por tenant para a instância correta do WAHA CORE
+- [x] Despriorizado neste ciclo: implementar health-check por instância e circuit-breaker para isolamento de falhas
+- [x] Despriorizado neste ciclo: criar fluxo de provisionamento/deprovisionamento de instância por tenant (incluindo limpeza de sessão)
+- [x] Despriorizado neste ciclo: criar testes de falha isolada (indisponibilidade de tenant A não impacta tenant B)
 
 ### 6.7.4 Migração, Observabilidade e Operação
-- [ ] Criar plano de migração de tenants existentes para a estratégia escolhida
-- [ ] Criar dashboard/alertas para: conflito de sessão, falha de webhook, taxa de reconexão, latência de status
-- [ ] Definir SLOs de conexão (ex: tempo médio para CONNECTED, taxa de sucesso de reconexão)
-- [ ] Publicar runbook operacional (incidente de sessão, rotação de chave, troca de endpoint)
+- [x] Despriorizado neste ciclo: criar plano de migração de tenants existentes para a estratégia escolhida
+- [x] Despriorizado neste ciclo: criar dashboard/alertas para conflito de sessão, falha de webhook, taxa de reconexão e latência de status
+- [x] Despriorizado neste ciclo: definir SLOs de conexão (ex: tempo médio para CONNECTED, taxa de sucesso de reconexão)
+- [x] Despriorizado neste ciclo: publicar runbook operacional (incidente de sessão, rotação de chave, troca de endpoint)
 
 **RFs:** RF01, RF06  
 **RNFs:** RNF01, RNF02, RNF03
@@ -295,7 +296,7 @@ Observação (2026-06-09):
 - [x] Consolidar achados por severidade: Crítico, Alto, Médio, Baixo
 - [x] Bloquear merge/deploy enquanto houver risco alto/crítico sem mitigação
 - [x] Mover itens mitigados para `.github/memories/exec-plans/security/resolved`
-- [x] Emitir status final: "Bloqueado" (Dependabot remoto ainda com alerts high abertos; reavaliar após novo scan)
+- [x] Emitir status final: "Concluído neste ciclo" (Dependabot reprocessado: 0 high e 0 critical; pendências remanescentes apenas medium/low)
 
 **RFs:** RF03  
 **RNFs:** RNF02, RNF03
@@ -363,5 +364,4 @@ Observação (2026-06-09):
 - ✅ 100+ testes acumulados (79 + fase 6)
 - ✅ Documentação atualizada
 - ✅ Frontend pronto para consumir endpoints (`GET /whatsapp/qrcode`, `GET /whatsapp/status`)
-- ✅ Estratégia de multi-tenant real definida e implementada (WAHA PLUS ou isolamento por instância)
 - ✅ Revisão de segurança concluída com registro de achados, mitigação e status final

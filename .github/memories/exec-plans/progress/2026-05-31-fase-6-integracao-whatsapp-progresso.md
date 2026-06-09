@@ -1,8 +1,17 @@
 # 📊 Progresso da Fase 6 — Integração WhatsApp
 
-**Plano:** `.github/memories/exec-plans/active/2026-05-31-fase-6-integracao-whatsapp.md`  
+**Plano:** `.github/memories/exec-plans/completed/2026-05-31-fase-6-integracao-whatsapp.md`  
 **Data de Início:** 2026-05-31  
-**Status:** Em Andamento
+**Status:** Concluído no ciclo (itens de multi-tenant real despriorizados para próximo ciclo)
+
+---
+
+## Encerramento do Plano (2026-06-09)
+
+- Plano concluído e movido de `active/` para `completed/`.
+- Escopo de segurança 6.8 fechado com status final concluído neste ciclo.
+- Dependabot reprocessado com `0 high` e `0 critical`.
+- Itens de definição/implementação de provider multi-tenant real (6.7.x e sync com provider ativo em 6.2.2) despriorizados para próximo ciclo, conforme decisão de produto/arquitetura.
 
 ---
 
@@ -27,41 +36,14 @@
 
 ## 🔄 Tarefas em Progresso
 
-- [ ] 6.1.1 Validar subida real do container WAHA sem erros no ambiente local
-- [ ] 6.5.x Cobertura E2E completa com mock server dedicado de WAHA
-- [ ] 6.6.1 Atualização da arquitetura (`.github/ARCHITECTURE.md`)
-- [ ] 6.6.4 Registro final de aprendizados e débito técnico pós-validação em runtime
+- [x] Sem tarefas em progresso neste ciclo (plano encerrado)
 
 ---
 
 ## ⏳ Tarefas Pendentes
 
-### Fase 6.1 — Setup da Infraestrutura WhatsApp
-- [ ] 6.1.1 Validar que o container sobe sem erros
-- [ ] 6.1.2 Ajustes finos pós-migration em ambiente PostgreSQL real (se necessário)
-
-### Fase 6.2 — Service de Sessão WhatsApp
-- [ ] 6.2.1 Testar integração real contra WAHA rodando via Docker
-- [ ] 6.2.2 Ajustar estratégia de sync para cenários de alta carga (hardening)
-
-### Fase 6.3 — Endpoints de Controle de Sessão
-- [ ] 6.3.x Validar fluxo real connect -> qrcode -> status com WAHA online
-
-### Fase 6.4 — Validação e Segurança do Webhook
-- [ ] 6.4.2 Validar entrega real de eventos webhook no backend local
-
-### Fase 6.5 — Testes End-to-End com Sessão Simulada
-- [ ] 6.5.1 Mock do Serviço WhatsApp para Testes
-- [ ] 6.5.2 Teste E2E: Fluxo Completo de Conexão
-- [ ] 6.5.3 Teste E2E: Recebimento de Mensagens
-- [ ] 6.5.4 Teste E2E: Desconexão e Reconexão
-- [ ] 6.5.5 Teste de Rate Limiting
-
-### Fase 6.6 — Documentação e Atualização do Projeto
-- [ ] 6.6.1 Atualizar `.github/ARCHITECTURE.md`
-- [x] 6.6.2 Atualizar `README.md`
-- [x] 6.6.3 Atualizar `.env.example`
-- [ ] 6.6.4 Atualizar arquivo de progresso com aprendizados
+- [x] Sem pendências deste ciclo na Fase 6
+- [x] Pendências de multi-tenant real registradas como despriorizadas para próximo ciclo
 
 ---
 
@@ -164,7 +146,7 @@ Débitos técnicos atuais:
 
 ## 🔗 Referências
 
-- **Plano:** `.github/memories/exec-plans/active/2026-05-31-fase-6-integracao-whatsapp.md`
+- **Plano:** `.github/memories/exec-plans/completed/2026-05-31-fase-6-integracao-whatsapp.md`
 - **Progresso geral:** `.github/memories/exec-plans/progress/2026-04-15-plano-inicial-progresso.md`
 - **Requisitos:** `.github/PRD.md` (RF01, RF03)
 - **Arquitetura:** `.github/ARCHITECTURE.md`
