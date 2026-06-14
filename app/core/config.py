@@ -19,28 +19,27 @@ class Settings(BaseSettings):
     LLM_API_KEY: str = ""
     LLM_MODEL: str = "gpt-4o-mini"
 
-    # WhatsApp
-    WHATSAPP_WEBHOOK_SECRET: str = ""
-    WHATSAPP_WEBHOOK_HMAC_KEY: str = ""
-    WHATSAPP_PROVIDER: str = "evolution"
+    # WhatsApp Provider Selection
+    WHATSAPP_PROVIDER: str = "evolution"  # "evolution" | "waha"
     
-    # WAHA Configuration (if WHATSAPP_PROVIDER="waha")
-    WHATSAPP_API_URL: str = "http://waha:3000"
-    WHATSAPP_API_PORT: int = 3000
-    WHATSAPP_API_KEY: str = ""
+    # WAHA Provider Configuration (if WHATSAPP_PROVIDER="waha")
+    WAHA_API_URL: str = "http://waha:3000"
+    WAHA_API_PORT: int = 3000
+    WAHA_API_KEY: str = ""
     
-    # Evolution API Configuration (if WHATSAPP_PROVIDER="evolution")
+    # Evolution Provider Configuration (if WHATSAPP_PROVIDER="evolution")
     EVOLUTION_API_URL: str = "http://evolution-api:8080"
     EVOLUTION_API_KEY: str = ""
     EVOLUTION_WEBHOOK_URL: str = ""
     
-    # WhatsApp Webhook Configuration (shared across providers)
-    WHATSAPP_WEBHOOK_URL: str = ""
-    WHATSAPP_WEBHOOK_REPLAY_TTL_SECONDS: int = 300
-    WHATSAPP_WEBHOOK_REQUIRE_REPLAY_HEADERS: bool = False
-    WHATSAPP_WEBHOOK_MAX_PAYLOAD_BYTES: int = 262144
-    WHATSAPP_WEBHOOK_RATE_LIMIT: int = 300
-    WHATSAPP_WEBHOOK_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    # Webhook Configuration (shared across all providers)
+    WEBHOOK_URL: str = ""  # URL where backend receives webhooks
+    WEBHOOK_HMAC_SECRET: str = ""  # Shared secret for HMAC validation
+    WEBHOOK_REPLAY_TTL_SECONDS: int = 300
+    WEBHOOK_REQUIRE_REPLAY_HEADERS: bool = False
+    WEBHOOK_MAX_PAYLOAD_BYTES: int = 262144
+    WEBHOOK_RATE_LIMIT: int = 300
+    WEBHOOK_RATE_LIMIT_WINDOW_SECONDS: int = 60
     AUTH_LOGIN_RATE_LIMIT: int = 10
     AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 60
 

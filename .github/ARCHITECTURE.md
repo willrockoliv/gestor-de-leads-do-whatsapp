@@ -53,11 +53,11 @@ tests/                 # Testes backend unitários e integração (pytest)
 - **Tenants:** CRUD e configuração de funil dinâmico.
 - **Webhooks:** Recebe eventos do WhatsApp, cria leads e armazena mensagens.
 - **WhatsApp Session:**
-    - `/whatsapp/connect`: inicia/recupera sessão WAHA do tenant.
+    - `/whatsapp/connect`: inicia/recupera sessão do tenant (provider-agnóstico).
     - `/whatsapp/qrcode`: retorna QR code atual para conexão.
     - `/whatsapp/status`: sincroniza e retorna estado da sessão.
     - `WhatsAppSessionService`: orchestration agnóstico a provider.
-    - `app/providers/whatsapp/`: contrato (`interface.py`), factory (`factory.py`) e adapter WAHA (`waha.py`).
+    - `app/providers/whatsapp/`: contrato (`interface.py`), factory (`factory.py`), adapters WAHA (`waha.py`) e Evolution API (`evolution.py`).
 - **Analysis:**
   - `/leads/{id}/analyze`: análise individual de lead com lock otimista, chamada LLM, parsing e persistência.
   - `/leads/analyze-all`: análise em lote com controle de concorrência.
@@ -122,7 +122,7 @@ tests/                 # Testes backend unitários e integração (pytest)
 - **Onboarding:** cadastro → seleção de template de funil → início da operação.
 - **Ingestão:** webhook recebe mensagem → cria lead se novo → armazena mensagem.
 - **Integração WhatsApp (WAHA):** usuário inicia conexão → backend cria sessão WAHA → frontend busca QR code → WAHA envia eventos via webhook → backend valida HMAC e persiste mensagens.
-- **Seleção de Provider:** backend resolve provider via `WHATSAPP_PROVIDER` na factory, sem alterar endpoints públicos.
+- **Seleção de Provider:** backend resolve provider via `WHATSAPP_PROVIDER` (`waha` ou `evolution`) na factory, sem alterar endpoints públicos.
 - **Análise:** botão de análise → lock otimista → chamada LLM → parsing → persistência → unlock.
 - **Dashboard:** exibe leads priorizados, agrupamento visual por contexto comercial e KPIs.
 - **Gestão Manual:** usuário pode alterar etapa/status manualmente, sobrescrevendo inferência da IA.
@@ -173,30 +173,74 @@ erDiagram
     LEAD ||--o{ ANALYSIS : possui
     TENANT ||--o{ WHATSAPP_SESSION : possui
     USER }o--|| TENANT : pertence
+```
+
+### Providers WhatsApp (Arquitetura Desacoplada)
+
+```mermaid
+flowchart TD
+    classDef app fill:#2e7d32,stroke:#1b5e20,color:#fff
+    classDef factory fill:#e65100,stroke:#bf360c,color:#fff
+    classDef adapter fill:#1565c0,stroke:#0d47a1,color:#fff
+    classDef protocol fill:#6a1b9a,stroke:#4a148c,color:#fff
+
+    subgraph Routers["Routers"]
+        R1[whatsapp.py]:::app
+        R2[webhooks.py]:::app
+    end
+
+    SVC[WhatsAppSessionService]:::app
+    FAC["Factory<br/>get_whatsapp_provider<br/>WHATSAPP_PROVIDER = waha | evolution"]:::factory
+    WAHA["WahaWhatsAppProvider<br/>waha.py"]:::adapter
+    EVO["EvolutionWhatsAppProvider<br/>evolution.py"]:::adapter
+    PROTO["WhatsAppProvider Protocol<br/>interface.py"]:::protocol
+
+    Routers -->|"Depends"| FAC
+    SVC -->|"provider param"| FAC
+    FAC --> WAHA
+    FAC --> EVO
+    WAHA -->|implements| PROTO
+    EVO -->|implements| PROTO
+```
+
+**Protocol `WhatsAppProvider`** define o contrato agnóstico:
+- `resolve_session_id(tenant_id)` — gera session_id para tenant
+- `create_session(db, tenant_id, session_id)` — cria sessão no provider
+- `fetch_qr_code(session_id)` — obtém QR code
+- `fetch_session_status(session_id)` — consulta status
+- `stop_session(session_id)` — encerra sessão
+- `normalize_webhook_payload(payload)` — normaliza webhook para formato interno
+
+**Providers suportados:**
+| Provider | Config (`WHATSAPP_PROVIDER`) | Multi-tenant | Session ID Format |
+|----------|:---:|:---:|---|
+| WAHA | `waha` | CORE: 1 sessão (`default`), PLUS: múltiplas | `default` ou `tenant-{uuid}` |
+| Evolution API | `evolution` | Ilimitadas instâncias | `tenant-{uuid}` |
 
 ### Integração WhatsApp (QR + Webhook)
 
 ```mermaid
 sequenceDiagram
-    participant U as Usuario
+    participant U as Usuário
     participant FE as Frontend
     participant BE as Backend
     participant PF as Provider Factory
-    participant WAHA as WAHA API
+    participant WA as WhatsApp Provider (WAHA ou Evolution)
 
     U->>FE: Clicar em conectar WhatsApp
     FE->>BE: POST /whatsapp/connect
     BE->>PF: Resolve provider (WHATSAPP_PROVIDER)
-    PF-->>BE: Adapter WhatsApp
-    BE->>WAHA: POST /api/sessions
-    WAHA-->>BE: session_id/status
+    PF-->>BE: Adapter instance
+    BE->>WA: Cria sessão/instância
+    WA-->>BE: session_id/status
     FE->>BE: GET /whatsapp/qrcode
-    BE->>WAHA: GET /api/{session}/auth/qr
-    WAHA-->>BE: qrCode
+    BE->>WA: Fetch QR code
+    WA-->>BE: qrCode (base64)
     BE-->>FE: qr_code
-    WAHA->>BE: POST /webhooks/whatsapp (event message)
-    BE->>BE: valida HMAC + session_id + tenant
-    BE->>BE: persiste Lead/Message
+    WA->>BE: Webhook (message event)
+    BE->>BE: provider.normalize_webhook_payload()
+    BE->>BE: Valida HMAC + session_id + tenant
+    BE->>BE: Persiste Lead/Message
 ```
 
 Estados de sessão mapeados no backend:
@@ -208,9 +252,37 @@ Estados de sessão mapeados no backend:
 - `ERROR`
 
 Observação de infraestrutura:
-- WAHA CORE suporta somente sessão `default` (sessão única).
-- Para isolamento real de 1 sessão por tenant em produção, é necessário WAHA PLUS ou isolamento por instância.
+- WAHA CORE suporta somente sessão `default` (sessão única). Para multi-tenant: WAHA PLUS.
+- Evolution API suporta múltiplas instâncias em 1 container (ideal para multi-tenant).
+
+### Infraestrutura Docker Compose
+
+O `docker-compose.yml` sobe os seguintes serviços:
+
+| Serviço | Imagem | Porta | Descrição |
+|---------|--------|-------|-----------|
+| `db` | `postgres:16-alpine` | `5432` | PostgreSQL compartilhado — cria os bancos `leads` (backend) e `evolution_db` (Evolution API) |
+| `backend` | build local | `8000` | FastAPI + Alembic |
+| `evolution-api` | `evoapicloud/evolution-api:v2.3.7` | `8080` | Gerenciador de instâncias WhatsApp |
+
+**Dois bancos no mesmo PostgreSQL:**
+- `leads` — banco da aplicação (backend + Alembic)
+- `evolution_db` — banco da Evolution API (Prisma)
+
+O banco `evolution_db` é criado pelo script `init-db.sh` montado em `/docker-entrypoint-initdb.d/`, que só executa na **primeira inicialização do volume**. Para recriar: `docker compose down -v`.
+
+**Alias de rede `postgres` no serviço `db`:**
+A imagem `evoapicloud/evolution-api` carrega um `.env` interno com `DATABASE_CONNECTION_URI=postgresql://...@postgres:5432/...` hardcoded via Prisma, que sobrescreve variáveis de ambiente externas. O serviço `db` expõe o alias de rede `postgres` para que o hostname resolva corretamente dentro da rede Docker.
+
+**Variáveis de ambiente da Evolution API (formato correto v2):**
 ```
+DATABASE_PROVIDER=postgresql
+DATABASE_CONNECTION_URI=postgresql://user:pass@postgres:5432/evolution_db?schema=evolution_api
+AUTHENTICATION_API_KEY=<chave>
+WEBHOOK_GLOBAL_ENABLED=true
+WEBHOOK_GLOBAL_URL=<url>
+```
+> Não usar `DATABASE_CONNECTION__HOST/PORT/USER` (formato incorreto) nem `APIKEY__GLOBAL_APIKEY` ou `WEBHOOK__GLOBAL__*` (double-underscore não é reconhecido pela v2).
 
 ## 8. RFCs
 

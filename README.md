@@ -82,6 +82,11 @@ docker compose up --build -d
 # Backend em localhost:8000, Frontend em localhost:3000
 ```
 
+> **Nota:** O PostgreSQL sobe dois bancos: `leads` (backend da aplicação) e `evolution_db` (Evolution API).
+> A criação do `evolution_db` é feita automaticamente pelo script `init-db.sh` montado em
+> `/docker-entrypoint-initdb.d/` — esse script só executa na **primeira** inicialização do volume.
+> Se precisar recriar o banco do zero, remova o volume antes: `docker compose down -v`.
+
 ### Desenvolvimento local (sem Docker)
 
 ```bash
@@ -111,9 +116,12 @@ cd frontend && npm install && npm run dev
 | `WHATSAPP_API_URL` | URL da API WhatsApp | `http://waha:3000` |
 | `WHATSAPP_API_PORT` | Porta da API WhatsApp | `3000` |
 | `WHATSAPP_API_KEY` | Chave de autenticação do WAHA (`X-Api-Key`) | — |
-| `WHATSAPP_PROVIDER` | Provider WhatsApp selecionado na factory | `waha` |
-| `WHATSAPP_WEBHOOK_URL` | URL pública usada pelo WAHA para envio de eventos | — |
+| `WHATSAPP_PROVIDER` | Provider WhatsApp selecionado na factory | `evolution` |
+| `WHATSAPP_WEBHOOK_URL` | URL pública usada pelo provider para envio de eventos | — |
 | `WHATSAPP_WEBHOOK_HMAC_KEY` | Chave HMAC usada pelo WAHA em `X-Webhook-Hmac` | — |
+| `EVOLUTION_API_URL` | URL da Evolution API | `http://evolution-api:8080` |
+| `EVOLUTION_API_KEY` | Chave de autenticação global da Evolution API | — |
+| `EVOLUTION_WEBHOOK_URL` | URL de webhook para Evolution API | — |
 | `CORS_ORIGINS` | Origens permitidas (JSON list) | `["http://localhost:3000"]` |
 | `DEBUG` | Modo debug | `false` |
 | `NEXT_PUBLIC_API_URL` | URL da API (frontend) | `http://localhost:8000` |
@@ -244,7 +252,7 @@ npx playwright test
 # (Os testes Playwright devem ser executados dentro da pasta frontend/)
 ```
 
-**79 testes** cobrindo: models, auth, webhook, análise LLM (com mock), dashboard, locks de concorrência e watchdog anti-zombie.
+**138 testes** cobrindo: models, auth, webhook, análise LLM (com mock), dashboard, locks de concorrência, watchdog anti-zombie, providers (WAHA + Evolution) e factory pattern.
 
 ## Roadmap
 
@@ -254,7 +262,7 @@ npx playwright test
 - [x] Fase 3 — Ingestão de dados (webhook)
 - [x] Fase 4 — Motor de inteligência (LLM)
 - [x] Fase 5 — API do dashboard
-- [ ] Fase 6 — Integração WhatsApp (QR Code, Waha/Evolution API)
+- [x] Fase 6 — Integração WhatsApp (QR Code, WAHA + Evolution API, factory pattern)
 - [x] Fase 7 — Frontend Next.js
 - [ ] Fase 8 — Hardening e deploy
 
