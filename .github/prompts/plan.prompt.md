@@ -58,6 +58,7 @@ mv .github/memories/exec-plans/active/2026-04-15-plano-inicial.md \
 - Revise planos em `completed/` e `archived/` antes de criar um novo para evitar retrabalho.
 - Mantenha o idioma em portugues.
 - Use textos curtos, objetivos e verificaveis.
+- para diagramas, utilize a skill `.github/skills/mermaid-diagrams/SKILL.md`
 
 ## Exemplo minimo
 
