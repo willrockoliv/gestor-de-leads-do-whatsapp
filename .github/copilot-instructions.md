@@ -56,6 +56,7 @@ applyTo: "**/*"
 - Jamais instale dependências globalmente no host. Use ambientes virtuais ou Docker para isolar o ambiente de desenvolvimento.
 - Sempre que uma lib for adicionada ou removida, atualize o arquivo de dependências (`requirements.txt`, `pyproject.toml`) e rode os comandos de instalação e migração necessários.
 - Jamais utilize tag latest para nenhuma dependência, seja de Python, Node ou Docker. Sempre fixe a versão para garantir reprodutibilidade, evitar quebras inesperadas e por segurança.
+- NUNCA delete testes unitários ou de integração sem autorização explícita. Se um teste estiver falhando, investigue a causa raiz e corrija o código ou o teste, mas não remova a cobertura de teste.
 
 ### Ambiente e Dependências do Frontend
 - Para bootstrap ou rebuild do frontend, prefira `docker compose up --build -d` para manter host e container sincronizados.
