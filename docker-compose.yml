@@ -18,8 +18,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      waha:
-        condition: service_started
+      # waha:
+      #   condition: service_started
+      evolution-api:
+        condition: service_healthy
 
   db:
     image: postgres:16-alpine
@@ -31,37 +33,65 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    networks:
+      default:
+        aliases:
+          - postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 3s
       retries: 5
 
-  waha:
-    image: devlikeapro/waha:latest-2026.5.1
-    ports:
-      - "3001:3000"
-    environment:
-      - WAHA_API_KEY=${WHATSAPP_API_KEY:-}
-      - WHATSAPP_HOOK_URL=${WHATSAPP_WEBHOOK_URL:-http://backend:8000/webhooks/whatsapp}
-      - WHATSAPP_HOOK_EVENTS=message,message.any,session.status
-      - WHATSAPP_HOOK_HMAC_KEY=${WHATSAPP_WEBHOOK_HMAC_KEY:-}
-      - WHATSAPP_SWAGGER_ENABLED=true
+  # waha:
+  #   image: devlikeapro/waha:latest-2026.5.1
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - WAHA_API_KEY=${WHATSAPP_API_KEY:-}
+  #     - WHATSAPP_HOOK_URL=${WHATSAPP_WEBHOOK_URL:-http://backend:8000/webhooks/whatsapp}
+  #     - WHATSAPP_HOOK_EVENTS=message,message.any,session.status
+  #     - WHATSAPP_HOOK_HMAC_KEY=${WHATSAPP_WEBHOOK_HMAC_KEY:-}
+  #     - WHATSAPP_SWAGGER_ENABLED=true
 
-  frontend:
-    image: node:20-alpine
-    working_dir: /app
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.3.7
     ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - ./frontend/node_modules:/app/node_modules
-      # - frontend_next:/app/.next
+      - "8080:8080"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
-    command: sh -c "npm install && npm run dev"
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://postgres:postgres@postgres:5432/evolution_db?schema=evolution_api
+      - CACHE_REDIS_ENABLED=false
+      - CACHE_LOCAL_ENABLED=false
+      - SERVER_URL=http://localhost:8080
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-sk-evolution-test-key}
+      - LOG_LEVEL=ERROR,WARN,INFO
+      - WEBHOOK_GLOBAL_ENABLED=true
+      - WEBHOOK_GLOBAL_URL=${WHATSAPP_WEBHOOK_URL:-http://backend:8000/webhooks/evolution}
     depends_on:
-      - backend
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # frontend:
+  #   image: node:20-alpine
+  #   working_dir: /app
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./frontend:/app
+  #     - ./frontend/node_modules:/app/node_modules
+  #     # - frontend_next:/app/.next
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:8000
+  #   command: sh -c "npm install && npm run dev"
+  #   depends_on:
+  #     - backend
 
 volumes:
   pgdata:

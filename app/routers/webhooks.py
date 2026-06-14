@@ -40,7 +40,7 @@ _webhook_limiter = SlidingWindowRateLimiter()
 
 
 def _webhook_hmac_secret() -> str:
-    return settings.WHATSAPP_WEBHOOK_HMAC_KEY or settings.WHATSAPP_WEBHOOK_SECRET
+    return settings.WEBHOOK_HMAC_SECRET
 
 
 def verify_webhook_signature(
@@ -86,8 +86,8 @@ async def webhook_whatsapp(
     client_ip = request.client.host if request.client else "unknown"
     allowed, retry_after = _webhook_limiter.hit(
         f"webhook:{client_ip}",
-        limit=settings.WHATSAPP_WEBHOOK_RATE_LIMIT,
-        window_seconds=settings.WHATSAPP_WEBHOOK_RATE_LIMIT_WINDOW_SECONDS,
+        limit=settings.WEBHOOK_RATE_LIMIT,
+        window_seconds=settings.WEBHOOK_RATE_LIMIT_WINDOW_SECONDS,
     )
     if not allowed:
         logger.warning("webhook refused: rate limit exceeded ip=%s", client_ip)
@@ -98,7 +98,7 @@ async def webhook_whatsapp(
         )
 
     body = await request.body()
-    if len(body) > settings.WHATSAPP_WEBHOOK_MAX_PAYLOAD_BYTES:
+    if len(body) > settings.WEBHOOK_MAX_PAYLOAD_BYTES:
         logger.warning("webhook refused: payload too large size=%s", len(body))
         raise HTTPException(status_code=status.HTTP_413_CONTENT_TOO_LARGE, detail="Payload too large")
 
@@ -108,13 +108,13 @@ async def webhook_whatsapp(
     request_ts_raw = request.headers.get("X-Webhook-Timestamp") or request.headers.get("x-webhook-timestamp")
     request_ts = _parse_timestamp_seconds(request_ts_raw)
 
-    if settings.WHATSAPP_WEBHOOK_REQUIRE_REPLAY_HEADERS and (not request_id or request_ts is None):
+    if settings.WEBHOOK_REQUIRE_REPLAY_HEADERS and (not request_id or request_ts is None):
         logger.warning("webhook refused: missing replay headers")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing replay protection headers")
 
     if request_ts is not None and _is_timestamp_stale(
         request_ts,
-        settings.WHATSAPP_WEBHOOK_REPLAY_TTL_SECONDS,
+        settings.WEBHOOK_REPLAY_TTL_SECONDS,
     ):
         logger.warning("webhook refused: stale timestamp")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Stale webhook timestamp")
@@ -145,7 +145,7 @@ async def webhook_whatsapp(
     replay_key = f"{session_id}:{replay_nonce}"
     if _replay_guard.seen_recently(
         replay_key,
-        window_seconds=settings.WHATSAPP_WEBHOOK_REPLAY_TTL_SECONDS,
+        window_seconds=settings.WEBHOOK_REPLAY_TTL_SECONDS,
     ):
         logger.warning("webhook ignored: replay detected session_id=%s", mask_identifier(session_id))
         return {"status": "ignored", "reason": "replay detected"}

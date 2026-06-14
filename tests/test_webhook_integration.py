@@ -190,7 +190,7 @@ async def test_webhook_ignores_non_message_event(client, tenant_in_db):
 async def test_webhook_invalid_hmac_signature_returns_403(client, tenant_in_db, monkeypatch):
     from app.routers import webhooks
 
-    monkeypatch.setattr(webhooks.settings, "WHATSAPP_WEBHOOK_HMAC_KEY", "top-secret")
+    monkeypatch.setattr(webhooks.settings, "WEBHOOK_HMAC_SECRET", "top-secret")
 
     payload = _make_webhook_payload(session_id=tenant_in_db["session_id"], phone="5511991111111")
     headers = _signed_headers(payload, secret="wrong-secret")
@@ -203,7 +203,7 @@ async def test_webhook_invalid_hmac_signature_returns_403(client, tenant_in_db, 
 async def test_webhook_unknown_session_returns_403(client, tenant_in_db, monkeypatch):
     from app.routers import webhooks
 
-    monkeypatch.setattr(webhooks.settings, "WHATSAPP_WEBHOOK_HMAC_KEY", "top-secret")
+    monkeypatch.setattr(webhooks.settings, "WEBHOOK_HMAC_SECRET", "top-secret")
 
     payload = _make_webhook_payload(session_id="unknown-session", phone="5511992222222")
     headers = _signed_headers(payload, secret="top-secret")
@@ -265,8 +265,8 @@ async def test_webhook_stale_timestamp_returns_403(client, tenant_in_db, monkeyp
         "Content-Type": "application/json",
     }
 
-    monkeypatch.setattr(webhooks.settings, "WHATSAPP_WEBHOOK_HMAC_KEY", monkey_secret)
-    monkeypatch.setattr(webhooks.settings, "WHATSAPP_WEBHOOK_REPLAY_TTL_SECONDS", 300)
+    monkeypatch.setattr(webhooks.settings, "WEBHOOK_HMAC_SECRET", monkey_secret)
+    monkeypatch.setattr(webhooks.settings, "WEBHOOK_REPLAY_TTL_SECONDS", 300)
 
     resp = await client.post("/webhooks/whatsapp", content=body, headers=headers)
     assert resp.status_code == 403
@@ -287,8 +287,8 @@ async def test_webhook_missing_replay_headers_when_required_returns_403(client, 
         "Content-Type": "application/json",
     }
 
-    monkeypatch.setattr(webhooks.settings, "WHATSAPP_WEBHOOK_HMAC_KEY", monkey_secret)
-    monkeypatch.setattr(webhooks.settings, "WHATSAPP_WEBHOOK_REQUIRE_REPLAY_HEADERS", True)
+    monkeypatch.setattr(webhooks.settings, "WEBHOOK_HMAC_SECRET", monkey_secret)
+    monkeypatch.setattr(webhooks.settings, "WEBHOOK_REQUIRE_REPLAY_HEADERS", True)
 
     resp = await client.post("/webhooks/whatsapp", content=body, headers=headers)
     assert resp.status_code == 403
@@ -297,7 +297,7 @@ async def test_webhook_missing_replay_headers_when_required_returns_403(client, 
 async def test_webhook_payload_too_large_returns_413(client, tenant_in_db, monkeypatch):
     from app.routers import webhooks
 
-    monkeypatch.setattr(webhooks.settings, "WHATSAPP_WEBHOOK_MAX_PAYLOAD_BYTES", 64)
+    monkeypatch.setattr(webhooks.settings, "WEBHOOK_MAX_PAYLOAD_BYTES", 64)
 
     payload = _make_webhook_payload(
         session_id=tenant_in_db["session_id"],
@@ -328,8 +328,8 @@ async def test_webhook_tenant_mismatch_returns_403(client, tenant_in_db):
 async def test_webhook_rate_limit_returns_429(client, tenant_in_db, monkeypatch):
     from app.routers import webhooks
 
-    monkeypatch.setattr(webhooks.settings, "WHATSAPP_WEBHOOK_RATE_LIMIT", 2)
-    monkeypatch.setattr(webhooks.settings, "WHATSAPP_WEBHOOK_RATE_LIMIT_WINDOW_SECONDS", 60)
+    monkeypatch.setattr(webhooks.settings, "WEBHOOK_RATE_LIMIT", 2)
+    monkeypatch.setattr(webhooks.settings, "WEBHOOK_RATE_LIMIT_WINDOW_SECONDS", 60)
     webhooks._webhook_limiter.clear()
 
     payload = _make_webhook_payload(

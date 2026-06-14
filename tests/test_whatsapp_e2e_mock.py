@@ -134,10 +134,10 @@ def mock_waha(monkeypatch):
     thread.start()
 
     base_url = f"http://{host}:{port}"
-    monkeypatch.setattr(provider_module.settings, "WHATSAPP_API_URL", base_url)
-    monkeypatch.setattr(provider_module.settings, "WHATSAPP_API_KEY", "")
-    monkeypatch.setattr(provider_module.settings, "WHATSAPP_WEBHOOK_URL", "http://test/webhooks/whatsapp")
-    monkeypatch.setattr(provider_module.settings, "WHATSAPP_WEBHOOK_HMAC_KEY", "")
+    monkeypatch.setattr(provider_module.settings, "WAHA_API_URL", base_url)
+    monkeypatch.setattr(provider_module.settings, "WAHA_API_KEY", "")
+    monkeypatch.setattr(provider_module.settings, "WEBHOOK_URL", "http://test/webhooks/whatsapp")
+    monkeypatch.setattr(provider_module.settings, "WEBHOOK_HMAC_SECRET", "")
     whatsapp_router._limiter._store.clear()
 
     try:

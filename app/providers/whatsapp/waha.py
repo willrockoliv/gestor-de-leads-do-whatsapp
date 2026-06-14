@@ -37,12 +37,12 @@ def _to_internal_status(raw_status: str | None) -> SessionStatus:
 
 class WahaWhatsAppProvider(WhatsAppProvider):
     def __init__(self):
-        self.base_url = settings.WHATSAPP_API_URL.rstrip("/")
+        self.base_url = settings.WAHA_API_URL.rstrip("/")
 
     def _api_headers(self) -> dict[str, str]:
         headers = {"Accept": "application/json"}
-        if settings.WHATSAPP_API_KEY:
-            headers["X-Api-Key"] = settings.WHATSAPP_API_KEY
+        if settings.WAHA_API_KEY:
+            headers["X-Api-Key"] = settings.WAHA_API_KEY
         return headers
 
     async def _request_with_retry(
@@ -138,10 +138,10 @@ class WahaWhatsAppProvider(WhatsAppProvider):
             "config": {
                 "webhooks": [
                     {
-                        "url": settings.WHATSAPP_WEBHOOK_URL,
+                        "url": settings.WEBHOOK_URL,
                         "events": ["message", "message.any", "session.status"],
-                        "hmac": {"key": settings.WHATSAPP_WEBHOOK_HMAC_KEY}
-                        if settings.WHATSAPP_WEBHOOK_HMAC_KEY
+                        "hmac": {"key": settings.WEBHOOK_HMAC_SECRET}
+                        if settings.WEBHOOK_HMAC_SECRET
                         else None,
                     }
                 ]
@@ -149,7 +149,7 @@ class WahaWhatsAppProvider(WhatsAppProvider):
         }
 
         webhooks = payload["config"]["webhooks"]
-        if not settings.WHATSAPP_WEBHOOK_URL:
+        if not settings.WEBHOOK_URL:
             payload = {"name": session_id}
         elif webhooks[0].get("hmac") is None:
             del webhooks[0]["hmac"]

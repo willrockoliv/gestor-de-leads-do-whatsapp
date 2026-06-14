@@ -1,11 +1,13 @@
 from app.core.config import get_settings
 from app.providers.whatsapp.interface import WhatsAppProvider
 from app.providers.whatsapp.waha import WahaWhatsAppProvider
+from app.providers.whatsapp.evolution import EvolutionWhatsAppProvider
 
 settings = get_settings()
 
 _SUPPORTED_PROVIDERS = {
     "waha": WahaWhatsAppProvider,
+    "evolution": EvolutionWhatsAppProvider,
 }
 
 

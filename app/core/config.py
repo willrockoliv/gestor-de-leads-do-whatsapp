@@ -22,10 +22,19 @@ class Settings(BaseSettings):
     # WhatsApp
     WHATSAPP_WEBHOOK_SECRET: str = ""
     WHATSAPP_WEBHOOK_HMAC_KEY: str = ""
+    WHATSAPP_PROVIDER: str = "evolution"
+    
+    # WAHA Configuration (if WHATSAPP_PROVIDER="waha")
     WHATSAPP_API_URL: str = "http://waha:3000"
     WHATSAPP_API_PORT: int = 3000
     WHATSAPP_API_KEY: str = ""
-    WHATSAPP_PROVIDER: str = "waha"
+    
+    # Evolution API Configuration (if WHATSAPP_PROVIDER="evolution")
+    EVOLUTION_API_URL: str = "http://evolution-api:8080"
+    EVOLUTION_API_KEY: str = ""
+    EVOLUTION_WEBHOOK_URL: str = ""
+    
+    # WhatsApp Webhook Configuration (shared across providers)
     WHATSAPP_WEBHOOK_URL: str = ""
     WHATSAPP_WEBHOOK_REPLAY_TTL_SECONDS: int = 300
     WHATSAPP_WEBHOOK_REQUIRE_REPLAY_HEADERS: bool = False
