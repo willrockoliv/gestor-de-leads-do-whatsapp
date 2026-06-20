@@ -29,9 +29,32 @@ async def register(payload: UserRegister, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: UserLogin, request: Request, db: AsyncSession = Depends(get_db)):
+async def login(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    email: str
+    password: str
+
+    content_type = request.headers.get("content-type", "").lower()
+    if "application/json" in content_type:
+        payload_data = await request.json()
+        payload = UserLogin.model_validate(payload_data)
+        email = payload.email
+        password = payload.password
+    else:
+        form_data = await request.form()
+        email = str(form_data.get("username") or form_data.get("email") or "").strip()
+        password = str(form_data.get("password") or "")
+
+    if not email or not password:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Credenciais inválidas",
+        )
+
     client_ip = request.client.host if request.client else "unknown"
-    key = f"login:{client_ip}:{payload.email.lower()}"
+    key = f"login:{client_ip}:{email.lower()}"
     allowed, retry_after = _login_limiter.hit(
         key,
         limit=settings.AUTH_LOGIN_RATE_LIMIT,
@@ -45,8 +68,8 @@ async def login(payload: UserLogin, request: Request, db: AsyncSession = Depends
         )
 
     _, token = await authenticate_user(
-        email=payload.email,
-        password=payload.password,
+        email=email,
+        password=password,
         db=db,
     )
     return TokenResponse(access_token=token)

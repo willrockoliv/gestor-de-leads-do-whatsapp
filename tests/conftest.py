@@ -7,6 +7,7 @@ os.environ.setdefault("WEBHOOK_URL", "http://localhost:8000/webhooks/whatsapp")
 # Leave WEBHOOK_HMAC_SECRET empty by default so unsigned webhooks are accepted in tests
 os.environ.setdefault("WEBHOOK_HMAC_SECRET", "")
 os.environ.setdefault("WHATSAPP_PROVIDER", "waha")
+os.environ.setdefault("SECURITY_CSP", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
 
 import pytest
 from httpx import ASGITransport, AsyncClient
