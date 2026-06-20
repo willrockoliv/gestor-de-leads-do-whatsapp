@@ -8,10 +8,10 @@ services:
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@db:5432/leads}
+      - DATABASE_URL=${DATABASE_URL}
       - DEBUG=true
-      - WEBHOOK_URL=${WEBHOOK_URL:-http://backend:8000/webhooks/whatsapp}
-      - WEBHOOK_HMAC_SECRET=${WEBHOOK_HMAC_SECRET:-}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - WEBHOOK_HMAC_SECRET=${WEBHOOK_HMAC_SECRET}
     depends_on:
       db:
         condition: service_healthy
@@ -31,10 +31,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
-    networks:
-      default:
-        aliases:
-          - postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -46,24 +42,24 @@ services:
   #   ports:
   #     - "3001:3000"
   #   environment:
-  #     - WAHA_API_KEY=${WAHA_API_KEY:-}
-  #     - WEBHOOK_URL=${WEBHOOK_URL:-http://backend:8000/webhooks/whatsapp}
+  #     - WAHA_API_KEY=${WAHA_API_KEY}
+  #     - WEBHOOK_URL=${WEBHOOK_URL}
   #     - WHATSAPP_HOOK_EVENTS=message,message.any,session.status
-  #     - WEBHOOK_HMAC_SECRET=${WEBHOOK_HMAC_SECRET:-}
+  #     - WEBHOOK_HMAC_SECRET=${WEBHOOK_HMAC_SECRET}
   #     - WHATSAPP_SWAGGER_ENABLED=true
 
   evolution-api:
     image: evoapicloud/evolution-api:v2.3.7
     environment:
       - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=${EVOLUTION_DATABASE_CONNECTION_URI:-postgresql://postgres:postgres@postgres:5432/evolution_db?schema=evolution_api}
+      - DATABASE_CONNECTION_URI=${EVOLUTION_DATABASE_CONNECTION_URI}
       - CACHE_REDIS_ENABLED=false
       - CACHE_LOCAL_ENABLED=false
       - SERVER_URL=http://localhost:8080
-      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-sk-evolution-test-key}
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
       - LOG_LEVEL=ERROR,WARN,INFO
       - WEBHOOK_GLOBAL_ENABLED=true
-      - WEBHOOK_GLOBAL_URL=${WEBHOOK_URL:-http://backend:8000/webhooks/evolution}
+      - WEBHOOK_GLOBAL_URL=${WEBHOOK_URL}
     depends_on:
       db:
         condition: service_healthy

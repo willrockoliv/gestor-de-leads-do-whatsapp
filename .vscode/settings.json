@@ -4,9 +4,23 @@
             "ssh": "Disabled",
             "previewLimit": 50,
             "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "evolution_api",
+            "database": "evolution_db",
+            "username": "postgres",
+            "password": "postgres"
+        },
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
             "driver": "PostgreSQL",
             "name": "leads",
-            "connectString": "postgresql://postgres:postgres@172.17.0.1:5432/leads"
+            "database": "leads",
+            "username": "postgres",
+            "password": "postgres"
         }
     ]
 }
