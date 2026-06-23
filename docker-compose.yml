@@ -12,6 +12,9 @@ services:
       - DEBUG=true
       - WEBHOOK_URL=${WEBHOOK_URL}
       - WEBHOOK_HMAC_SECRET=${WEBHOOK_HMAC_SECRET}
+      - EVOLUTION_API_URL=${EVOLUTION_API_URL}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
+      - EVOLUTION_WEBHOOK_URL=${EVOLUTION_WEBHOOK_URL}
     depends_on:
       db:
         condition: service_healthy

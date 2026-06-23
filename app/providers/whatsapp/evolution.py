@@ -38,6 +38,16 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
     """WhatsApp provider adapter for Evolution API."""
 
     def __init__(self):
+        if not settings.EVOLUTION_API_URL:
+            raise ValueError(
+                "EVOLUTION_API_URL is required when using Evolution provider. "
+                "Set it in your environment variables or .env file."
+            )
+        if not settings.EVOLUTION_API_KEY:
+            raise ValueError(
+                "EVOLUTION_API_KEY is required when using Evolution provider. "
+                "Set it in your environment variables or .env file."
+            )
         self.base_url = settings.EVOLUTION_API_URL.rstrip("/")
         self.api_key = settings.EVOLUTION_API_KEY
 
@@ -48,7 +58,8 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
             "Content-Type": "application/json",
         }
         if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+            # Evolution API v2 expects global auth on `apikey` header.
+            headers["apikey"] = self.api_key
         return headers
 
     async def _request_with_retry(
@@ -81,6 +92,9 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
                 # Detect conflict: instance already exists
                 if exc.response.status_code == 409 or "already exists" in detail.lower():
                     raise WhatsAppProviderAlreadyExistsError(message) from exc
+                if exc.response.status_code in (400, 401, 403, 404):
+                    # Do not retry non-retriable client/auth errors.
+                    raise WhatsAppProviderError(message) from exc
                 last_exc = WhatsAppProviderError(message)
                 if attempt >= attempts:
                     break
