@@ -11,7 +11,7 @@
 ### Fase 1: Setup e Infraestrutura
 - [x] Evolution API adicionado ao `docker-compose.yml` (fase anterior)
 - [x] `.env.example` estendido com variáveis Evolution
-- [x] `app/core/config.py` atualizado com EVOLUTION_API_URL, EVOLUTION_API_KEY, EVOLUTION_WEBHOOK_URL
+- [x] `app/core/config.py` atualizado com EVOLUTION_API_URL, EVOLUTION_API_KEY, WEBHOOK_URL
 
 ### Fase 2: Adapter Evolution API
 - [x] `app/providers/whatsapp/evolution.py` criado com classe EvolutionWhatsAppProvider
@@ -19,7 +19,7 @@
   - `resolve_session_id()` → `tenant-{tenant_id}`
   - `create_session()` → POST `/instance/create`
   - `fetch_qr_code()` → GET `/instance/connect`
-  - `fetch_session_status()` → GET `/instance/fetch`
+   - `fetch_session_status()` → GET `/instance/connectionState`
   - `stop_session()` → DELETE `/instance/logout`
   - `normalize_webhook_payload()` → normaliza `MESSAGES_UPSERT`/`MESSAGES_UPDATE`
 - [x] Retry logic com exponential backoff (3 tentativas)
@@ -120,6 +120,23 @@
 - A variável correta é `DATABASE_CONNECTION_URI` (URL Prisma completa) + `DATABASE_PROVIDER`.
 - Demais variáveis seguem o padrão `NOME_SECAO_CAMPO` (ex: `AUTHENTICATION_API_KEY`, `WEBHOOK_GLOBAL_URL`), não `NOME__SECAO__CAMPO` com duplo underscore.
 - Referência: [.env.example oficial](https://github.com/evolution-foundation/evolution-api/blob/main/.env.example).
+
+### Problema 4: endpoint de status desatualizado no adapter
+- O adapter usava `GET /instance/fetch/{instanceName}` para status e recebia 404.
+- Em v2.3.7, o endpoint correto de status é `GET /instance/connectionState/{instanceName}`.
+- **Solução:** atualizar `fetch_session_status()` para usar `connectionState`.
+
+### Problema 5: webhook com `localhost` em ambiente Docker
+- `localhost` dentro do container Evolution aponta para o próprio container, não para o backend.
+- Isso gera `ECONNREFUSED` ao tentar enviar para `http://localhost:8000/webhooks/whatsapp`.
+- **Solução:** usar `WEBHOOK_URL=http://backend:8000/webhooks/whatsapp`.
+
+### Problema 6: parâmetros de webhook inconsistentes entre versões
+- Para endpoint único no backend, `webhook_by_events` deve ficar `false`.
+- Com `webhook_by_events=true`, a Evolution pode montar URL por evento e quebrar roteamento do backend atual.
+
+### Fonte oficial recomendada para investigações futuras
+- Índice LLM-friendly com todos os links e OpenAPI: https://docs.evolutionfoundation.com.br/llms.txt
 
 ### Configuração final funcional no docker-compose.yml
 ```yaml
@@ -227,7 +244,7 @@ sequenceDiagram
 WHATSAPP_PROVIDER=evolution
 EVOLUTION_API_URL=http://evolution-api:8080
 EVOLUTION_API_KEY=seu-token-aqui
-EVOLUTION_WEBHOOK_URL=http://localhost:8000/webhooks/evolution
+WEBHOOK_URL=http://backend:8000/webhooks/whatsapp
 ```
 
 ### Para continuar com WAHA

@@ -191,7 +191,7 @@ frontend/           # Next.js 16 + TypeScript + Tailwind + shadcn/ui
 ### Webhook
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST | `/webhooks/whatsapp` | Recebe eventos do WAHA com validação HMAC |
+| POST | `/webhooks/whatsapp` | Recebe eventos de WAHA/Evolution (validação HMAC quando configurada) |
 
 ### WhatsApp Session
 | Método | Rota | Descrição |
@@ -203,16 +203,26 @@ frontend/           # Next.js 16 + TypeScript + Tailwind + shadcn/ui
 ### Troubleshooting WhatsApp
 
 - Provider não inicializa:
-	- verifique `WHATSAPP_PROVIDER` no `.env` (valor atual suportado: `waha`).
+	- verifique `WHATSAPP_PROVIDER` no `.env` (valores suportados: `waha` e `evolution`).
 	- se usar valor não suportado, a API retorna erro de configuração ao resolver dependency.
 - QR code não aparece:
-	- valide se `WHATSAPP_API_URL` e `WHATSAPP_API_KEY` estão corretos para o backend.
-	- confira se o WAHA está online e respondendo em `/api/server/status`.
+	- em WAHA, valide se `WHATSAPP_API_URL` e `WHATSAPP_API_KEY` estão corretos para o backend.
+	- em Evolution, valide se `EVOLUTION_API_URL` e `EVOLUTION_API_KEY` estão corretos e se o endpoint `GET /instance/connect/{instanceName}` responde.
+	- para status em Evolution, use `GET /instance/connectionState/{instanceName}` (não usar `/instance/fetch/{instanceName}`).
 	- em WAHA CORE, apenas sessão `default` é suportada; múltiplos tenants podem conflitar.
 - Webhook não recebe mensagens:
-	- confirme `WHATSAPP_WEBHOOK_URL` acessível pelo container WAHA.
+	- confirme `WEBHOOK_URL` acessível pelos containers do provider (WAHA/Evolution).
+	- em Docker Compose, use hostname de serviço (`http://backend:8000/webhooks/whatsapp`) e não `localhost`.
+	- em Evolution Manager, mantenha `webhook_by_events=false` quando o backend usa endpoint único.
 	- valide se o evento inclui `session`/`instance` e se a sessão existe no banco.
-	- confirme se `WHATSAPP_WEBHOOK_HMAC_KEY` (quando habilitado) está igual nos dois lados.
+	- confirme se `WHATSAPP_WEBHOOK_HMAC_KEY` ou `WEBHOOK_HMAC_SECRET` (quando habilitado) está igual nos dois lados.
+
+### Referências Oficiais Evolution API
+
+- Documentação principal: https://docs.evolutionfoundation.com.br/evolution-api/index.md
+- Índice LLM-friendly (llms.txt): https://docs.evolutionfoundation.com.br/llms.txt
+- Connection state: https://docs.evolutionfoundation.com.br/evolution-api/get-connection-state.md
+- Webhooks: https://docs.evolutionfoundation.com.br/evolution-api/configuration/webhooks.md
 
 ### Análise (LLM)
 | Método | Rota | Descrição |
@@ -251,7 +261,7 @@ npx playwright test
 # (Os testes Playwright devem ser executados dentro da pasta frontend/)
 ```
 
-**138 testes** cobrindo: models, auth, webhook, análise LLM (com mock), dashboard, locks de concorrência, watchdog anti-zombie, providers (WAHA + Evolution) e factory pattern.
+**139 testes** cobrindo: models, auth, webhook, análise LLM (com mock), dashboard, locks de concorrência, watchdog anti-zombie, providers (WAHA + Evolution) e factory pattern.
 
 ## Roadmap
 

@@ -255,6 +255,13 @@ Observação de infraestrutura:
 - WAHA CORE suporta somente sessão `default` (sessão única). Para multi-tenant: WAHA PLUS.
 - Evolution API suporta múltiplas instâncias em 1 container (ideal para multi-tenant).
 
+Notas operacionais da Evolution API (v2.3.7):
+- Endpoint correto de status de instância: `GET /instance/connectionState/{instanceName}`.
+- Não usar `GET /instance/fetch/{instanceName}` para status (retorna 404 nas versões atuais).
+- Webhook entre containers deve usar hostname de serviço Docker (`backend`) e nunca `localhost`.
+- Quando o backend expõe um único endpoint (`/webhooks/whatsapp`), manter `webhook_by_events=false`.
+- Referência rápida para troubleshooting: https://docs.evolutionfoundation.com.br/llms.txt
+
 ### Infraestrutura Docker Compose
 
 O `docker-compose.yml` sobe os seguintes serviços:
