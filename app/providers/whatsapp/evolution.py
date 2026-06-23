@@ -135,7 +135,9 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
             "webhook": {
                 "url": settings.WEBHOOK_URL,
                 "enabled": True,
+                "webhook_by_events": False,
                 "events": [
+                    "QRCODE_UPDATED",
                     "MESSAGES_UPSERT",
                     "MESSAGES_UPDATE",
                     "MESSAGES_DELETE",
@@ -144,7 +146,6 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
                     "CONTACTS_SET",
                     "CONNECTION_UPDATE",
                 ],
-                "withLocalBase64": False,
             } if settings.WEBHOOK_URL else None,
         }
 
@@ -169,7 +170,7 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
 
     async def fetch_session_status(self, session_id: str) -> ProviderSessionStatus:
         """Fetch session status and phone number from Evolution API."""
-        url = f"{self.base_url}/instance/fetch/{session_id}"
+        url = f"{self.base_url}/instance/connectionState/{session_id}"
         data = await self._request_with_retry("GET", url)
 
         # Extract status from instance data

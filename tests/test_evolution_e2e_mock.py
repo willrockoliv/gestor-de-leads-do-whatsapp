@@ -50,13 +50,13 @@ async def test_evolution_full_connection_flow(evolution_provider_with_config):
             return {"instanceId": session_id}
         elif method == "GET" and "/instance/connect/" in url:
             return {"qr": "base64_qr_code_data"}
-        elif method == "GET" and "/instance/fetch/" in url:
+        elif method == "GET" and "/instance/connectionState/" in url:
             # Simulate status progression
-            if len([c for c in call_sequence if "/instance/fetch/" in c[1]]) == 1:
+            if len([c for c in call_sequence if "/instance/connectionState/" in c[1]]) == 1:
                 return {"instance": {"state": "PENDING"}}
-            elif len([c for c in call_sequence if "/instance/fetch/" in c[1]]) == 2:
+            elif len([c for c in call_sequence if "/instance/connectionState/" in c[1]]) == 2:
                 return {"instance": {"state": "QR_CODE_READY"}}
-            elif len([c for c in call_sequence if "/instance/fetch/" in c[1]]) == 3:
+            elif len([c for c in call_sequence if "/instance/connectionState/" in c[1]]) == 3:
                 return {"instance": {"state": "CONNECTING"}}
             else:
                 return {"instance": {"state": "OPEN", "phoneNumber": "5511999999999"}}
