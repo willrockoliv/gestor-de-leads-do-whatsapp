@@ -195,32 +195,53 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
         """Normalize Evolution API webhook payload to internal format."""
         # Evolution sends events with event type in top-level key
         event_type = payload.get("event")
+        event_type_normalized = None
+        if isinstance(event_type, str):
+            event_type_normalized = event_type.strip().upper().replace(".", "_").replace("-", "_")
 
-        # Filter for message events only
-        if event_type not in ("MESSAGES_UPSERT", "MESSAGES_UPDATE"):
+        # When webhook_by_events=true some deployments may omit top-level `event`.
+        # In that case we try to infer message payload shape instead of rejecting early.
+        if event_type is not None and event_type_normalized not in ("MESSAGES_UPSERT", "MESSAGES_UPDATE"):
+            logger.debug("Evolution webhook event not a message: event_type=%s", event_type)
             return None
 
         # Extract instance name (session_id)
-        instance_name = payload.get("instance")
+        instance_name = (
+            payload.get("instance")
+            or payload.get("instanceName")
+            or payload.get("session")
+        )
         if not instance_name:
+            logger.warning("Evolution webhook: missing instance name")
             return None
 
-        # Extract message data
+        # Extract message data from wrapped or raw payload formats.
         data = payload.get("data") or {}
         messages = data.get("messages") or []
-        if not messages:
+        if messages:
+            message = messages[0]
+        elif isinstance(data.get("key"), dict):
+            message = data
+        elif isinstance(payload.get("key"), dict):
+            message = payload
+        else:
+            logger.warning("Evolution webhook: no messages in data")
             return None
 
-        # Process first message in batch
-        message = messages[0]
         key = message.get("key") or {}
         remote_jid = key.get("remoteJid")
+        remote_jid_alt = key.get("remoteJidAlt")
+        if remote_jid and remote_jid.endswith("@lid") and remote_jid_alt:
+            remote_jid = remote_jid_alt
+        elif not remote_jid:
+            remote_jid = remote_jid_alt
         if not remote_jid:
+            logger.warning("Evolution webhook: missing remoteJid")
             return None
 
         # Extract message metadata
         message_body = message.get("message") or {}
-        timestamp = message.get("messageTimestamp")
+        timestamp = message.get("messageTimestamp") or data.get("messageTimestamp") or payload.get("messageTimestamp")
 
         return NormalizedWebhookMessage(
             event_name="message.upsert",
@@ -228,7 +249,7 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
             message_id=key.get("id"),
             remote_jid=remote_jid,
             content_payload=message_body,
-            push_name=message.get("pushName"),
+            push_name=message.get("pushName") or payload.get("pushName"),
             from_me=bool(key.get("fromMe", False)),
             timestamp_raw=timestamp,
             metadata_tenant_id=None,  # Evolution doesn't provide tenant_id in webhook

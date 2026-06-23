@@ -5,6 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Lead, LeadStatus, Message, MessageDirection
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def extract_phone(remote_jid: str) -> str:
@@ -52,23 +55,37 @@ async def ingest_message(
         select(Lead).where(Lead.tenant_id == tenant_id, Lead.phone == phone)
     )
     lead = result.scalar_one_or_none()
+    # Never trust push_name from outbound messages (it is usually the operator/account owner).
+    # Keep lead identity tied to inbound customer messages.
+    lead_name_candidate = push_name if not from_me else None
 
     if lead is None:
+        logger.info(
+            "Creating new lead: tenant_id=%s phone=%s push_name=%s",
+            tenant_id,
+            phone,
+            lead_name_candidate,
+        )
         lead = Lead(
             tenant_id=tenant_id,
             phone=phone,
-            name=push_name,
+            name=lead_name_candidate,
             status=LeadStatus.active,
             is_processing=False,
         )
         db.add(lead)
         await db.flush()
     elif lead.status in (LeadStatus.converted, LeadStatus.lost):
+        logger.warning(
+            "Discarding message for lead in status: phone=%s status=%s",
+            phone,
+            lead.status,
+        )
         return None
 
-    # Update lead name if we have pushName and it's not set
-    if push_name and not lead.name:
-        lead.name = push_name
+    # Update lead name only from inbound customer messages.
+    if lead_name_candidate and not lead.name:
+        lead.name = lead_name_candidate
 
     direction = MessageDirection.outbound if from_me else MessageDirection.inbound
     effective_timestamp = timestamp or datetime.now(timezone.utc)

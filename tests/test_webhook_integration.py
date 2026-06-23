@@ -150,6 +150,7 @@ async def test_webhook_outbound_message(client, tenant_in_db):
     async with AsyncSessionTest() as session:
         result = await session.execute(select(Lead).where(Lead.phone == phone))
         lead = result.scalar_one()
+        assert lead.name is None
         result = await session.execute(select(Message).where(Message.lead_id == lead.id))
         msg = result.scalar_one()
         assert msg.direction.value == "outbound"

@@ -186,9 +186,8 @@ async def webhook_whatsapp(
         await db.refresh(session)
         return {"status": "ok", "session_status": session.status.value}
 
-    if event_name not in ("message.upsert", "message", "message.any"):
-        return {"status": "ignored", "reason": f"event {event_name} not handled"}
-
+    # Let provider-specific adapter normalize the payload
+    # Provider returns None if event is not a message event or payload is invalid
     normalized = provider.normalize_webhook_payload(payload)
     if normalized is None:
         session_id = payload.get("session") or payload.get("instance")
@@ -196,8 +195,14 @@ async def webhook_whatsapp(
             logger.warning("webhook refused: missing session id")
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing session")
         return {"status": "ignored", "reason": "payload without remoteJid"}
-
     session_id = normalized.session_id
+    logger.info(
+        "webhook message normalized: session_id=%s phone=%s message_id=%s from_me=%s",
+        mask_identifier(session_id),
+        mask_identifier(normalized.remote_jid),
+        normalized.message_id,
+        normalized.from_me,
+    )
     replay_fingerprint = hashlib.sha256(body).hexdigest()
     replay_nonce = request_id or f"{normalized.message_id or ''}:{replay_fingerprint}"
     replay_key = f"{session_id}:{replay_nonce}"

@@ -247,3 +247,150 @@ async def test_normalize_webhook_payload_missing_instance():
 
     result = provider.normalize_webhook_payload(payload)
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_normalize_webhook_payload_raw_shape_without_data_messages():
+    """Test normalization when Evolution delivers raw message object at root."""
+    provider = EvolutionWhatsAppProvider()
+
+    payload = {
+        "event": "MESSAGES_UPSERT",
+        "instance": "tenant-test",
+        "key": {
+            "id": "msg-raw-123",
+            "remoteJid": "5511999999999@s.whatsapp.net",
+            "fromMe": False,
+        },
+        "message": {"conversation": "teste"},
+        "messageTimestamp": 1782250218,
+        "pushName": "Luana Mello",
+    }
+
+    result = provider.normalize_webhook_payload(payload)
+
+    assert result is not None
+    assert result.event_name == "message.upsert"
+    assert result.session_id == "tenant-test"
+    assert result.message_id == "msg-raw-123"
+    assert result.remote_jid == "5511999999999@s.whatsapp.net"
+    assert result.push_name == "Luana Mello"
+    assert result.from_me is False
+    assert result.timestamp_raw == 1782250218
+
+
+@pytest.mark.asyncio
+async def test_normalize_webhook_payload_without_event_but_message_shape():
+    """Test normalization when event is omitted but payload shape is message."""
+    provider = EvolutionWhatsAppProvider()
+
+    payload = {
+        "instance": "tenant-test",
+        "key": {
+            "id": "msg-raw-no-event",
+            "remoteJid": "5511888888888@s.whatsapp.net",
+            "fromMe": True,
+        },
+        "message": {"conversation": "oi"},
+        "messageTimestamp": 1782250333,
+        "pushName": "William",
+    }
+
+    result = provider.normalize_webhook_payload(payload)
+
+    assert result is not None
+    assert result.event_name == "message.upsert"
+    assert result.session_id == "tenant-test"
+    assert result.message_id == "msg-raw-no-event"
+    assert result.remote_jid == "5511888888888@s.whatsapp.net"
+    assert result.push_name == "William"
+    assert result.from_me is True
+    assert result.timestamp_raw == 1782250333
+
+
+@pytest.mark.asyncio
+async def test_normalize_webhook_payload_data_object_without_messages_array():
+    """Test normalization when payload uses data.key/data.message format."""
+    provider = EvolutionWhatsAppProvider()
+
+    payload = {
+        "event": "MESSAGES_UPSERT",
+        "instance": "tenant-test",
+        "data": {
+            "key": {
+                "id": "msg-data-shape",
+                "remoteJid": "5511777777777@s.whatsapp.net",
+                "fromMe": False,
+            },
+            "message": {"extendedTextMessage": {"text": "olá"}},
+            "messageTimestamp": 1782250444,
+            "pushName": "Cliente",
+        },
+    }
+
+    result = provider.normalize_webhook_payload(payload)
+
+    assert result is not None
+    assert result.event_name == "message.upsert"
+    assert result.session_id == "tenant-test"
+    assert result.message_id == "msg-data-shape"
+    assert result.remote_jid == "5511777777777@s.whatsapp.net"
+    assert result.push_name == "Cliente"
+    assert result.from_me is False
+    assert result.timestamp_raw == 1782250444
+
+
+@pytest.mark.asyncio
+async def test_normalize_webhook_payload_lowercase_dot_event():
+    """Test normalization for real Evolution format: messages.upsert."""
+    provider = EvolutionWhatsAppProvider()
+
+    payload = {
+        "event": "messages.upsert",
+        "instance": "tenant-test",
+        "data": {
+            "key": {
+                "id": "msg-lowercase-dot",
+                "remoteJid": "551132645998@s.whatsapp.net",
+                "fromMe": False,
+            },
+            "message": {"conversation": "Para começar"},
+            "messageTimestamp": 1782254715,
+            "pushName": None,
+        },
+    }
+
+    result = provider.normalize_webhook_payload(payload)
+
+    assert result is not None
+    assert result.event_name == "message.upsert"
+    assert result.session_id == "tenant-test"
+    assert result.message_id == "msg-lowercase-dot"
+    assert result.remote_jid == "551132645998@s.whatsapp.net"
+    assert result.timestamp_raw == 1782254715
+
+
+@pytest.mark.asyncio
+async def test_normalize_webhook_payload_prefers_remote_jid_alt_for_lid():
+    """When remoteJid is LID, provider should use remoteJidAlt phone JID."""
+    provider = EvolutionWhatsAppProvider()
+
+    payload = {
+        "event": "messages.upsert",
+        "instance": "tenant-test",
+        "data": {
+            "key": {
+                "id": "msg-lid-alt",
+                "remoteJid": "58961428480076@lid",
+                "remoteJidAlt": "551132645998@s.whatsapp.net",
+                "fromMe": False,
+            },
+            "message": {"conversation": "oi"},
+            "messageTimestamp": 1782254716,
+        },
+    }
+
+    result = provider.normalize_webhook_payload(payload)
+
+    assert result is not None
+    assert result.remote_jid == "551132645998@s.whatsapp.net"
