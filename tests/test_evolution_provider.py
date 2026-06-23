@@ -20,7 +20,7 @@ def evolution_provider():
     with patch("app.providers.whatsapp.evolution.get_settings") as mock_settings:
         mock_settings.return_value.EVOLUTION_API_URL = "http://evolution-api:8080"
         mock_settings.return_value.EVOLUTION_API_KEY = "test-api-key"
-        mock_settings.return_value.EVOLUTION_WEBHOOK_URL = "http://localhost:8000/webhooks/evolution"
+        mock_settings.return_value.WEBHOOK_URL = "http://localhost:8000/webhooks/whatsapp"
         provider = EvolutionWhatsAppProvider()
         provider.api_key = "test-api-key"
     return provider

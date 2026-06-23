@@ -121,7 +121,6 @@ cd frontend && npm install && npm run dev
 | `WHATSAPP_WEBHOOK_HMAC_KEY` | Chave HMAC usada pelo WAHA em `X-Webhook-Hmac` | — |
 | `EVOLUTION_API_URL` | URL da Evolution API | `http://evolution-api:8080` |
 | `EVOLUTION_API_KEY` | Chave de autenticação global da Evolution API | — |
-| `EVOLUTION_WEBHOOK_URL` | URL de webhook para Evolution API | — |
 | `CORS_ORIGINS` | Origens permitidas (JSON list) | `["http://localhost:3000"]` |
 | `DEBUG` | Modo debug | `false` |
 | `NEXT_PUBLIC_API_URL` | URL da API (frontend) | `http://localhost:8000` |

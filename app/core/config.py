@@ -30,7 +30,6 @@ class Settings(BaseSettings):
     # Evolution Provider Configuration (if WHATSAPP_PROVIDER="evolution")
     EVOLUTION_API_URL: str = "http://evolution-api:8080"
     EVOLUTION_API_KEY: str = ""
-    EVOLUTION_WEBHOOK_URL: str = ""
     
     # Webhook Configuration (shared across all providers)
     WEBHOOK_URL: str = ""  # URL where backend receives webhooks

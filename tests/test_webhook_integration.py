@@ -187,6 +187,31 @@ async def test_webhook_ignores_non_message_event(client, tenant_in_db):
     assert resp.json()["status"] == "ignored"
 
 
+async def test_webhook_connection_update_updates_whatsapp_session(client, tenant_in_db):
+    from tests.conftest import AsyncSessionTest
+
+    payload = {
+        "event": "CONNECTION_UPDATE",
+        "instance": tenant_in_db["session_id"],
+        "data": {"status": "OPEN"},
+    }
+
+    resp = await client.post("/webhooks/whatsapp", content=json.dumps(payload))
+
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ok"
+    assert resp.json()["session_status"] == "CONNECTED"
+
+    async with AsyncSessionTest() as session:
+        result = await session.execute(
+            select(WhatsAppSession).where(WhatsAppSession.session_id == tenant_in_db["session_id"])
+        )
+        wa_session = result.scalar_one()
+        assert wa_session.status == SessionStatus.CONNECTED
+        assert wa_session.connected_since is not None
+        assert wa_session.connected_at is not None
+
+
 async def test_webhook_invalid_hmac_signature_returns_403(client, tenant_in_db, monkeypatch):
     from app.routers import webhooks
 

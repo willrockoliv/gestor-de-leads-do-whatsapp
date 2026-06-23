@@ -126,39 +126,30 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
             "instanceName": session_id,
             "integration": "WHATSAPP-BAILEYS",
             "token": self.api_key,
-            "reject_call": True,
-            "msg_call": "I'm not available",
-            "groupsIgnore": False,
+            "reject_call": False,
+            "groupsIgnore": True,
             "rejectMsgs": [],
             "autoDownloadMedia": {
-                "autoDownload": True,
-                "maxSize": 52428800,  # 50MB default
+                "autoDownload": False
             },
             "webhook": {
-                "url": settings.EVOLUTION_WEBHOOK_URL,
+                "url": settings.WEBHOOK_URL,
                 "enabled": True,
                 "events": [
                     "MESSAGES_UPSERT",
                     "MESSAGES_UPDATE",
                     "MESSAGES_DELETE",
+                    "MESSAGES_SET",
                     "SEND_MESSAGE",
                     "CONTACTS_SET",
-                    "PRESENCE_UPDATE",
-                    "CHATS_SET",
-                    "CHATS_UPDATE",
-                    "CHATS_DELETE",
-                    "GROUPS_UPSERT",
-                    "GROUP_UPDATE",
-                    "GROUP_PARTICIPANTS_UPDATE",
                     "CONNECTION_UPDATE",
-                    "CALL",
                 ],
                 "withLocalBase64": False,
-            } if settings.EVOLUTION_WEBHOOK_URL else None,
+            } if settings.WEBHOOK_URL else None,
         }
 
         # Remove webhook section if URL is not configured
-        if not settings.EVOLUTION_WEBHOOK_URL:
+        if not settings.WEBHOOK_URL:
             payload.pop("webhook", None)
 
         # Create instance

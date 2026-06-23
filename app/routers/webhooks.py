@@ -13,7 +13,7 @@ from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.rate_limit import SlidingWindowRateLimiter
 from app.core.redaction import mask_identifier
-from app.models import WhatsAppSession
+from app.models import SessionStatus, WhatsAppSession
 from app.providers.whatsapp import get_whatsapp_provider
 from app.services.webhook_service import (extract_message_text, extract_phone,
                                           ingest_message)
@@ -77,6 +77,25 @@ def _is_timestamp_stale(ts_seconds: int, ttl_seconds: int) -> bool:
     return abs(now - ts_seconds) > ttl_seconds
 
 
+def _to_session_status(event_name: str | None, payload: dict) -> SessionStatus | None:
+    if event_name != "CONNECTION_UPDATE":
+        return None
+
+    data = payload.get("data") or {}
+    raw_status = data.get("status") or data.get("state") or payload.get("status")
+    status_map = {
+        "PENDING": SessionStatus.PENDING,
+        "QR_CODE_READY": SessionStatus.QR_CODE_READY,
+        "QRCODE": SessionStatus.QR_CODE_READY,
+        "CONNECTING": SessionStatus.CONNECTING,
+        "OPEN": SessionStatus.CONNECTED,
+        "CONNECTED": SessionStatus.CONNECTED,
+        "CLOSED": SessionStatus.DISCONNECTED,
+        "DISCONNECTED": SessionStatus.DISCONNECTED,
+    }
+    return status_map.get((raw_status or "").upper())
+
+
 @router.post("/whatsapp")
 async def webhook_whatsapp(
     request: Request,
@@ -127,7 +146,46 @@ async def webhook_whatsapp(
         payload = json.loads(body)
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON payload") from exc
+
     event_name = payload.get("event")
+    session_status = _to_session_status(event_name, payload)
+    if session_status is not None:
+        session_id = payload.get("instance") or payload.get("session")
+        if not session_id:
+            logger.warning("webhook refused: missing session id")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing session")
+
+        replay_fingerprint = hashlib.sha256(body).hexdigest()
+        replay_nonce = request_id or f"{event_name}:{replay_fingerprint}"
+        replay_key = f"{session_id}:{replay_nonce}"
+        if _replay_guard.seen_recently(
+            replay_key,
+            window_seconds=settings.WEBHOOK_REPLAY_TTL_SECONDS,
+        ):
+            logger.warning("webhook ignored: replay detected session_id=%s", mask_identifier(session_id))
+            return {"status": "ignored", "reason": "replay detected"}
+
+        result = await db.execute(
+            select(WhatsAppSession).where(WhatsAppSession.session_id == session_id)
+        )
+        session = result.scalar_one_or_none()
+        if not session:
+            logger.warning("webhook refused: unknown session_id=%s", mask_identifier(session_id))
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unknown session")
+
+        session.status = session_status
+        if session_status == SessionStatus.CONNECTED and not session.connected_since:
+            now = datetime.now(timezone.utc)
+            session.connected_since = now
+            session.connected_at = now
+        elif session_status != SessionStatus.CONNECTED:
+            session.connected_since = None
+            session.connected_at = None
+
+        await db.commit()
+        await db.refresh(session)
+        return {"status": "ok", "session_status": session.status.value}
+
     if event_name not in ("message.upsert", "message", "message.any"):
         return {"status": "ignored", "reason": f"event {event_name} not handled"}
 
