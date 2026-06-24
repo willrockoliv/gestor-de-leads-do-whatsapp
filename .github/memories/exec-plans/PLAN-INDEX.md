@@ -7,7 +7,10 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 ## .github/memories/exec-plans/active/ - planos em andamento
 
 - 2026-06-24-etapa-solicita-analise-ia.md
-  - Implementar a etapa da jornada em que o usuario solicita analise IA (individual e em lote), com lock, confiabilidade operacional e validacao fim a fim.
+  - Backend assíncrono para análise IA: endpoints 202 Accepted, worker em background, fila no banco, confiabilidade operacional, LiteLLM + Ollama local com fallback cloud.
+
+- 2026-06-24-etapa-analise-ia-frontend.md
+  - Frontend para análise IA: integração com backend assíncrono, polling de status, atualização incremental de leads, feedback visual de progresso e erros.
 
 ## .github/memories/exec-plans/completed/ - planos completados
 
@@ -35,7 +38,10 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 ## .github/memories/exec-plans/progress/ - progresso das implementaçoes com aprendizados e anotações importantes
 
 - 2026-06-24-etapa-solicita-analise-ia-progress.md
-  - Diario de progresso da etapa de analise IA, com status, aprendizados, debitos tecnicos e decisoes de implementacao.
+  - Diário de progresso do backend de análise IA, com decisões de arquitetura, aprendizados e débitos técnicos.
+
+- 2026-06-24-etapa-analise-ia-frontend-progress.md
+  - Diário de progresso do frontend de análise IA, bloqueado por dependência do backend.
 
 - 2026-06-14-integracao-evolution-api-progresso.md
   - Progresso da integração Evolution API, decisões arquiteturais, aprendizados e débitos técnicos.
