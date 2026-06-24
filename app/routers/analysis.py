@@ -2,11 +2,13 @@ import asyncio
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.rate_limit import SlidingWindowRateLimiter
 from app.core.security import get_current_user
 from app.models import Lead, LeadStatus, User
 from app.schemas.analysis import AnalysisResponse, AnalyzeBatchResponse
@@ -15,6 +17,8 @@ from app.services.analysis_service import analyze_lead
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/leads", tags=["analysis"])
+settings = get_settings()
+_analysis_limiter = SlidingWindowRateLimiter()
 
 BATCH_SEMAPHORE = asyncio.Semaphore(5)  # Max 5 concurrent LLM calls
 
@@ -22,9 +26,23 @@ BATCH_SEMAPHORE = asyncio.Semaphore(5)  # Max 5 concurrent LLM calls
 @router.post("/{lead_id}/analyze", response_model=AnalysisResponse)
 async def analyze_single(
     lead_id: uuid.UUID,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    key = f"analyze-single:{current_user.tenant_id}:{request.url.path}"
+    allowed, retry_after = _analysis_limiter.hit(
+        key,
+        limit=settings.ANALYSIS_RATE_LIMIT,
+        window_seconds=settings.ANALYSIS_RATE_LIMIT_WINDOW_SECONDS,
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     # Verify lead belongs to user's tenant
     result = await db.execute(
         select(Lead).where(Lead.id == lead_id, Lead.tenant_id == current_user.tenant_id)
@@ -56,9 +74,23 @@ async def analyze_single(
 
 @router.post("/analyze-all", response_model=AnalyzeBatchResponse)
 async def analyze_all(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    key = f"analyze-all:{current_user.tenant_id}:{request.url.path}"
+    allowed, retry_after = _analysis_limiter.hit(
+        key,
+        limit=settings.ANALYSIS_RATE_LIMIT,
+        window_seconds=settings.ANALYSIS_RATE_LIMIT_WINDOW_SECONDS,
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     result = await db.execute(
         select(Lead).where(
             Lead.tenant_id == current_user.tenant_id,

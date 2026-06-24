@@ -7,11 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from app.core.config import get_settings
+from app.core.logging_config import configure_logging
 from app.core.redaction import sanitize_error_message
 from app.routers import analysis, auth, dashboard, tenants, webhooks, whatsapp
 
-logger = logging.getLogger(__name__)
 settings = get_settings()
+configure_logging(use_json=settings.LOG_JSON, level=settings.LOG_LEVEL)
+logger = logging.getLogger(__name__)
 
 
 async def watchdog_loop():

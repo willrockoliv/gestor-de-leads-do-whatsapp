@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     WEBHOOK_RATE_LIMIT_WINDOW_SECONDS: int = 60
     AUTH_LOGIN_RATE_LIMIT: int = 10
     AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    ANALYSIS_RATE_LIMIT: int = 30
+    ANALYSIS_RATE_LIMIT_WINDOW_SECONDS: int = 60
+
+    # Logging
+    LOG_LEVEL: str = "INFO"
+    LOG_JSON: bool = True
 
     # Security headers
     SECURITY_CSP: str = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"

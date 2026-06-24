@@ -61,11 +61,13 @@ tests/                 # Testes backend unitários e integração (pytest)
 - **Analysis:**
     - `/leads/{id}/analyze`: análise individual de lead com lock otimista, chamada LLM, parsing e persistência.
     - `/leads/analyze-all`: análise em lote com controle de concorrência (semaphore para chamadas LLM).
+    - Endpoints de análise protegidos por rate limit por tenant/rota para evitar abuso de custo e saturação de chamadas LLM.
 - **Dashboard:** listagem, filtros, estatísticas e detalhamento de leads.
 
 Tarefas em background no ciclo de vida da API:
 - **Watchdog de análise:** reseta locks presos (`is_processing`) periodicamente.
 - **Sync de sessão WhatsApp:** sincroniza status das sessões no provider para manter consistência do estado local.
+- **Logging estruturado:** logs da API podem ser emitidos em JSON (`LOG_JSON=true`) para observabilidade em ambiente dev.
 
 ### 3.3 Concorrência e Locks
 

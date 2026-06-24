@@ -122,8 +122,23 @@ cd frontend && npm install && npm run dev
 | `EVOLUTION_API_URL` | URL da Evolution API | `http://evolution-api:8080` |
 | `EVOLUTION_API_KEY` | Chave de autenticação global da Evolution API | — |
 | `CORS_ORIGINS` | Origens permitidas (JSON list) | `["http://localhost:3000"]` |
+| `ANALYSIS_RATE_LIMIT` | Limite de requisições para endpoints de análise | `30` |
+| `ANALYSIS_RATE_LIMIT_WINDOW_SECONDS` | Janela do rate limit de análise (segundos) | `60` |
+| `LOG_LEVEL` | Nível global de logs da API | `INFO` |
+| `LOG_JSON` | Habilita logs estruturados em JSON (`true`/`false`) | `true` |
 | `DEBUG` | Modo debug | `false` |
 | `NEXT_PUBLIC_API_URL` | URL da API (frontend) | `http://localhost:8000` |
+
+### Hardening em Desenvolvimento (Fase 8)
+
+- Rate limit aplicado em webhook e endpoints de análise:
+	- `POST /webhooks/whatsapp`
+	- `POST /leads/{id}/analyze`
+	- `POST /leads/analyze-all`
+- Logging estruturado em JSON habilitável por configuração (`LOG_JSON`).
+- Health check disponível em `GET /health`.
+- Checklist operacional de validação em dev:
+	- `.github/memories/exec-plans/active/2026-06-24-checklist-hardening-dev.md`
 
 ### Security Headers (backend)
 
