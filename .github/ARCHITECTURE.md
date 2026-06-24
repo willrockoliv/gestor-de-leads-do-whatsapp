@@ -305,6 +305,7 @@ WEBHOOK_GLOBAL_URL=<url>
 - `.github/skills/`
 - `.prompts/frontend.md`
 - `.prompts/redesign-frontend/`
+- https://docs.evolutionfoundation.com.br/llms.txt
 
 ## 10. Atualização Obrigatória
 
