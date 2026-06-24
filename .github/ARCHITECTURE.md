@@ -15,9 +15,9 @@ app/
     core/              # Configuração, database, segurança
     models/            # Modelos ORM (Tenant, User, Lead, Message, Analysis, WhatsAppSession)
     providers/         # Contratos/factory/adapters de integrações externas (WhatsApp, etc.)
-    routers/           # Rotas FastAPI (auth, tenants, webhooks, analysis, dashboard)
+    routers/           # Rotas FastAPI (auth, tenants, whatsapp, webhooks, analysis, dashboard)
     schemas/           # Schemas Pydantic (validação e resposta)
-    services/          # Lógica de negócio (análise, auth, webhooks, funil)
+    services/          # Lógica de negócio (análise, auth, webhooks, sessão WhatsApp, funil)
 frontend/
     src/app/           # Páginas Next.js (dashboard, leads, onboarding, settings, login, register)
     src/components/    # Componentes de aplicação e UI
@@ -59,15 +59,19 @@ tests/                 # Testes backend unitários e integração (pytest)
     - `WhatsAppSessionService`: orchestration agnóstico a provider.
     - `app/providers/whatsapp/`: contrato (`interface.py`), factory (`factory.py`), adapters WAHA (`waha.py`) e Evolution API (`evolution.py`).
 - **Analysis:**
-  - `/leads/{id}/analyze`: análise individual de lead com lock otimista, chamada LLM, parsing e persistência.
-  - `/leads/analyze-all`: análise em lote com controle de concorrência.
-  - **Watchdog:** tarefa background para resetar locks travados.
+    - `/leads/{id}/analyze`: análise individual de lead com lock otimista, chamada LLM, parsing e persistência.
+    - `/leads/analyze-all`: análise em lote com controle de concorrência (semaphore para chamadas LLM).
 - **Dashboard:** listagem, filtros, estatísticas e detalhamento de leads.
+
+Tarefas em background no ciclo de vida da API:
+- **Watchdog de análise:** reseta locks presos (`is_processing`) periodicamente.
+- **Sync de sessão WhatsApp:** sincroniza status das sessões no provider para manter consistência do estado local.
 
 ### 3.3 Concorrência e Locks
 
 - **is_processing:** coluna booleana no Lead para evitar double submit.
 - **Watchdog:** reseta locks travados há mais de 5 minutos.
+- **Sync de sessão WhatsApp:** loop periódico para reconciliar status (`PENDING`, `QR_CODE_READY`, `CONNECTED`, etc.) entre provider e banco local.
 - **Validação:** respostas da LLM validadas via Pydantic.
 
 ## 4. Frontend
@@ -121,7 +125,7 @@ tests/                 # Testes backend unitários e integração (pytest)
 
 - **Onboarding:** cadastro → seleção de template de funil → início da operação.
 - **Ingestão:** webhook recebe mensagem → cria lead se novo → armazena mensagem.
-- **Integração WhatsApp (WAHA):** usuário inicia conexão → backend cria sessão WAHA → frontend busca QR code → WAHA envia eventos via webhook → backend valida HMAC e persiste mensagens.
+- **Integração WhatsApp (Provider-agnóstica):** usuário inicia conexão → backend cria sessão no provider ativo (WAHA ou Evolution) → frontend busca QR code → provider envia eventos via webhook → backend valida HMAC e persiste mensagens.
 - **Seleção de Provider:** backend resolve provider via `WHATSAPP_PROVIDER` (`waha` ou `evolution`) na factory, sem alterar endpoints públicos.
 - **Análise:** botão de análise → lock otimista → chamada LLM → parsing → persistência → unlock.
 - **Dashboard:** exibe leads priorizados, agrupamento visual por contexto comercial e KPIs.
@@ -270,7 +274,9 @@ O `docker-compose.yml` sobe os seguintes serviços:
 |---------|--------|-------|-----------|
 | `db` | `postgres:16-alpine` | `5432` | PostgreSQL compartilhado — cria os bancos `leads` (backend) e `evolution_db` (Evolution API) |
 | `backend` | build local | `8000` | FastAPI + Alembic |
-| `evolution-api` | `evoapicloud/evolution-api:v2.3.7` | `8080` | Gerenciador de instâncias WhatsApp |
+| `evolution-api` | `evoapicloud/evolution-api:v2.3.7` | `3000 -> 8080` | Gerenciador de instâncias WhatsApp |
+
+Observação: o serviço `frontend` está versionado no `docker-compose.yml`, porém atualmente comentado para uso opcional no fluxo local.
 
 **Dois bancos no mesmo PostgreSQL:**
 - `leads` — banco da aplicação (backend + Alembic)
