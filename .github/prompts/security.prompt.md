@@ -1,7 +1,7 @@
 ---
-name: Security Review Guardrails
-description: Instrucao obrigatoria para agentes revisarem codigo e alteracoes com foco em seguranca da API, protecao de dados pessoais e dados sensiveis.
-applyTo: "**/*"
+name: security
+description: Instrucoes para agentes revisarem codigo e alteracoes com foco em seguranca da API, protecao de dados pessoais e dados sensiveis.
+agent: agent
 ---
 
 # Instrução de Segurança Obrigatória
@@ -241,3 +241,7 @@ O resultado da revisão deve sempre conter:
 
 ## Regra final
 Se não for possível provar que a mudança é segura para dados pessoais e dados sensíveis de leads, onboarding, ingestão, análise e integrações externas, a mudança não deve ser considerada pronta.
+
+## Referências Rápidas:
+
+- Skill de revisão de segurança: `.github/skills/security-review/SKILL.md`
