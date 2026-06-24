@@ -1,6 +1,6 @@
-# Security Pending — Supply Chain High Alerts Regression (2026-06-24)
+# Security Resolved — Supply Chain High Alerts Regression (2026-06-24)
 
-Status: PENDING (BLOQUEADO para merge/deploy)
+Status: RESOLVED
 Scope: Revisão de segurança obrigatória do diff local
 Owner: Plataforma (Backend/Frontend)
 
@@ -44,14 +44,20 @@ Owner: Plataforma (Backend/Frontend)
 
 ## Progresso de mitigação nesta sessão
 
-- Backend (pip): `requirements.txt` atualizado de `python-multipart==0.0.27` para `python-multipart==0.0.30` (versão corrigida).
+- Backend (pip): `requirements.txt` atualizado para versões corrigidas:
+  - `pydantic-settings==2.14.2`
+  - `python-multipart==0.0.31`
 - Frontend (npm): `frontend/package.json` recebeu override explícito `"hono": "4.12.25"`.
 - Prompt frontend (npm): `.prompts/redesign-frontend/lead-dashboard/package.json` atualizado para `"vite": "8.0.16"`.
+- Lockfiles npm regenerados em ambiente isolado via container Node (sem instalação no host).
+- Validação local concluída:
+  - `pyenv exec python -m pip_audit -r requirements.txt` sem vulnerabilidades conhecidas.
+  - `npm ci --ignore-scripts` no frontend concluído com sucesso em container.
 
-### Limitação operacional registrada
+## Evidências de fechamento
 
-- Por decisão explícita do usuário nesta sessão, **não executar instalação no frontend neste momento**.
-- Consequência: lockfiles npm ainda não foram regenerados, então os alertas Dependabot high associados a `package-lock.json` podem permanecer abertos até a atualização dos locks e push.
+- GitHub Actions: workflow `Security Gate` mais recente em status `success`.
+- Dependabot remoto: `0` alertas `high/critical` no momento do fechamento.
 
 ## Critério de saída para mover a RESOLVED
 

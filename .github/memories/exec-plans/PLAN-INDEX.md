@@ -47,8 +47,7 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 ## .github/memories/exec-plans/security/pending - revisoes e achados de seguranca pendentes de solução
 
-- 2026-06-24-supply-chain-high-alerts-regression.md
-  - Bloqueio de segurança por regressão de supply chain com `3 high` no Dependabot remoto, exigindo mitigação antes de merge/deploy.
+- Nenhum achado pendente no momento.
 
 ## .github/memories/exec-plans/security/resolved - revisoes e achados de seguranca já resolvidos
 
@@ -63,3 +62,6 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 - 2026-06-09-whatsapp-threat-model.md
   - Threat model da Fase 6.8.1 consolidado, com mitigação dos riscos altos validada e monitoramento contínuo de riscos residuais.
+
+- 2026-06-24-supply-chain-high-alerts-regression.md
+  - Regressão de supply chain mitigada com `Security Gate` em sucesso e Dependabot remoto em `0 high/critical`.
