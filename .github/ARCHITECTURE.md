@@ -136,6 +136,8 @@ Tarefas em background no ciclo de vida da API:
 
 ## 7. Diagramas
 
+- Jornada completa do cliente (diagramas de sequencia): [CUSTOMER_JOURNEY_SEQUENCE_DIAGRAMS.md](CUSTOMER_JOURNEY_SEQUENCE_DIAGRAMS.md)
+
 ### Diagrama de Módulos
 
 ```mermaid
