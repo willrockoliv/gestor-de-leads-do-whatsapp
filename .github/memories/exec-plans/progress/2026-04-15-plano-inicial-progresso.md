@@ -58,6 +58,17 @@
 - `GET /whatsapp/status` — status da sessão WhatsApp
 - **79 testes acumulados**
 
+### Fase 6 — Integração WhatsApp (QR Code e Status)
+- Provedor Evolution API integrado no `docker-compose.yml` (`evoapicloud/evolution-api:v2.3.7`)
+- Camada de providers WhatsApp desacoplada (`interface`, `factory`, `waha`, `evolution`)
+- `POST /whatsapp/connect` — cria/recupera sessão por tenant
+- `GET /whatsapp/qrcode` — retorna QR code da sessão
+- `GET /whatsapp/status` — sincroniza e retorna estado da conexão
+- Webhook da Evolution configurável via `WEBHOOK_URL` apontando para `POST /webhooks/whatsapp`
+- Loop de sincronização de sessão WhatsApp no backend (lifespan/background task)
+- Testes cobrindo provider factory, sessão e cenário e2e mock
+- **79 testes acumulados** (backend)
+
 ### Fase 7 — Frontend: Dashboard e Interação (MVP)
 - Next.js 16 + TypeScript + Tailwind CSS + shadcn/ui
 - Páginas de auth: `/login` e `/register` com seleção de template de funil
@@ -115,11 +126,21 @@
 ## 📈 Status Atual
 - **79 testes passando** (0 falhas)
 - Python 3.14.3 / pyenv virtualenv `gestor-leads`
-- Backend 100% funcional (fases 0-5)
+- Backend 100% funcional (fases 0-6)
 - Frontend 100% funcional com Nordic Minimalist visual (fases 7, 7B)
 - CORS configurado no backend
 - Infraestrutura: Docker Compose obrigatório, validação via Integrated Browser
-- Próximas fases: 6 (integração WhatsApp real), 8 (hardening/deploy)
+- Hardening em dev concluído (fase 8, sem deploy)
+- Plano movido de `active/` para `completed/` em 2026-06-24
+- Checklist de hardening movido de `active/` para `completed/` em 2026-06-24
+
+### Fase 8 — Hardening em Desenvolvimento (Concluída)
+- 8.1 Rate limit aplicado também nos endpoints de análise (`/leads/{id}/analyze` e `/leads/analyze-all`)
+- 8.2 CORS mantido e validado para ambiente local de desenvolvimento
+- 8.3 Logging estruturado em JSON configurável por ambiente (`LOG_JSON`, `LOG_LEVEL`)
+- 8.4 Health check ativo em `GET /health`
+- 8.5 Variáveis de ambiente atualizadas em `.env.example`
+- 8.6 Checklist de validação manual em dev criado em `.github/memories/exec-plans/active/2026-06-24-checklist-hardening-dev.md`
 
 ## 🐛 Bugs Conhecidos / Débitos Técnicos
 - `passlib` incompatível com `bcrypt>=5.0` — fixado pinando `bcrypt==4.2.1`
@@ -127,9 +148,12 @@
 - Análise em lote (`analyze-all`) cria sessões DB independentes por lead — funcional mas pode precisar de ajuste para uso real com PostgreSQL
 
 ## 🗺️ Roadmap
-- [ ] Fase 6 — Integração WhatsApp (QR Code, Waha/Evolution API)
+- [x] Fase 6 — Integração WhatsApp (QR Code, Waha/Evolution API)
 - [x] Fase 7 — Frontend Next.js (Dashboard, Kanban, detalhes, resposta)
-- [ ] Fase 8 — Hardening (rate limit, CORS, logging, deploy)
+- [x] Fase 8 — Hardening em desenvolvimento (rate limit, CORS, logging)
+
+## ⏸️ Escopo Adiado
+- Deploy em produção (backend/frontend) foi retirado do plano atual e será retomado em uma fase futura específica de produção.
 
 ## Referências & Documentação
 

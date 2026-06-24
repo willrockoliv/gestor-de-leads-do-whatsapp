@@ -2,6 +2,11 @@
 
 Baseado no PRD em `prd.md`. Cada fase entrega valor incremental e testável.
 
+## Status
+
+- Situação atual: concluído para escopo de desenvolvimento (fases 0 a 8 em dev).
+- Produção: adiada para plano futuro dedicado.
+
 ---
 
 ## Fase 0 — Scaffolding e Infraestrutura Base
@@ -157,23 +162,20 @@ Baseado no PRD em `prd.md`. Cada fase entrega valor incremental e testável.
 
 ---
 
-## Fase 8 — Hardening e Preparação para Produção
+## Fase 8 — Hardening em Desenvolvimento (Produção Adiada)
 
-**Objetivo:** Segurança, observabilidade e deploy.
+**Objetivo:** Segurança, observabilidade e robustez em ambiente de desenvolvimento.
 
 | # | Tarefa | RFs/RNFs |
 |---|--------|----------|
 | 8.1 | Rate limiting no webhook e endpoints de análise | RNF02, RNF03 |
-| 8.2 | CORS configurado corretamente (domínio da Vercel) | — |
+| 8.2 | CORS configurado corretamente para ambientes locais de desenvolvimento | — |
 | 8.3 | Logging estruturado (JSON logs com contexto de tenant/lead) | RF06.3 |
 | 8.4 | Health check endpoint (`GET /health`) | — |
 | 8.5 | Variáveis de ambiente documentadas em `.env.example` | — |
-| 8.6 | Docker Compose de produção (sem hot-reload, multi-stage build) | — |
-| 8.7 | Deploy do backend (EC2/ECS/Render) | — |
-| 8.8 | Deploy do frontend (Vercel) | — |
-| 8.9 | Smoke test end-to-end em ambiente de staging | — |
+| 8.6 | Checklist de validação manual em dev (logs, fluxos críticos e smoke local) | — |
 
-**Critério de Saída:** Sistema rodando em produção com logs, rate limit e monitoramento básico.
+**Critério de Saída:** Ambiente de desenvolvimento estável, com logs, rate limit e monitoramento básico local.
 
 ---
 
@@ -199,4 +201,9 @@ A fase 7 (frontend) pode iniciar em paralelo a partir da fase 5, quando a API es
 | PostgreSQL | Fase 0 (via Docker) |
 | Waha ou Evolution API | Fase 6 |
 | Chave de API LLM (OpenAI/Anthropic/Google) | Fase 4 |
-| Domínio + Vercel | Fase 8 |
+
+---
+
+## Nota de Escopo
+
+O escopo de deploy em produção foi adiado. A Fase 8 cobre apenas hardening no ambiente de desenvolvimento até nova priorização.

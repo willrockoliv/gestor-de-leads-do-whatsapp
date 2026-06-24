@@ -6,10 +6,15 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 ## .github/memories/exec-plans/active/ - planos em andamento
 
-- 2026-04-15-plano-inicial.md
-  - Scaffolding do projeto, setup FastAPI, Next.js, Docker, CI, banco e testes básicos. Entregas incrementais por fases.
+- Nenhum plano ativo no momento.
 
 ## .github/memories/exec-plans/completed/ - planos completados
+
+- 2026-04-15-plano-inicial.md
+  - Plano principal do produto concluído para escopo dev: fases 0 a 8 implementadas, com produção adiada para ciclo futuro.
+
+- 2026-06-24-checklist-hardening-dev.md
+  - Checklist de hardening em desenvolvimento concluído com evidências (rate limit, CORS, logging JSON, health, qualidade).
 
 - 2026-06-14-integracao-evolution-api.md
   - Integração do Evolution API como novo provider WhatsApp, mantendo desacoplamento via Protocol + Factory + DI. Suporta múltiplas instâncias por tenant. 27 testes novos, 138 total sem regressões.
