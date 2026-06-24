@@ -47,7 +47,8 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 ## .github/memories/exec-plans/security/pending - revisoes e achados de seguranca pendentes de solução
 
-- Nenhum achado pendente no momento.
+- 2026-06-24-supply-chain-high-alerts-regression.md
+  - Bloqueio de segurança por regressão de supply chain com `3 high` no Dependabot remoto, exigindo mitigação antes de merge/deploy.
 
 ## .github/memories/exec-plans/security/resolved - revisoes e achados de seguranca já resolvidos
 
