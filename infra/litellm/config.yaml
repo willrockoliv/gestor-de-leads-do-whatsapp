@@ -1,0 +1,14 @@
+model_list:
+  - model_name: lead-analysis-primary
+    litellm_params:
+      model: ollama/llama3.2:1b
+      api_base: http://ollama:11434
+
+  - model_name: lead-analysis-fallback
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+router_settings:
+  fallbacks:
+    - {"lead-analysis-primary": ["lead-analysis-fallback"]}

@@ -110,8 +110,11 @@ cd frontend && npm install && npm run dev
 |----------|-----------|---------|
 | `DATABASE_URL` | URL de conexão PostgreSQL (async) | `postgresql+asyncpg://postgres:postgres@db:5432/leads` |
 | `SECRET_KEY` | Chave para assinatura JWT | `dev-secret-change-in-production` |
+| `LLM_API_BASE` | Base URL do gateway LiteLLM | `http://litellm:4000/v1` |
 | `LLM_API_KEY` | Chave da API de LLM | — |
-| `LLM_MODEL` | Modelo a usar via LiteLLM | `gpt-4o-mini` |
+| `LITELLM_DATABASE_URL` | URL PostgreSQL usada internamente pelo LiteLLM para login/UI/state | `postgresql://postgres:postgres@db:5432/litellm_db` |
+| `LLM_MODEL` | Rota/modelo a usar via LiteLLM | `lead-analysis-primary` |
+| `OPENAI_API_KEY` | Chave cloud usada no fallback do LiteLLM | — |
 | `WHATSAPP_WEBHOOK_SECRET` | Secret HMAC do webhook | — |
 | `WHATSAPP_API_URL` | URL da API WhatsApp | `http://waha:3000` |
 | `WHATSAPP_API_PORT` | Porta da API WhatsApp | `3000` |
@@ -242,8 +245,9 @@ frontend/           # Next.js 16 + TypeScript + Tailwind + shadcn/ui
 ### Análise (LLM)
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST | `/leads/{id}/analyze` | Análise individual (com lock) |
-| POST | `/leads/analyze-all` | Análise em lote dos leads ativos |
+| POST | `/leads/{id}/analyze` | Enfileira análise individual e retorna `202 Accepted` |
+| POST | `/leads/analyze-all` | Enfileira análise em lote dos leads ativos e retorna `202 Accepted` |
+| GET | `/leads/analyze/status` | Retorna contagem e ids por status da fila (`pending`, `processing`, `completed`, `failed`) |
 
 ### Dashboard
 | Método | Rota | Descrição |
@@ -276,7 +280,7 @@ npx playwright test
 # (Os testes Playwright devem ser executados dentro da pasta frontend/)
 ```
 
-**139 testes** cobrindo: models, auth, webhook, análise LLM (com mock), dashboard, locks de concorrência, watchdog anti-zombie, providers (WAHA + Evolution) e factory pattern.
+**146 testes** cobrindo: models, auth, webhook, análise LLM (com mock), dashboard, fila assíncrona de análise, watchdog anti-zombie, providers (WAHA + Evolution) e factory pattern.
 
 ## Roadmap
 
