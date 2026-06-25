@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redaction import mask_identifier, sanitize_error_message
-from app.models import Lead, SessionStatus, WhatsAppSession
+from app.models import AnalysisStatus, Lead, SessionStatus, WhatsAppSession
 from app.providers.whatsapp import (WhatsAppProvider,
                                     WhatsAppProviderAlreadyExistsError,
                                     get_whatsapp_provider)
@@ -116,7 +116,11 @@ async def sync_whatsapp_sessions(db: AsyncSession, provider: WhatsAppProvider | 
                 await db.execute(
                     Lead.__table__.update()
                     .where(Lead.tenant_id == session.tenant_id, Lead.is_processing.is_(True))
-                    .values(is_processing=False)
+                    .values(
+                        analysis_status=AnalysisStatus.pending,
+                        is_processing=False,
+                        processing_started_at=None,
+                    )
                 )
                 await db.commit()
         except Exception as exc:

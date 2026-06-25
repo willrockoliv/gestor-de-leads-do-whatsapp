@@ -34,6 +34,27 @@ async def watchdog_loop():
             logger.error("Watchdog error: %s", sanitize_error_message(e))
 
 
+async def analysis_queue_loop(worker_id: int):
+    """Background worker that processes pending lead analysis."""
+    from app.core.database import AsyncSessionLocal
+    from app.services.analysis_service import process_next_pending_lead
+
+    while True:
+        try:
+            async with AsyncSessionLocal() as db:
+                processed = await process_next_pending_lead(db)
+            await asyncio.sleep(1 if processed else 2)
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.error(
+                "Analysis queue worker %s error: %s",
+                worker_id,
+                sanitize_error_message(e),
+            )
+            await asyncio.sleep(2)
+
+
 async def whatsapp_sync_loop():
     """Background task to sync WhatsApp session status every 30 seconds."""
     from app.core.database import AsyncSessionLocal
@@ -58,14 +79,26 @@ async def whatsapp_sync_loop():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     watchdog_task = asyncio.create_task(watchdog_loop())
+    worker_count = max(settings.ANALYSIS_WORKER_CONCURRENCY, 1)
+    analysis_queue_tasks = [
+        asyncio.create_task(analysis_queue_loop(worker_id=i + 1))
+        for i in range(worker_count)
+    ]
     whatsapp_task = asyncio.create_task(whatsapp_sync_loop())
     yield
     watchdog_task.cancel()
+    for task in analysis_queue_tasks:
+        task.cancel()
     whatsapp_task.cancel()
     try:
         await watchdog_task
     except asyncio.CancelledError:
         pass
+    for task in analysis_queue_tasks:
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
     try:
         await whatsapp_task
     except asyncio.CancelledError:

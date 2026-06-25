@@ -15,6 +15,14 @@ class LeadStatus(str, enum.Enum):
     lost = "lost"
 
 
+class AnalysisStatus(str, enum.Enum):
+    idle = "idle"
+    pending = "pending"
+    processing = "processing"
+    completed = "completed"
+    failed = "failed"
+
+
 class MessageDirection(str, enum.Enum):
     inbound = "inbound"
     outbound = "outbound"
@@ -82,6 +90,15 @@ class Lead(Base):
     status: Mapped[LeadStatus] = mapped_column(Enum(LeadStatus), default=LeadStatus.active, insert_default=LeadStatus.active, index=True)
     current_stage: Mapped[str | None] = mapped_column(String(100), nullable=True)
     temperature_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    analysis_status: Mapped[AnalysisStatus] = mapped_column(
+        Enum(AnalysisStatus),
+        default=AnalysisStatus.idle,
+        insert_default=AnalysisStatus.idle,
+        index=True,
+    )
+    analysis_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    analysis_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    analysis_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_processing: Mapped[bool] = mapped_column(Boolean, default=False, insert_default=False)
     processing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

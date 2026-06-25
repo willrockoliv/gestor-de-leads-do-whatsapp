@@ -10,6 +10,8 @@ class LeadListItem(BaseModel):
     status: str
     current_stage: str | None
     temperature_score: int | None
+    analysis_status: str
+    analysis_error: str | None = None
     is_processing: bool
     created_at: datetime
     updated_at: datetime

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Lead, LeadStatus, Message, MessageDirection
+from app.models import AnalysisStatus, Lead, LeadStatus, Message, MessageDirection
 import logging
 
 logger = logging.getLogger(__name__)
@@ -71,6 +71,7 @@ async def ingest_message(
             phone=phone,
             name=lead_name_candidate,
             status=LeadStatus.active,
+            analysis_status=AnalysisStatus.idle,
             is_processing=False,
         )
         db.add(lead)

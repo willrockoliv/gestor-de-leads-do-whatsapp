@@ -1,20 +1,30 @@
 import json
+from types import SimpleNamespace
 
 import pytest
 
 from app.schemas.analysis import LLMAnalysisResult
-from app.services.analysis_service import (build_analysis_prompt_sync,
+from app.services.analysis_service import (build_analysis_prompt,
                                            parse_llm_response)
 
 
 def test_build_prompt_sync():
     funnel = {"etapa_1": "Descoberta", "etapa_2": "Orçamento"}
     messages = [
-        {"direction": "inbound", "content": "Oi, quero saber o preço"},
-        {"direction": "outbound", "content": "Olá! O preço é R$100"},
-        {"direction": "inbound", "content": "Achei caro, tem desconto?"},
+        SimpleNamespace(
+            direction=SimpleNamespace(value="inbound"),
+            content="Oi, quero saber o preço",
+        ),
+        SimpleNamespace(
+            direction=SimpleNamespace(value="outbound"),
+            content="Olá! O preço é R$100",
+        ),
+        SimpleNamespace(
+            direction=SimpleNamespace(value="inbound"),
+            content="Achei caro, tem desconto?",
+        ),
     ]
-    system, user = build_analysis_prompt_sync(funnel, messages)
+    system, user = build_analysis_prompt(funnel, messages)
     assert "Descoberta" in system
     assert "Orçamento" in system
     assert "[LEAD]: Oi, quero saber o preço" in user

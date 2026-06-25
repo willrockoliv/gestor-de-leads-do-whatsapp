@@ -1,6 +1,6 @@
-from app.models.models import (Analysis, Lead, LeadStatus, Message,
-                               MessageDirection, SessionStatus, Tenant, User,
-                               WhatsAppSession)
+from app.models.models import (Analysis, AnalysisStatus, Lead, LeadStatus,
+                               Message, MessageDirection, SessionStatus,
+                               Tenant, User, WhatsAppSession)
 
 __all__ = [
     "Tenant",
@@ -9,6 +9,7 @@ __all__ = [
     "Lead",
     "Message",
     "Analysis",
+    "AnalysisStatus",
     "LeadStatus",
     "MessageDirection",
     "SessionStatus",

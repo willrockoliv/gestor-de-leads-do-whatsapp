@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     # LLM
     LLM_API_KEY: str = ""
+    LLM_API_BASE: str = ""
     LLM_MODEL: str = "gpt-4o-mini"
 
     # WhatsApp Provider Selection
@@ -43,6 +44,10 @@ class Settings(BaseSettings):
     AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 60
     ANALYSIS_RATE_LIMIT: int = 30
     ANALYSIS_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    ANALYSIS_MAX_CONTEXT_MESSAGES: int = 20
+    ANALYSIS_MAX_OUTPUT_TOKENS: int = 200
+    ANALYSIS_WORKER_CONCURRENCY: int = 1
+    ANALYSIS_JSON_PARSE_RETRIES: int = 2
 
     # Logging
     LOG_LEVEL: str = "INFO"
