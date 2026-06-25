@@ -42,11 +42,28 @@ sequenceDiagram
 
     U->>FE: Solicita analise IA
     FE->>BE: POST /leads/{id}/analyze ou /leads/analyze-all
-    BE->>LLM: Classificacao, resumo e sugestao
-    LLM-->>BE: Resultado estruturado
-    BE->>DB: Persiste analysis e score
-    DB-->>BE: Persistencia concluida
-    BE-->>FE: Resultado atualizado
+    BE->>DB: Marca lead(s) como pending
+    DB-->>BE: Fila atualizada
+    BE-->>FE: 202 Accepted (job_id/ids)
+
+    loop Worker serial (1 por vez)
+        BE->>DB: Claim de 1 lead pending -> processing
+        DB-->>BE: Lead bloqueado para worker
+        BE->>LLM: Classificacao, resumo e sugestao
+        alt LLM ok
+            LLM-->>BE: Resultado estruturado
+            BE->>DB: Persiste analysis + score + completed
+            DB-->>BE: Persistencia concluida
+        else LLM erro
+            BE->>DB: Marca failed + analysis_error
+            DB-->>BE: Falha persistida
+        end
+    end
+
+    loop Polling frontend
+        FE->>BE: GET /leads/analyze/status
+        BE-->>FE: counts + ids por status
+    end
 
     U->>FE: Acompanha dashboard e leads
     FE->>BE: GET /dashboard/stats, /leads, /leads/{id}
@@ -177,26 +194,34 @@ sequenceDiagram
     autonumber
     participant U as Usuario
     participant FE as Frontend
-    participant BE as Backend Analysis
+    participant BE as Backend Analysis API
+    participant W as Worker de Analise
     participant DB as Banco
     participant LLM as LiteLLM
 
     U->>FE: Solicita analisar lead
     FE->>BE: POST /leads/{id}/analyze
-    BE->>DB: Tenta lock otimista is_processing
+    BE->>DB: Enfileira lead como pending
+    DB-->>BE: Lead na fila
+    BE-->>FE: 202 Accepted com job_id
 
-    alt Lock adquirido
-        DB-->>BE: Lock ativo para analise
-        BE->>LLM: Envia contexto de mensagens e funil
-        LLM-->>BE: Score, etapa, resumo e resposta sugerida
-        BE->>DB: Persiste Analysis e atualiza Lead
-        DB-->>BE: Persistencia concluida
-        BE->>DB: Libera lock
-        DB-->>BE: Lock liberado
-        BE-->>FE: Resultado de analise
-    else Lead em processamento
-        DB-->>BE: Lock rejeitado
-        BE-->>FE: Erro de concorrencia orientando retry
+    loop Polling de progresso
+        FE->>BE: GET /leads/analyze/status
+        BE->>DB: Consulta counts + ids por status
+        DB-->>BE: Snapshot da fila
+        BE-->>FE: pending/processing/completed/failed
+    end
+
+    W->>DB: Claim de 1 lead pending
+    DB-->>W: Lead em processing
+    W->>LLM: Envia contexto de mensagens e funil
+    alt Sucesso de inferencia
+        LLM-->>W: Score, etapa, resumo e resposta sugerida
+        W->>DB: Persiste Analysis e marca completed
+        DB-->>W: Persistencia concluida
+    else Erro de inferencia/parsing
+        W->>DB: Marca failed com analysis_error
+        DB-->>W: Falha persistida
     end
 ```
 

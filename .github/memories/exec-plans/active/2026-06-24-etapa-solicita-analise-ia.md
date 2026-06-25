@@ -10,44 +10,45 @@ Objetivo: Implementar com seguranca a etapa da jornada no backend em que o usuar
 
 ## Dependencias explicitas
 
-- [ ] D1. Subir e configurar o LiteLLM (LLM Gateway) para padronizar rotas e gerenciar o fallback entre Ollama (local) e Cloud (OpenAI).
-- [ ] D2. Confirmar modelagem e relacoes de dados (`Lead`, `Message`, `Analysis`) prontas para persistencia do resultado.
-- [ ] D3. Adicionar campo `analysis_status` (ex: idle, pending, processing, completed, failed) na tabela de Leads para controle de fila.
-- [ ] D4. Definir limites de concorrencia absolutos (worker assincrono = 1) para evitar gargalos de CPU na Evolution-API.
+- [x] D1. Subir e configurar o LiteLLM (LLM Gateway) para padronizar rotas e gerenciar o fallback entre Ollama (local) e Cloud (OpenAI).
+- [x] D2. Confirmar modelagem e relacoes de dados (`Lead`, `Message`, `Analysis`) prontas para persistencia do resultado.
+- [x] D3. Adicionar campo `analysis_status` (ex: idle, pending, processing, completed, failed) na tabela de Leads para controle de fila.
+- [x] D4. Definir limites de concorrencia absolutos (worker assincrono = 1) para evitar gargalos de CPU na Evolution-API.
 
 ## Fase 1 - Contrato funcional da analise (Assincrono)
 
-- [ ] 1.1 Definir contrato `POST /leads/{id}/analyze`: marca o lead como `pending` e retorna `202 Accepted` com id do job.
-- [ ] 1.2 Definir contrato `POST /leads/analyze-all`: marca lote de leads selecionados como `pending` e retorna `202 Accepted` informando a quantidade enfileirada.
-- [ ] 1.3 Criar endpoint `GET /leads/analyze/status`: retorna a contagem atualizada de status (pending, processing, completed, failed) e quais ids foram concluidos.
-- [ ] 1.4 Documentar contrato de resposta em schemas Pydantic e em docstrings OpenAPI.
+- [x] 1.1 Definir contrato `POST /leads/{id}/analyze`: marca o lead como `pending` e retorna `202 Accepted` com id do lead.
+- [x] 1.2 Definir contrato `POST /leads/analyze-all`: marca lote de leads selecionados como `pending` e retorna `202 Accepted` informando a quantidade enfileirada.
+- [x] 1.3 Criar endpoint `GET /leads/analyze/status`: retorna a contagem atualizada de status (pending, processing, completed, failed) e quais ids foram concluidos; suporte a filtro `?lead_ids=...`.
+- [x] 1.3b Criar endpoint `GET /leads/{id}/analyze/status`: retorna status individual do lead (lead_id, analysis_status, analysis_error).
+- [x] 1.4 Documentar contrato de resposta em schemas Pydantic e em docstrings OpenAPI.
 
 ## Fase 2 - Pipeline de analise em Background (Worker)
 
-- [ ] 2.1 Implementar worker assincrono ou job loop (no backend) que busca estritamente 1 lead por vez com status `pending`.
-- [ ] 2.2 Alterar status do lead de `pending` para `processing` (lock no banco) antes de iniciar a inferencia.
-- [ ] 2.3 Orquestrar contexto: coletar mensagens truncadas (limite maximo de 1000 tokens) + funil do tenant.
-- [ ] 2.4 Chamar o LiteLLM com timeout restrito, retries controlados e trilha de logs limpa (sem PII).
-- [ ] 2.5 Validar resposta com Output Parser robusto (capaz de limpar/corrigir JSONs malformados por LLMs menores antes de falhar).
-- [ ] 2.6 Persistir objeto `Analysis`, atualizar campos no lead e mudar status para `completed` (ou `failed`).
+- [x] 2.1 Implementar worker assincrono ou job loop (no backend) que busca estritamente 1 lead por vez com status `pending`.
+- [x] 2.2 Alterar status do lead de `pending` para `processing` (lock no banco) antes de iniciar a inferencia.
+- [x] 2.3 Orquestrar contexto: coletar mensagens truncadas (limite configurável via `ANALYSIS_MAX_CONTEXT_MESSAGES`) + funil do tenant.
+- [x] 2.4 Chamar o LiteLLM com timeout restrito (30s), configuração de retry com prompt reforçado e trilha de logs limpa (sem PII).
+- [x] 2.5 Validar resposta com Output Parser robusto: retry automático com prompt reforçado antes de falhar (até `ANALYSIS_JSON_PARSE_RETRIES`).
+- [x] 2.6 Persistir objeto `Analysis`, atualizar campos no lead e mudar status para `completed` (ou `failed`).
 
 ## Fase 3 - Confiabilidade operacional
 
-- [ ] 3.1 Implementar watchdog para resetar locks zombies: reverter leads travados em `processing` ha mais de 5 minutos de volta para `pending`.
-- [ ] 3.2 Definir padrao de erros no banco de dados para justificar o status `failed` (ex: falha na nuvem, timeout local, json quebrado sem conserto).
+- [x] 3.1 Implementar watchdog para resetar locks zombies: reverter leads travados em `processing` ha mais de 5 minutos de volta para `pending`.
+- [x] 3.2 Definir padrao de erros no banco de dados para justificar o status `failed` (ex: falha na nuvem, timeout local, json quebrado sem conserto).
 - [ ] 3.3 Adicionar metricas e logs estruturados para observabilidade do tamanho da fila e taxa de resolucao.
 
 ## Fase 4 - Testes e validação
 
 - [ ] 4.1 Cobrir worker com testes unitários focados na estabilidade da extração JSON e tratamento de timeouts.
-- [ ] 4.2 Cobrir endpoints com testes de integração verificando as trocas de estado corretas (pending -> processing -> completed).
-- [ ] 4.3 Executar regressão (`pytest`) validando impactos indiretos.
+- [x] 4.2 Cobrir endpoints com testes de integração verificando as trocas de estado corretas (pending -> processing -> completed).
+- [x] 4.3 Executar regressão (`pytest`) validando impactos indiretos.
 - [ ] 4.4 Checar qualidade (lint/type-check).
 
 ## Fase 5 - Documentação e encerramento
 
-- [ ] 5.1 Atualizar `ARCHITECTURE.md` com novo fluxo assíncrono: endpoints `POST /leads/{id}/analyze`, `POST /leads/analyze-all`, `GET /leads/analyze/status`, worker loop, campos `analysis_status` e status transitions.
-- [ ] 5.2 Atualizar `CUSTOMER_JOURNEY_SEQUENCE_DIAGRAMS.md` com diagrama de sequência refletindo o novo fluxo (202 Accepted, fila no banco, worker, polling do frontend).
+- [x] 5.1 Atualizar `ARCHITECTURE.md` com novo fluxo assíncrono: endpoints `POST /leads/{id}/analyze`, `POST /leads/analyze-all`, `GET /leads/analyze/status`, worker loop, campos `analysis_status` e status transitions.
+- [x] 5.2 Atualizar `CUSTOMER_JOURNEY_SEQUENCE_DIAGRAMS.md` com diagrama de sequência refletindo o novo fluxo (202 Accepted, fila no banco, worker, polling do frontend).
 - [ ] 5.3 Mover plano para `completed/` e refletir no `PLAN-INDEX.md`.
 
 ## Ordem de execucao (uma tarefa por vez)
@@ -60,12 +61,17 @@ Objetivo: Implementar com seguranca a etapa da jornada no backend em que o usuar
 
 ## Criterios de saida
 
-- [ ] Endpoints individuais e em lote enfileiram corretamente e retornam `202 Accepted`.
-- [ ] Worker processa 1 lead por vez, respeitando lock e tratando falhas sem travar.
-- [ ] Falhas da LLM retornam erro padronizado e não deixam lock preso.
-- [ ] Watchdog reseta locks zombies conforme esperado.
-- [ ] Testes de unidade/integração cobrindo fluxos críticos passando sem regressão.
-- [ ] Documentação atualizada em ARCHITECTURE.md e CUSTOMER_JOURNEY_SEQUENCE_DIAGRAMS.md refletindo novo fluxo assíncrono.
+- [x] Endpoints individuais e em lote enfileiram corretamente e retornam `202 Accepted`.
+- [x] Worker processa 1 lead por vez (configurável via `ANALYSIS_WORKER_CONCURRENCY`), com fair queue multi-tenant.
+- [x] Falhas da LLM retornam erro padronizado e não deixam lock preso.
+- [x] Watchdog reseta locks zombies conforme esperado.
+- [x] Testes de unidade/integração cobrindo fluxos críticos passando: **19 passed**.
+- [x] Documentação atualizada em ARCHITECTURE.md e CUSTOMER_JOURNEY_SEQUENCE_DIAGRAMS.md refletindo novo fluxo assíncrono.
+- [x] Configuração via ENV vars: `ANALYSIS_MAX_CONTEXT_MESSAGES`, `ANALYSIS_MAX_OUTPUT_TOKENS`, `ANALYSIS_WORKER_CONCURRENCY`, `ANALYSIS_JSON_PARSE_RETRIES`.
+- [x] Retry automático para parse JSON com prompt reforçado.
+- [x] Prompt externo em `app/prompts/analysis_system_prompt.txt` para versionamento.
+- [x] Nomenclatura unificada: `lead_id` (sem duplicação `job_id`).
+- [x] Fair queue multi-tenant: round-robin via `row_number() OVER (PARTITION BY tenant_id)`.
 
 ---
 
