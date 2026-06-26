@@ -7,16 +7,7 @@ services:
       - ./app:/app/app
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - DEBUG=true
-      - WEBHOOK_URL=${WEBHOOK_URL}
-      - WEBHOOK_HMAC_SECRET=${WEBHOOK_HMAC_SECRET}
-      - EVOLUTION_API_URL=${EVOLUTION_API_URL}
-      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
-      - LLM_API_BASE=${LLM_API_BASE}
-      - LLM_API_KEY=${LLM_API_KEY}
-      - LLM_MODEL=${LLM_MODEL}
+    env_file: .env
     depends_on:
       db:
         condition: service_healthy
