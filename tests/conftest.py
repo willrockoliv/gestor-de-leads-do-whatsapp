@@ -11,6 +11,7 @@ os.environ.setdefault("SECURITY_CSP", "default-src 'none'; frame-ancestors 'none
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
                                     create_async_engine)
 
@@ -21,6 +22,14 @@ TEST_DATABASE_URL = os.environ["DATABASE_URL"]
 
 engine_test = create_async_engine(TEST_DATABASE_URL, echo=False)
 AsyncSessionTest = async_sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=False)
+
+_LEADS_ATTACH = "ATTACH DATABASE 'file:leads_test_schema?mode=memory&cache=shared&uri=true' AS leads"
+
+# SQLite doesn't support schemas natively; attach a shared in-memory database
+# named 'leads' so schema-qualified table names (leads.xxx) resolve correctly.
+@event.listens_for(engine_test.sync_engine, "connect")
+def _attach_leads_schema(dbapi_conn, _):
+    dbapi_conn.execute(_LEADS_ATTACH)
 
 
 @pytest.fixture(scope="session")

@@ -12,9 +12,9 @@ async def seed_tenant_user_lead(setup_database):
     Usuário: teste@teste.com / 123456
     Lead: current_stage='Prospecção', phone='11999999999', name='Lead Teste'
     """
-    from app.core.database import get_db
-    async for db in get_db():
-        session: AsyncSession = db
+    from tests.conftest import AsyncSessionTest
+    async with AsyncSessionTest() as session:
+        session: AsyncSession
         # Cria tenant com funnel_config
         funnel_config = {"1": "Prospecção", "2": "Contato", "3": "Fechamento"}
         tenant = Tenant(name="Tenant Teste", funnel_config=funnel_config)
@@ -42,4 +42,3 @@ async def seed_tenant_user_lead(setup_database):
             "user": user,
             "lead": lead,
         }
-        break
