@@ -39,6 +39,7 @@ class SessionStatus(str, enum.Enum):
 
 class Tenant(Base):
     __tablename__ = "tenants"
+    __table_args__ = {"schema": "leads"}
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255))
@@ -52,7 +53,7 @@ class Tenant(Base):
 
 class User(Base):
     __tablename__ = "users"
-
+    __table_args__ = {"schema": "leads"}
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tenants.id"), index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
@@ -64,6 +65,7 @@ class User(Base):
 
 class WhatsAppSession(Base):
     __tablename__ = "whatsapp_sessions"
+    __table_args__ = {"schema": "leads"}
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tenants.id"), index=True)
@@ -82,6 +84,7 @@ class WhatsAppSession(Base):
 
 class Lead(Base):
     __tablename__ = "leads"
+    __table_args__ = {"schema": "leads"}
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tenants.id"), index=True)
@@ -113,6 +116,7 @@ class Lead(Base):
 
 class Message(Base):
     __tablename__ = "messages"
+    __table_args__ = {"schema": "leads"}
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     lead_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("leads.id"), index=True)
@@ -125,6 +129,7 @@ class Message(Base):
 
 class Analysis(Base):
     __tablename__ = "analyses"
+    __table_args__ = {"schema": "leads"}
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     lead_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("leads.id"), index=True)

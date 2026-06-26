@@ -13,7 +13,9 @@ config = context.config
 
 # Override sqlalchemy.url from settings
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("+asyncpg", "+psycopg") if "asyncpg" in settings.DATABASE_URL else settings.DATABASE_URL)
+# Convert asyncpg URL to psycopg for migrations
+db_url = settings.DATABASE_URL.replace("+asyncpg", "+psycopg") if "asyncpg" in settings.DATABASE_URL else settings.DATABASE_URL
+config.set_main_option("sqlalchemy.url", db_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -46,6 +48,8 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        include_schemas=True,
+        version_table_schema="leads",
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -69,7 +73,10 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            include_schemas=True,
+            version_table_schema="leads",
         )
 
         with context.begin_transaction():

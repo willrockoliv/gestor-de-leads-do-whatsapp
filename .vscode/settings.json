@@ -6,30 +6,8 @@
             "server": "localhost",
             "port": 5432,
             "driver": "PostgreSQL",
-            "name": "evolution_api",
-            "database": "evolution_db",
-            "username": "postgres",
-            "password": "postgres"
-        },
-        {
-            "ssh": "Disabled",
-            "previewLimit": 50,
-            "server": "localhost",
-            "port": 5432,
-            "driver": "PostgreSQL",
-            "name": "leads",
-            "database": "leads",
-            "username": "postgres",
-            "password": "postgres"
-        },
-        {
-            "ssh": "Disabled",
-            "previewLimit": 50,
-            "server": "localhost",
-            "port": 5432,
-            "driver": "PostgreSQL",
-            "name": "litellm",
-            "database": "litellm_db",
+            "name": "gestor_leads",
+            "database": "gestor_leads",
             "username": "postgres",
             "password": "postgres"
         }
