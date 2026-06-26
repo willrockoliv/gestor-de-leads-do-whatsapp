@@ -126,7 +126,7 @@ class EvolutionWhatsAppProvider(WhatsAppProvider):
             "instanceName": session_id,
             "integration": "WHATSAPP-BAILEYS",
             "token": self.api_key,
-            "reject_call": False,
+            "rejectCall": False,
             "groupsIgnore": True,
             "rejectMsgs": [],
             "autoDownloadMedia": {
