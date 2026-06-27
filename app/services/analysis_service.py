@@ -285,11 +285,13 @@ async def call_llm(system_prompt: str, user_prompt: str) -> str:
             {"role": "user", "content": user_prompt},
         ],
         api_key=settings.LLM_API_KEY,
-        api_base=settings.LLM_API_BASE or None,
+        api_base=settings.LLM_API_BASE,
         max_tokens=settings.ANALYSIS_MAX_OUTPUT_TOKENS,
         timeout=30,
         response_format={"type": "json_object"},
+        stream=False,
     )
+    logger.info("LLM response: %s", response)
     return response.choices[0].message.content
 
 
