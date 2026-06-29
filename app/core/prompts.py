@@ -9,8 +9,8 @@ Analise a conversa abaixo e retorne APENAS um JSON válido com os seguintes camp
 - temperature_score: número inteiro de 0 a 100 indicando a "temperatura" do lead (0 = frio, 100 = quente)
 - current_stage: a etapa atual do funil de vendas baseada nas etapas disponíveis
 - conversation_summary: resumo conciso da conversa em português
-- qualitative_tips: dicas qualitativas para o vendedor em português
-- suggested_reply: sugestão de resposta para o vendedor enviar em português
+- qualitative_tips: dicas qualitativas sobre a conversa com lead para o vendedor em português
+- suggested_reply: sugestão de resposta para retomar a conversa com o lead em português
 
 Etapas do funil disponíveis:
 {funnel_stages}

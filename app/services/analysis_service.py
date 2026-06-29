@@ -291,7 +291,6 @@ async def call_llm(system_prompt: str, user_prompt: str) -> str:
         response_format={"type": "json_object"},
         stream=False,
     )
-    logger.info("LLM response: %s", response)
     return response.choices[0].message.content
 
 
