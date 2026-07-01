@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import WhatsAppConnectionCard from "@/components/whatsapp-connection-card";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Save } from "lucide-react";
 import { useOnboardingGuard } from "../onboarding/guard";
@@ -90,7 +91,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl px-4 sm:px-6 lg:px-8 py-8 bg-slate-50 dark:bg-[#0B1120] min-h-[100vh]">
+    <div className="space-y-6 max-w-3xl px-4 sm:px-6 lg:px-8 py-8 bg-slate-50 dark:bg-[#0B1120] min-h-screen">
       <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">Configurações</h1>
 
       {/* Business Info */}
@@ -105,6 +106,11 @@ export default function SettingsPage() {
           </p>
         </CardContent>
       </Card>
+
+      <WhatsAppConnectionCard
+        title="Conexão com WhatsApp"
+        description="Conecte ou reconecte seu WhatsApp por aqui sempre que precisar."
+      />
 
       {/* Funnel Config */}
       <Card>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import {
   getLeads,
@@ -56,6 +56,15 @@ export default function LeadsPage() {
   const [tenant, setTenant] = useState<TenantResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzingAll, setAnalyzingAll] = useState(false);
+  const [showAnalyzeAllStatus, setShowAnalyzeAllStatus] = useState(false);
+  const [analyzeAllRequestedTotal, setAnalyzeAllRequestedTotal] = useState(0);
+  const [analyzeAllTrackedIds, setAnalyzeAllTrackedIds] = useState<Set<string>>(new Set());
+  const [globalAnalyzeCounts, setGlobalAnalyzeCounts] = useState({
+    pending: 0,
+    processing: 0,
+    completed: 0,
+    failed: 0,
+  });
   const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set());
   const [trackedPollingIds, setTrackedPollingIds] = useState<Set<string>>(new Set());
   const [pollAllStatuses, setPollAllStatuses] = useState(false);
@@ -130,6 +139,13 @@ export default function LeadsPage() {
         if (isCancelled) {
           return;
         }
+
+        setGlobalAnalyzeCounts({
+          pending: status.counts.pending,
+          processing: status.counts.processing,
+          completed: status.counts.completed,
+          failed: status.counts.failed,
+        });
 
         const pendingIds = status.pending_ids ?? [];
         const processingIds = status.processing_ids ?? [];
@@ -244,6 +260,52 @@ export default function LeadsPage() {
     };
   }, [leads, pollAllStatuses, trackedPollingIds]);
 
+  const hasOngoingAnalysis = useMemo(
+    () =>
+      leads.some(
+        (lead) =>
+          lead.analysis_status === "pending" ||
+          lead.analysis_status === "processing" ||
+          lead.is_processing
+      ),
+    [leads]
+  );
+
+  const analyzeAllStatus = useMemo(() => {
+    if (!showAnalyzeAllStatus && !hasOngoingAnalysis) {
+      return null;
+    }
+
+    if (analyzeAllTrackedIds.size > 0) {
+      const trackedLeads = leads.filter((lead) => analyzeAllTrackedIds.has(lead.id));
+      const pending = trackedLeads.filter(
+        (lead) =>
+          lead.analysis_status === "pending" ||
+          lead.analysis_status === "processing" ||
+          lead.is_processing
+      ).length;
+      const success = trackedLeads.filter((lead) => lead.analysis_status === "completed").length;
+      const failed = trackedLeads.filter((lead) => lead.analysis_status === "failed").length;
+      const total = Math.max(analyzeAllRequestedTotal, trackedLeads.length);
+
+      return { pending, success, failed, total };
+    }
+
+    const pending = globalAnalyzeCounts.pending + globalAnalyzeCounts.processing;
+    const success = globalAnalyzeCounts.completed;
+    const failed = globalAnalyzeCounts.failed;
+    const total = Math.max(analyzeAllRequestedTotal, pending + success + failed);
+
+    return { pending, success, failed, total };
+  }, [
+    analyzeAllRequestedTotal,
+    analyzeAllTrackedIds,
+    hasOngoingAnalysis,
+    globalAnalyzeCounts,
+    leads,
+    showAnalyzeAllStatus,
+  ]);
+
   async function handleAnalyzeSingle(leadId: string) {
     setAnalyzingIds((prev) => new Set(prev).add(leadId));
     try {
@@ -281,10 +343,17 @@ export default function LeadsPage() {
     setAnalyzingAll(true);
     try {
       const res = await analyzeAll();
+      setShowAnalyzeAllStatus(true);
+      setAnalyzeAllRequestedTotal(res.total_enqueued);
+      if (res.total_enqueued === 0) {
+        setAnalyzeAllTrackedIds(new Set());
+      }
       if (res.total_enqueued > 0) {
         if ((res.lead_ids ?? []).length === 0) {
+          setAnalyzeAllTrackedIds(new Set());
           setPollAllStatuses(true);
         } else {
+          setAnalyzeAllTrackedIds(new Set(res.lead_ids ?? []));
           setTrackedPollingIds((prev) => {
             const next = new Set(prev);
             (res.lead_ids ?? []).forEach((id) => next.add(id));
@@ -379,6 +448,28 @@ export default function LeadsPage() {
           </Button>
         </div>
       </div>
+
+      {analyzeAllStatus ? (
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-900/50 px-4 py-3 shadow-[0_6px_20px_rgb(0,0,0,0.04)] dark:shadow-none">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <p className="font-medium text-slate-700 dark:text-slate-200">
+              Status da análise em lote
+            </p>
+            <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-300">
+              Pendente: {analyzeAllStatus.pending}
+            </Badge>
+            <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 dark:border-green-500/40 dark:bg-green-500/10 dark:text-green-300">
+              Sucesso: {analyzeAllStatus.success}
+            </Badge>
+            <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">
+              Falha: {analyzeAllStatus.failed}
+            </Badge>
+            <span className="text-slate-500 dark:text-slate-400">
+              Total: {analyzeAllStatus.total}
+            </span>
+          </div>
+        </div>
+      ) : null}
 
       <SegmentedTabs
         tabs={[

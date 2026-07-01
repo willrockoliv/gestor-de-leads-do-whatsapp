@@ -6,6 +6,7 @@ import { getFunnelTemplates, updateFunnel, getTenant, type TenantResponse, type 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import WhatsAppConnectionCard from "@/components/whatsapp-connection-card";
 import { toast } from "sonner";
 
 export default function OnboardingPage() {
@@ -91,30 +92,39 @@ export default function OnboardingPage() {
           <CardHeader>
             <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">Bem-vindo(a) ao Gestor de Leads!</CardTitle>
             <CardDescription>
-              Antes de começar, personalize seu funil de vendas. Você pode escolher um template pronto ou configurar depois.
+              Antes de começar, conecte seu WhatsApp e personalize seu funil de vendas.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <Button onClick={() => setStep(1)} className="w-full">Escolher Template</Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (tenant?.id) {
-                  localStorage.setItem(`onboarding_done_${tenant.id}`, "1");
-                }
-                router.push("/dashboard");
-              }}
-            >
-              Configurar depois
-            </Button>
+            <Button onClick={() => setStep(1)} className="w-full">Começar onboarding</Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Etapa 1: Seleção de template
+  // Etapa 1: Conexão com WhatsApp
   if (step === 1) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0B1120] p-4">
+        <div className="w-full max-w-2xl space-y-4">
+          <WhatsAppConnectionCard
+            autoConnect
+            hideActionButtons
+            hideQrRefreshButton
+            description="Estamos gerando seu QR Code automaticamente. Escaneie com o WhatsApp no celular ou siga para o próximo passo para configurar o funil."
+          />
+          <div className="flex gap-2">
+            <Button onClick={() => setStep(0)} variant="outline">Voltar</Button>
+            <Button onClick={() => setStep(2)}>Continuar para funil</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Etapa 2: Seleção de template
+  if (step === 2) {
     // Suporte para resposta do backend como Record<string, string> ou Record<string, { name, funnel_config }>
     const templateEntries = Object.entries(templates);
     return (
@@ -161,7 +171,7 @@ export default function OnboardingPage() {
             </div>
             <Separator className="my-4" />
             <div className="flex gap-2">
-              <Button onClick={() => setStep(0)} variant="outline">Voltar</Button>
+              <Button onClick={() => setStep(1)} variant="outline">Voltar</Button>
               <Button onClick={handleApplyTemplate} disabled={!selected || saving}>
                 {saving ? "Aplicando..." : "Aplicar e Começar"}
               </Button>

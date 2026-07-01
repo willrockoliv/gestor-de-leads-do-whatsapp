@@ -263,13 +263,52 @@ export function getDashboardStats() {
 
 // ---------- WhatsApp ----------
 export interface WhatsAppStatus {
+  status:
+    | "pending"
+    | "qr_code_ready"
+    | "connecting"
+    | "connected"
+    | "disconnected"
+    | "error";
+  phone: string | null;
+  connected_since: string | null;
+}
+
+export interface WhatsAppConnectResponse {
+  session_id: string;
+  status: string;
+}
+
+export interface WhatsAppQRCodeResponse {
+  status: string;
+  qr_code: string | null;
+  phone: string | null;
+}
+
+interface RawWhatsAppStatus {
   status: string;
   phone: string | null;
   connected_since: string | null;
 }
 
 export function getWhatsAppStatus() {
-  return request<WhatsAppStatus>("/whatsapp/status");
+  return request<RawWhatsAppStatus>("/whatsapp/status").then((status) => ({
+    ...status,
+    status: status.status.toLowerCase() as WhatsAppStatus["status"],
+  }));
+}
+
+export function connectWhatsApp() {
+  return request<WhatsAppConnectResponse>("/whatsapp/connect", {
+    method: "POST",
+  });
+}
+
+export function getWhatsAppQRCode() {
+  return request<WhatsAppQRCodeResponse>("/whatsapp/qrcode").then((response) => ({
+    ...response,
+    status: response.status.toLowerCase(),
+  }));
 }
 
 export { ApiError };
