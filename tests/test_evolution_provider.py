@@ -1,7 +1,7 @@
 """Unit tests for Evolution API WhatsApp provider."""
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from app.providers.whatsapp.evolution import EvolutionWhatsAppProvider
@@ -9,7 +9,6 @@ from app.providers.whatsapp.interface import (
     ProviderSessionStatus,
     WhatsAppProviderAlreadyExistsError,
     WhatsAppProviderError,
-    WhatsAppProviderUnavailableError,
 )
 from app.models import SessionStatus
 

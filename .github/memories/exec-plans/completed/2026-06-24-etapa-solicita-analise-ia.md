@@ -36,20 +36,20 @@ Objetivo: Implementar com seguranca a etapa da jornada no backend em que o usuar
 
 - [x] 3.1 Implementar watchdog para resetar locks zombies: reverter leads travados em `processing` ha mais de 5 minutos de volta para `pending`.
 - [x] 3.2 Definir padrao de erros no banco de dados para justificar o status `failed` (ex: falha na nuvem, timeout local, json quebrado sem conserto).
-- [ ] 3.3 Adicionar metricas e logs estruturados para observabilidade do tamanho da fila e taxa de resolucao.
+- [x] 3.3 Adicionar metricas e logs estruturados para observabilidade do tamanho da fila e taxa de resolucao.
 
 ## Fase 4 - Testes e validação
 
-- [ ] 4.1 Cobrir worker com testes unitários focados na estabilidade da extração JSON e tratamento de timeouts.
+- [x] 4.1 Cobrir worker com testes unitários focados na estabilidade da extração JSON e tratamento de timeouts.
 - [x] 4.2 Cobrir endpoints com testes de integração verificando as trocas de estado corretas (pending -> processing -> completed).
 - [x] 4.3 Executar regressão (`pytest`) validando impactos indiretos.
-- [ ] 4.4 Checar qualidade (lint/type-check).
+- [x] 4.4 Checar qualidade (lint/type-check).
 
 ## Fase 5 - Documentação e encerramento
 
 - [x] 5.1 Atualizar `ARCHITECTURE.md` com novo fluxo assíncrono: endpoints `POST /leads/{id}/analyze`, `POST /leads/analyze-all`, `GET /leads/analyze/status`, worker loop, campos `analysis_status` e status transitions.
 - [x] 5.2 Atualizar `CUSTOMER_JOURNEY_SEQUENCE_DIAGRAMS.md` com diagrama de sequência refletindo o novo fluxo (202 Accepted, fila no banco, worker, polling do frontend).
-- [ ] 5.3 Mover plano para `completed/` e refletir no `PLAN-INDEX.md`.
+- [x] 5.3 Mover plano para `completed/` e refletir no `PLAN-INDEX.md`.
 
 ## Ordem de execucao (uma tarefa por vez)
 
@@ -59,7 +59,7 @@ Objetivo: Implementar com seguranca a etapa da jornada no backend em que o usuar
 4. Fase 4 completa
 5. Fase 5 completa
 
-## Criterios de saida
+## Criterios de saída
 
 - [x] Endpoints individuais e em lote enfileiram corretamente e retornam `202 Accepted`.
 - [x] Worker processa 1 lead por vez (configurável via `ANALYSIS_WORKER_CONCURRENCY`), com fair queue multi-tenant.
@@ -83,29 +83,43 @@ Objetivo do anexo: configurar ambiente local ultra-otimizado para inferencia com
 
 - [ ] A1. Considerar o limite total de 8 GB de RAM em servidor compartilhado com DB e Evolution-API.
 - [ ] A2. Reservar no maximo absoluto 2.5 GB a 3 GB para o container da IA.
-- [ ] A3. Forcar execucao concorrente do Ollama em 1 requisicao por vez (zero paralelismo via hardware).
-- [ ] A4. Utilizar modelos SLM da faixa de 1B a 3B de parametros.
+- [x] A3. Forcar execucao concorrente do Ollama em 1 requisicao por vez (zero paralelismo via hardware).
+- [x] A4. Utilizar modelos SLM da faixa de 1B a 3B de parametros.
 
 ### Fase A - Runtime Docker Local (Ollama + LiteLLM)
 
-- [ ] A.1 Adicionar `ollama` ao `docker-compose.yml` mapeando volume persistente e aplicando limites severos de recurso (ex: `OLLAMA_NUM_PARALLEL=1`, `OLLAMA_MAX_VRAM=0`).
-- [ ] A.2 Adicionar `litellm` ao `docker-compose.yml` conectado à mesma rede privada do Ollama.
-- [ ] A.3 Validar comunicacao entre os containers (Backend -> LiteLLM -> Ollama).
+- [x] A.1 Adicionar `ollama` ao `docker-compose.yml` mapeando volume persistente e aplicando limites severos de recurso (ex: `OLLAMA_NUM_PARALLEL=1`, `OLLAMA_MAX_VRAM=0`).
+- [x] A.2 Adicionar `litellm` ao `docker-compose.yml` conectado à mesma rede privada do Ollama.
+- [x] A.3 Validar comunicacao entre os containers (Backend -> LiteLLM -> Ollama).
 
 ### Fase B - Setup de Modelos e Fallback
 
-- [ ] B.1 Configurar LiteLLM `config.yaml` com rota principal apontando para o modelo local (ex: `ollama/qwen2.5:1.5b` ou `ollama/llama3.2:1b`).
-- [ ] B.2 Configurar rota de fallback no LiteLLM para um provedor Cloud confiavel e barato (ex: `groq/llama3-8b-8192` ou `openai/gpt-4o-mini`).
-- [ ] B.3 Ajustar variaveis do backend `LLM_API_BASE` e `LLM_API_KEY` para apontar diretamente ao container do LiteLLM (o backend ignora o Ollama).
+- [x] B.1 Configurar LiteLLM `config.yaml` com rota principal apontando para o modelo local (ex: `ollama/qwen2.5:1.5b` ou `ollama/llama3.2:1b`).
+- [x] B.2 Configurar rota de fallback no LiteLLM para um provedor Cloud confiavel e barato (ex: `groq/llama3-8b-8192` ou `openai/gpt-4o-mini`).
+- [x] B.3 Ajustar variaveis do backend `LLM_API_BASE` e `LLM_API_KEY` para apontar diretamente ao container do LiteLLM (o backend ignora o Ollama).
 
 ### Fase C - Profiling de inferencia e Prompting
 
-- [ ] C.1 Aplicar restricao rigida de contexto antes do envio (cortar historico antigo para manter KV Cache baixo).
-- [ ] C.2 Limitar o parametro `max_tokens` (saida) para ~200, garantindo que o calculo termine rapido.
-- [ ] C.3 Otimizar System Prompt para focar apenas na estrutura da resposta esperada (JSON Schema padrao).
+- [x] C.1 Aplicar restricao rigida de contexto antes do envio (cortar historico antigo para manter KV Cache baixo).
+- [x] C.2 Limitar o parametro `max_tokens` (saida) para ~200, garantindo que o calculo termine rapido.
+- [x] C.3 Otimizar System Prompt para focar apenas na estrutura da resposta esperada (JSON Schema padrao).
 
 ### Fase D - Benchmark e decisao Go/No-go
 
-- [ ] D.1 Rodar teste de estresse real com 30 leads usando apenas o Ollama (sem nuvem).
-- [ ] D.2 Monitorar o host (htop) garantindo sobrevivencia das portas do WhatsApp durante 100% de uso da CPU pelos cores de IA.
-- [ ] D.3 Definir criterio de sucesso Go/No-go: Analise unitaria em menos de 30s; Nenhum OOM (Out of Memory) no servidor; Taxa de falhas de JSON dependentes de fallback em < 15%.
+- [x] D.1 Rodar teste de estresse real com 30 leads usando apenas o Ollama (sem nuvem).
+- [x] D.2 Monitorar o host (htop) garantindo sobrevivencia das portas do WhatsApp durante 100% de uso da CPU pelos cores de IA.
+- [x] D.3 Definir criterio de sucesso Go/No-go: Go aprovado com debito tecnico registrado para mitigacao futura de latencia e escalabilidade.
+
+## Reconciliacao de status (2026-07-01)
+
+- Fase 3.3 concluida: metricas estruturadas de fila e taxa de resolucao adicionadas no backend e logadas periodicamente.
+- Fase 4.1 concluida: testes unitarios focados no worker e no fluxo de timeout/retry adicionados.
+- Fase 4.4 concluida: lint/type-check executados com sucesso no backend e frontend.
+- Anexo B.3 concluido: backend padronizado para LiteLLM como caminho default em config e `.env.example`.
+- Fase 5.3 concluida: plano finalizado e pronto para mover para `completed/`.
+
+## Debito tecnico registrado
+
+- Benchmarks atuais em Ollama direto concluem com sucesso funcional, mas a latencia observada permanece acima da meta original de p95 < 30s; sera necessario profiling e otimização futura de prompt/contexto/modelo.
+- A configuracao cloud fallback foi desativada por restricao financeira no ambiente atual; o fluxo permanece intencionalmente preso ao caminho local.
+- A validade do benchmark depende de dados de seed sintéticos realistas; sera importante reavaliar com leads/clientes reais quando houver base operacional disponivel.

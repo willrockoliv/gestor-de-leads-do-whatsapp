@@ -1,16 +1,14 @@
 """Integration tests for Evolution API WhatsApp provider with mock HTTP server."""
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.providers.whatsapp.evolution import EvolutionWhatsAppProvider
 from app.providers.whatsapp.interface import (
-    ProviderSessionStatus,
     WhatsAppProviderAlreadyExistsError,
-    WhatsAppProviderError,
 )
 from app.models import SessionStatus
 

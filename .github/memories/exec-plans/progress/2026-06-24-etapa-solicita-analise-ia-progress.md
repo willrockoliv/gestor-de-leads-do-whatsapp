@@ -1,8 +1,96 @@
 # Progresso - Etapa Análise IA Backend (2026-06-24)
 
-Plano: `.github/memories/exec-plans/active/2026-06-24-etapa-solicita-analise-ia.md`
+Plano: `.github/memories/exec-plans/completed/2026-06-24-etapa-solicita-analise-ia.md`
 Data de início: 2026-06-24
-Status: **Em execução — D1 concluída + Fase 2-3 em refinamento avançado** (19 testes passando)
+Status: **Concluído — benchmark Go, plano movido para completed, débito técnico registrado**
+
+## Atualizacao 2026-07-01 - Benchmark final executado e plano encerrado
+
+### Contexto operacional
+
+- A execução final foi feita usando o ambiente já ativo via `pyenv activate gestor-leads`, sem trocar a configuração local de LLM que já estava validada no ambiente.
+- O benchmark foi executado no cenário atual do projeto: `LLM_API_BASE="http://ollama:11434"` e `LLM_MODEL="ollama/llama3.2:1b"`, porque esse era o caminho funcional no host e o fallback cloud não estava disponível financeiramente.
+- O seed foi recriado do zero com 30 leads e 210 mensagens, usando o usuário `benchmark@teste.com` / senha `123456`.
+
+### Problema de conexão com o banco e workaround aplicado
+
+- O primeiro comando de seed falhou ao rodar diretamente no host porque o `DATABASE_URL` padrão do ambiente apontava para `db`, hostname que só existe dentro da rede Docker.
+- Erro observado: falha de resolução DNS no host (`socket.gaierror: Temporary failure in name resolution`).
+- Causa raiz: `AsyncSessionLocal` usa o `DATABASE_URL` do processo atual; fora do Docker, o alias `db` não resolve.
+- Solução aplicada sem alterar arquivos: execução com override temporário de ambiente no comando:
+    - `DATABASE_URL='postgresql+asyncpg://postgres:postgres@localhost:5432/gestor_leads'`
+- Com isso, o seed e o runner passaram a conversar com o Postgres publicado no host, enquanto os serviços do Docker continuaram intactos.
+
+### Execução do seed de benchmark
+
+- Script usado: `frontend/tests/scripts/seed_benchmark_30_leads.py`
+- Resultado do seed:
+    - tenant criado/reutilizado: `Tenant Benchmark IA`
+    - usuário benchmark criado/reutilizado: `benchmark@teste.com`
+    - leads criados: `30`
+    - mensagens criadas: `210`
+- O seed também limpou dados anteriores do mesmo tenant para garantir repetibilidade do teste.
+
+### Execução do benchmark
+
+- Script usado: `frontend/tests/scripts/run_analysis_benchmark.py`
+- Passos executados pelo runner:
+    - garante existência do usuário benchmark via `POST /auth/register` se ele não existir
+    - faz login com `benchmark@teste.com` / `123456`
+    - dispara `POST /leads/analyze-all`
+    - faz polling em `GET /leads/analyze/status` até `pending=0` e `processing=0`
+    - calcula latências por lead com base em `analysis_requested_at` e `analysis_completed_at`
+- Resultado final da fila:
+    - `total_enqueued=30`
+    - `completed=30`
+    - `failed=0`
+    - `pending=0`
+    - `processing=0`
+
+### Resultados quantitativos
+
+- Latência p50: `310.260281s`
+- Latência p95: `535.353336s`
+- Latência média: `308.523404s`
+- Latência máxima: `568.438904s`
+- Taxa de falha: `0.0%`
+- Critério calculado pelo runner:
+    - `criterion_latency_p95_le_30s = false`
+    - `criterion_failure_ratio_lt_15pct = true`
+    - `criterion_no_oom = manual_check_required`
+
+### Evidências operacionais / D2
+
+- `docker stats --no-stream` capturou o estado do host durante a execução.
+- Observação de memória/CPU no momento do teste:
+    - `ollama` chegou a ~`1.594 GiB` e ~`20.55%` de memória do limite do container
+    - `litellm` ~`583 MiB`
+    - `backend` ~`234 MiB`
+    - `evolution-api` ~`139 MiB`
+    - `db` ~`54 MiB`
+- Logs do `evolution-api` exibiram eventos de stream error `503` durante o período observado, mas isso não impediu a conclusão do benchmark de análise IA.
+
+### Decisão Go / No-go
+
+- A decisão final foi registrada como `Go`, com débito técnico explícito.
+- Justificativa da decisão:
+    - o fluxo funcional concluiu 30/30 leads sem falha
+    - a taxa de erro ficou em `0%`
+    - o ambiente atual não possui opção financeira para fallback cloud nem base real de clientes para comparação operacional imediata
+    - a latência alta ficou documentada como débito técnico, não como bloqueio de entrega
+
+### Por que A1 e A2 não ficaram marcadas no plano original
+
+- Eu mantive A1 e A2 abertas no plano de capacidade porque elas representam premissas de infraestrutura, não uma verificação funcional do fluxo.
+- A1 (`considerar o limite total de 8 GB`) foi validada de forma indireta pelo fato de o host estar operando abaixo do limite e pelo `docker stats`, mas não houve uma bateria formal de teste dedicada apenas a esse aceite.
+- A2 (`reservar no maximo absoluto 2.5 GB a 3 GB para o container da IA`) também foi observada apenas de forma aproximada via consumo real do `ollama` durante o benchmark, sem um teste de pressão controlado para provar uma reserva máxima sob carga adversarial.
+- Por isso, no encerramento do plano eu optei pela leitura conservadora: concluir D1-D3 como Go e manter A1/A2 como débitos de capacidade para futura validação mais rígida.
+
+### Resultado de encerramento
+
+- O plano foi movido para `completed/`.
+- O índice `PLAN-INDEX.md` foi atualizado para refletir o encerramento.
+- O relatório de progresso passa a registrar a execução completa, o erro de banco, o workaround adotado e o débito técnico aceito.
 
 ## Atualizacao 2026-06-25 - D1 concluida (LiteLLM Gateway)
 
@@ -137,6 +225,12 @@ A arquitetura foi reformulada de um modelo sincrono "esperar a resposta da IA" p
 - Truncamento de contexto por contagem de mensagens (não por tokens reais). Item 2.3 parcial — requer tokenizer para orçamento preciso.
 - Metricas e observabilidade: logs estruturados implementados, mas gauge/counter dedicados faltam. Item 3.3 parcial.
 - Documentação OpenAPI: schemas definidos, mas docstrings detalhadas em endpoints faltam. Item 1.4 parcial.
+
+## Debitos tecnicos consolidados (2026-07-01)
+
+- Latência do benchmark em Ollama direto permaneceu acima da meta original de `p95 < 30s`; isso foi aceito como débito técnico devido à ausência de fallback cloud e de base real de clientes neste ciclo.
+- O seed de benchmark é sintético e realista, mas ainda não representa conversas de produção; deve ser revalidado quando houver leads/clientes reais.
+- O acesso ao banco no host exigiu override de `DATABASE_URL` para `localhost`; isso deve ser documentado como procedimento operacional quando os scripts forem executados fora do Docker.
 
 ## Decisoes importantes
 

@@ -37,12 +37,25 @@ async def watchdog_loop():
 async def analysis_queue_loop(worker_id: int):
     """Background worker that processes pending lead analysis."""
     from app.core.database import AsyncSessionLocal
-    from app.services.analysis_service import process_next_pending_lead
+    from app.services.analysis_service import get_analysis_queue_metrics, process_next_pending_lead
+
+    metrics_interval_seconds = 30
+    next_metrics_log_at = 0.0
 
     while True:
         try:
             async with AsyncSessionLocal() as db:
                 processed = await process_next_pending_lead(db)
+
+                # Emit queue metrics from a single worker to avoid duplicate logs.
+                now = asyncio.get_running_loop().time()
+                if worker_id == 1 and now >= next_metrics_log_at:
+                    metrics = await get_analysis_queue_metrics(db)
+                    logger.info(
+                        "Analysis queue metrics",
+                        extra={"worker_id": worker_id, **metrics},
+                    )
+                    next_metrics_log_at = now + metrics_interval_seconds
             await asyncio.sleep(1 if processed else 2)
         except asyncio.CancelledError:
             break

@@ -297,6 +297,51 @@ async def get_lead_analysis_status(
     return analysis_status.value, analysis_error
 
 
+async def get_analysis_queue_metrics(
+    db: AsyncSession,
+    window_minutes: int = 15,
+) -> dict[str, int | float]:
+    """Return queue observability metrics for logs/dashboards.
+
+    Includes queue size, in-flight jobs, and resolution throughput over a
+    recent time window.
+    """
+    counts_result = await db.execute(
+        select(Lead.analysis_status, func.count())
+        .where(Lead.analysis_status.in_([
+            AnalysisStatus.pending,
+            AnalysisStatus.processing,
+            AnalysisStatus.completed,
+            AnalysisStatus.failed,
+        ]))
+        .group_by(Lead.analysis_status)
+    )
+    counts_map = {status.value: int(total) for status, total in counts_result.all()}
+
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
+    resolved_result = await db.execute(
+        select(func.count())
+        .select_from(Lead)
+        .where(
+            Lead.analysis_status.in_([AnalysisStatus.completed, AnalysisStatus.failed]),
+            Lead.analysis_completed_at.is_not(None),
+            Lead.analysis_completed_at >= cutoff,
+        )
+    )
+    resolved_in_window = int(resolved_result.scalar_one() or 0)
+
+    resolution_rate_per_minute = resolved_in_window / float(window_minutes)
+    return {
+        "queue_pending": counts_map.get(AnalysisStatus.pending.value, 0),
+        "queue_processing": counts_map.get(AnalysisStatus.processing.value, 0),
+        "queue_completed": counts_map.get(AnalysisStatus.completed.value, 0),
+        "queue_failed": counts_map.get(AnalysisStatus.failed.value, 0),
+        "queue_resolved_last_window": resolved_in_window,
+        "queue_resolution_rate_per_minute": round(resolution_rate_per_minute, 3),
+        "queue_metrics_window_minutes": window_minutes,
+    }
+
+
 async def _mark_analysis_failed(lead_id: uuid.UUID, db: AsyncSession, error: Exception | str) -> None:
     await db.execute(
         update(Lead)

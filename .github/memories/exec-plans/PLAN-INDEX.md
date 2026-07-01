@@ -6,13 +6,13 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 ## .github/memories/exec-plans/active/ - planos em andamento
 
-- 2026-06-24-etapa-solicita-analise-ia.md
-  - Backend assíncrono para análise IA: endpoints 202 Accepted, worker em background, fila no banco, confiabilidade operacional, LiteLLM + Ollama local com fallback cloud.
-
 - 2026-06-24-etapa-analise-ia-frontend.md
   - Frontend para análise IA: integração com backend assíncrono, polling de status, atualização incremental de leads, feedback visual de progresso e erros.
 
 ## .github/memories/exec-plans/completed/ - planos completados
+
+- 2026-06-24-etapa-solicita-analise-ia.md
+  - Backend assíncrono para análise IA: endpoints 202 Accepted, worker em background, fila no banco, confiabilidade operacional, LiteLLM + Ollama local com fallback cloud. Benchmark Go com débito técnico registrado.
 
 - 2026-04-15-plano-inicial.md
   - Plano principal do produto concluído para escopo dev: fases 0 a 8 implementadas, com produção adiada para ciclo futuro.

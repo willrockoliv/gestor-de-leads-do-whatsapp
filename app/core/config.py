@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # LLM
     LLM_API_KEY: str = ""
     LLM_API_BASE: str = ""
-    LLM_MODEL: str = "gpt-4o-mini"
+    LLM_MODEL: str = ""
 
     # WhatsApp Provider Selection
     WHATSAPP_PROVIDER: str = "evolution"  # "evolution" | "waha"

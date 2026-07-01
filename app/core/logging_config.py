@@ -23,6 +23,21 @@ class JsonFormatter(logging.Formatter):
             if value is not None:
                 payload[key] = value
 
+        # Preserve primitive extra fields for structured observability metrics.
+        reserved = {
+            "name", "msg", "args", "levelname", "levelno", "pathname", "filename",
+            "module", "exc_info", "exc_text", "stack_info", "lineno", "funcName",
+            "created", "msecs", "relativeCreated", "thread", "threadName", "processName",
+            "process", "taskName", "message", "asctime",
+        }
+        for key, value in record.__dict__.items():
+            if key in reserved or key.startswith("_"):
+                continue
+            if key in payload:
+                continue
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                payload[key] = value
+
         return json.dumps(payload, ensure_ascii=False)
 
 
