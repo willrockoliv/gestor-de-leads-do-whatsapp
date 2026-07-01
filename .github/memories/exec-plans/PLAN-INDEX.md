@@ -6,10 +6,12 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 ## .github/memories/exec-plans/active/ - planos em andamento
 
-- 2026-06-24-etapa-analise-ia-frontend.md
-  - Frontend para análise IA: integração com backend assíncrono, polling de status, atualização incremental de leads, feedback visual de progresso e erros.
+- Nenhum plano ativo no momento.
 
 ## .github/memories/exec-plans/completed/ - planos completados
+
+- 2026-06-24-etapa-analise-ia-frontend.md
+  - Frontend da análise IA assíncrona concluído: polling silencioso (4s), atualização incremental nas telas de Dashboard/Leads/Lead Detail, feedback visual de conclusão/falha e validação de qualidade (lint/type-check).
 
 - 2026-06-24-etapa-solicita-analise-ia.md
   - Backend assíncrono para análise IA: endpoints 202 Accepted, worker em background, fila no banco, confiabilidade operacional, LiteLLM + Ollama local com fallback cloud. Benchmark Go com débito técnico registrado.

@@ -249,6 +249,11 @@ frontend/           # Next.js 16 + TypeScript + Tailwind + shadcn/ui
 | POST | `/leads/analyze-all` | Enfileira análise em lote dos leads ativos e retorna `202 Accepted` |
 | GET | `/leads/analyze/status` | Retorna contagem e ids por status da fila (`pending`, `processing`, `completed`, `failed`) |
 
+Comportamento do frontend para análise assíncrona:
+- Ao solicitar análise (individual ou em lote), a UI exibe feedback de enfileiramento (`202 Accepted`).
+- Acompanhamento de progresso via polling silencioso a cada 4 segundos usando `GET /leads/analyze/status`.
+- Atualização incremental por lead com indicação de andamento, conclusão e falha final (`failed`) com mensagem de erro orientada à ação.
+
 ### Dashboard
 | Método | Rota | Descrição |
 |--------|------|-----------|

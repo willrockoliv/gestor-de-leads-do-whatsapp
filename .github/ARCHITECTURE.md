@@ -62,6 +62,7 @@ tests/                 # Testes backend unitários e integração (pytest)
     - `POST /leads/{id}/analyze`: enfileira o lead (`analysis_status=pending`) e retorna `202 Accepted` com `job_id`.
     - `POST /leads/analyze-all`: enfileira em lote os leads ativos elegíveis e retorna `202 Accepted` com os ids enfileirados.
     - `GET /leads/analyze/status`: endpoint de polling para progresso por tenant (`pending`, `processing`, `completed`, `failed`).
+    - Frontend (Dashboard, Leads e Lead Detail) usa polling silencioso a cada 4 segundos para atualização incremental por lead e feedback de conclusão/falha.
     - Endpoints de análise protegidos por rate limit por tenant/rota para evitar abuso de custo e saturação de chamadas LLM.
 - **Dashboard:** listagem, filtros, estatísticas e detalhamento de leads.
 

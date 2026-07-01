@@ -29,7 +29,7 @@ applyTo: "**/*"
 ### Bootstrap & Execução (Recomendado: Docker Compose)
 1. `docker-compose up --build`  
    - Sobe backend (FastAPI), frontend (Next.js) e banco PostgreSQL.
-   - Backend: http://localhost:8000  |  Frontend: http://localhost:3000
+   - Backend: http://localhost:8000  |  Frontend: http://localhost:8080
 2. Para popular dados de teste: `docker-compose exec backend python3 frontend/tests/scripts/seed_e2e.py`
 
 ### Dev Local Manual (Avançado)
@@ -88,7 +88,7 @@ applyTo: "**/*"
 - Se usar dev local, use as versões de Python/Node especificadas.
 
 ### Validação de Frontend (Obrigatória para Agentes)
-- **Use o Integrated Browser do VS Code** para validar visual e comportamento das páginas (`http://localhost:3000/...`).
+- **Use o Integrated Browser do VS Code** para validar visual e comportamento das páginas (`http://localhost:8080/...`).
 - **Após qualquer alteração de frontend, navegue por TODAS as telas alteradas** (incluindo rotas públicas e autenticadas impactadas).
 - **Quando a tarefa envolver código em `frontend/` ou integração frontend-backend**, siga o padrão de pastas do projeto em Next.js, valide endpoints alterados e atualize componentes e páginas conforme `.github/rfcs/002-frontend-redesign.md`.
 - **Para validar fluxos críticos manualmente**, rode o seed E2E a partir da raiz do projeto para garantir dados consistentes no frontend:

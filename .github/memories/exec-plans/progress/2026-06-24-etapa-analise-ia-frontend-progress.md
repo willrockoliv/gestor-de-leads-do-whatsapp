@@ -1,14 +1,15 @@
 # Progresso - Etapa Análise IA Frontend (2026-06-24)
 
 Plano: `.github/memories/exec-plans/active/2026-06-24-etapa-analise-ia-frontend.md`
-Data de início: 2026-06-24 (aguardando backend)
-Status: Bloqueado por dependência do backend
+Data de início: 2026-06-24
+Status: Concluído
 
 ## Status da implementação
 
 - Plano criado como placeholder.
 - Backend assíncrono concluído e frontend iniciado para preparação de contrato.
 - Ajustes de base concluídos para habilitar a Fase 1 (integração/polling) sem retrabalho de contrato.
+- Fase de integração com polling concluída nas telas de Leads, Lead Detail e Dashboard.
 
 ## Atualização 2026-07-01 - Preparação de contrato concluída
 
@@ -34,7 +35,44 @@ Status: Bloqueado por dependência do backend
 
 ### Próximo passo recomendado
 
-- Iniciar implementação do polling silencioso (3-5s) com atualização incremental por `lead_ids` enfileirados usando `GET /leads/analyze/status`.
+- Plano concluído. Próximo passo recomendado: acompanhar métricas de UX e volume de polling em produção para ajuste fino do intervalo.
+
+## Atualização 2026-07-01 - Implementação concluída
+
+### Implementações realizadas
+
+- Polling silencioso implementado no frontend com intervalo de 4 segundos:
+	- `frontend/src/app/(authenticated)/leads/page.tsx`
+	- `frontend/src/app/(authenticated)/leads/[id]/page.tsx`
+	- `frontend/src/app/(authenticated)/dashboard/page.tsx`
+- Atualização incremental de estado por lead durante processamento:
+	- transições `pending`/`processing`/`completed`/`failed` refletidas sem travar navegação.
+	- limpeza de `is_processing` quando job finaliza.
+- Feedback visual de conclusão e erro:
+	- label de "Análise concluída" na lista de leads.
+	- mensagem de erro final por lead (`analysis_error`) e toast quando o status final é `failed`.
+- Polling de detalhe por lead:
+	- uso de `GET /leads/{id}/analyze/status` para sincronizar status no detalhe.
+	- refresh automático de dados do lead quando análise conclui para refletir resumo/score atualizados.
+- Documentação atualizada:
+	- `README.md` com comportamento de polling/feedback da UI.
+	- `.github/ARCHITECTURE.md` com nota de integração de polling no frontend.
+
+### Validação
+
+- `docker compose exec frontend npm run lint` sem erros.
+- `docker compose exec frontend npx tsc --noEmit` sem erros.
+- Navegação manual em rotas autenticadas validada no navegador integrado (login, dashboard, leads e detalhe).
+
+## Aprendizados
+
+- Para evitar falso positivo de lint (`react-hooks/set-state-in-effect`), foi necessário remover `setState` síncrono dentro de `useEffect` e derivar os ids monitorados dentro do próprio ciclo de polling.
+- O endpoint agregado de status (`/leads/analyze/status`) combinado com endpoint por lead (`/leads/{id}/analyze/status`) reduz custo de atualização e melhora o feedback de erro final sem chamadas excessivas.
+
+## Débitos técnicos
+
+- Extrair a lógica de polling para um hook compartilhado (ex.: `useAnalysisPolling`) para reduzir duplicação entre Dashboard e Leads.
+- Consolidar estratégia de deduplicação de toasts de falha para sessão inteira, não apenas por ciclo ativo em memória.
 
 ## Dependências
 
@@ -51,5 +89,6 @@ Status: Bloqueado por dependência do backend
 
 ## Decisões importantes
 
-- Frontend iniciará apenas após backend estar documentado e funcional.
-- Polling será implementado incrementalmente: começar com intervalo de 3-5s.
+- Frontend iniciou integração após contrato backend estabilizado e documentado.
+- Intervalo de polling fixado em 4 segundos (dentro da janela 3-5s do plano), priorizando responsividade sem agressividade excessiva.
+- Atualização incremental prioriza experiência de continuidade da tela (sem refresh total da listagem a cada ciclo).

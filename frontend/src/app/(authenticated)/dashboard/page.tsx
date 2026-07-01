@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 
 import Link from "next/link";
 import {
@@ -9,6 +9,9 @@ import {
   getLead,
   getTenant,
   analyzeAll,
+  getAnalyzeStatus,
+  getLeadAnalyzeStatus,
+  type AnalysisStatus,
   type DashboardStats,
   type LeadListItem,
   type LeadDetail,
@@ -42,6 +45,9 @@ export default function DashboardPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [funnelStages, setFunnelStages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trackedPollingIds, setTrackedPollingIds] = useState<Set<string>>(new Set());
+  const [pollAllStatuses, setPollAllStatuses] = useState(false);
+  const failedNotifiedIdsRef = useRef<Set<string>>(new Set());
   // Sliding panel UI state
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedLeadDetail, setSelectedLeadDetail] = useState<LeadDetail | null>(null);
@@ -78,6 +84,15 @@ export default function DashboardPage() {
     try {
       const res = await analyzeAll();
       if (res.total_enqueued > 0) {
+        if ((res.lead_ids ?? []).length === 0) {
+          setPollAllStatuses(true);
+        } else {
+          setTrackedPollingIds((prev) => {
+            const next = new Set(prev);
+            (res.lead_ids ?? []).forEach((id) => next.add(id));
+            return next;
+          });
+        }
         const enqueuedIds = new Set(res.lead_ids ?? []);
         setLeads((prev) =>
           prev.map((lead) =>
@@ -99,6 +114,145 @@ export default function DashboardPage() {
       setAnalyzing(false);
     }
   };
+
+  useEffect(() => {
+    const leadIdsInProgress = leads
+      .filter(
+        (lead) =>
+          lead.analysis_status === "pending" ||
+          lead.analysis_status === "processing" ||
+          lead.is_processing
+      )
+      .map((lead) => lead.id);
+
+    if (
+      !pollAllStatuses &&
+      trackedPollingIds.size === 0 &&
+      leadIdsInProgress.length === 0
+    ) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    async function runPollingCycle() {
+      try {
+        const idsToTrack = Array.from(
+          new Set([...trackedPollingIds, ...leadIdsInProgress])
+        );
+        const status = await getAnalyzeStatus(pollAllStatuses ? undefined : idsToTrack);
+        if (isCancelled) {
+          return;
+        }
+
+        const pendingIds = status.pending_ids ?? [];
+        const processingIds = status.processing_ids ?? [];
+        const completedIds = status.completed_ids ?? [];
+        const failedIds = status.failed_ids ?? [];
+
+        const statusById = new Map<string, AnalysisStatus>();
+        pendingIds.forEach((id) => statusById.set(id, "pending"));
+        processingIds.forEach((id) => statusById.set(id, "processing"));
+        completedIds.forEach((id) => statusById.set(id, "completed"));
+        failedIds.forEach((id) => statusById.set(id, "failed"));
+
+        setLeads((prev) =>
+          prev.map((lead) => {
+            const nextStatus = statusById.get(lead.id);
+            if (!nextStatus) {
+              return lead;
+            }
+
+            if (nextStatus === "pending" || nextStatus === "processing") {
+              return {
+                ...lead,
+                analysis_status: nextStatus,
+                analysis_error: null,
+                is_processing: true,
+              };
+            }
+
+            return {
+              ...lead,
+              analysis_status: nextStatus,
+              is_processing: false,
+            };
+          })
+        );
+
+        const newFailedIds = failedIds.filter(
+          (id) => !failedNotifiedIdsRef.current.has(id)
+        );
+        if (newFailedIds.length > 0) {
+          const failedDetails = await Promise.all(
+            newFailedIds.map(async (leadId) => {
+              try {
+                return await getLeadAnalyzeStatus(leadId);
+              } catch {
+                return null;
+              }
+            })
+          );
+
+          if (!isCancelled) {
+            failedDetails.forEach((detail) => {
+              if (!detail) {
+                return;
+              }
+
+              failedNotifiedIdsRef.current.add(detail.lead_id);
+              setLeads((prev) =>
+                prev.map((lead) =>
+                  lead.id === detail.lead_id
+                    ? {
+                        ...lead,
+                        analysis_status: detail.analysis_status,
+                        analysis_error: detail.analysis_error,
+                        is_processing: false,
+                      }
+                    : lead
+                )
+              );
+              toast.error(`Falha na análise de um lead${detail.analysis_error ? `: ${detail.analysis_error}` : ""}`);
+            });
+          }
+        }
+
+        const inProgressIds = new Set<string>([
+          ...pendingIds,
+          ...processingIds,
+        ]);
+
+        if (pollAllStatuses && inProgressIds.size === 0) {
+          setPollAllStatuses(false);
+        }
+
+        if (!pollAllStatuses) {
+          setTrackedPollingIds((prev) => {
+            const next = new Set<string>();
+            prev.forEach((id) => {
+              if (inProgressIds.has(id)) {
+                next.add(id);
+              }
+            });
+            return next;
+          });
+        }
+      } catch {
+        if (!isCancelled) {
+          toast.error("Erro ao consultar status de análise");
+        }
+      }
+    }
+
+    runPollingCycle();
+    const intervalId = window.setInterval(runPollingCycle, 4000);
+
+    return () => {
+      isCancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [leads, pollAllStatuses, trackedPollingIds]);
 
   // Fetch lead detail when selected
   useEffect(() => {

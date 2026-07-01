@@ -7,6 +7,7 @@ import {
   getMessages,
   getTenant,
   analyzeLead,
+  getLeadAnalyzeStatus,
   updateLeadStatus,
   updateLeadStage,
   type LeadDetail,
@@ -48,6 +49,8 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [statusDialog, setStatusDialog] = useState<"converted" | "lost" | null>(null);
+  const leadAnalysisStatus = lead?.analysis_status;
+  const leadIsProcessing = lead?.is_processing ?? false;
 
   const funnelStages = tenant?.funnel_config
     ? Object.values(tenant.funnel_config)
@@ -74,6 +77,69 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (!leadAnalysisStatus) {
+      return;
+    }
+
+    if (
+      leadAnalysisStatus !== "pending" &&
+      leadAnalysisStatus !== "processing" &&
+      !leadIsProcessing
+    ) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    async function pollLeadStatus() {
+      try {
+        const status = await getLeadAnalyzeStatus(id);
+        if (isCancelled) {
+          return;
+        }
+
+        setLead((prev) =>
+          prev
+            ? {
+                ...prev,
+                analysis_status: status.analysis_status,
+                analysis_error: status.analysis_error,
+                is_processing:
+                  status.analysis_status === "pending" ||
+                  status.analysis_status === "processing",
+              }
+            : prev
+        );
+
+        if (status.analysis_status === "completed") {
+          await refresh();
+        }
+
+        if (status.analysis_status === "failed" && status.analysis_error) {
+          toast.error(status.analysis_error);
+        }
+      } catch {
+        if (!isCancelled) {
+          toast.error("Erro ao consultar status da análise");
+        }
+      }
+    }
+
+    pollLeadStatus();
+    const intervalId = window.setInterval(pollLeadStatus, 4000);
+
+    return () => {
+      isCancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [
+    id,
+    leadAnalysisStatus,
+    leadIsProcessing,
+    refresh,
+  ]);
 
   async function handleAnalyze() {
     setAnalyzing(true);
