@@ -22,7 +22,9 @@ export function WhatsAppBanner() {
       <WifiOff className="h-4 w-4" />
       <span>
         WhatsApp desconectado.{" "}
-        {status.message || "Reconecte via QR Code nas configurações."}
+        {status.phone
+          ? `Último número conectado: ${status.phone}. Reconecte via QR Code nas configurações.`
+          : "Reconecte via QR Code nas configurações."}
       </span>
     </div>
   );

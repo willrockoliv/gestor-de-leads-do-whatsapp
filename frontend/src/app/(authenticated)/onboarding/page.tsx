@@ -2,21 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getFunnelTemplates, updateFunnel, getTenant, type TenantResponse } from "@/lib/api";
+import { getFunnelTemplates, updateFunnel, getTenant, type TenantResponse, type FunnelTemplateMap } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
-interface FunnelTemplate {
-  name: string;
-  funnel_config: Record<string, string>;
-}
-
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [templates, setTemplates] = useState<Record<string, FunnelTemplate>>({});
+  const [templates, setTemplates] = useState<FunnelTemplateMap>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,6 +27,24 @@ export default function OnboardingPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  function isNamedTemplate(
+    value: unknown
+  ): value is { name: string; funnel_config: Record<string, string> } {
+    if (!value || typeof value !== "object") return false;
+    const candidate = value as { name?: unknown; funnel_config?: unknown };
+    return (
+      typeof candidate.name === "string" &&
+      !!candidate.funnel_config &&
+      typeof candidate.funnel_config === "object" &&
+      !Array.isArray(candidate.funnel_config)
+    );
+  }
+
+  function isStageMap(value: unknown): value is Record<string, string> {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    return Object.values(value).every((item) => typeof item === "string");
+  }
+
   function handleSelectTemplate(key: string) {
     setSelected(key);
   }
@@ -43,9 +56,9 @@ export default function OnboardingPage() {
       // Suporte para ambos formatos de template
       let funnelConfig: Record<string, string> | undefined = undefined;
       const tmpl = templates[selected];
-      if (typeof tmpl === "object" && tmpl !== null && "funnel_config" in tmpl) {
+      if (isNamedTemplate(tmpl)) {
         funnelConfig = tmpl.funnel_config;
-      } else if (typeof tmpl === "object" && tmpl !== null) {
+      } else if (isStageMap(tmpl)) {
         funnelConfig = tmpl;
       }
       if (!funnelConfig) {
@@ -120,10 +133,10 @@ export default function OnboardingPage() {
                 // Suporte para formato antigo (direto) e novo (objeto)
                 let name = key;
                 let funnelConfig: Record<string, string> | undefined = undefined;
-                if (typeof tmpl === "object" && tmpl !== null && "funnel_config" in tmpl) {
+                if (isNamedTemplate(tmpl)) {
                   name = tmpl.name || key;
                   funnelConfig = tmpl.funnel_config;
-                } else if (typeof tmpl === "object" && tmpl !== null) {
+                } else if (isStageMap(tmpl)) {
                   funnelConfig = tmpl;
                 }
                 return (

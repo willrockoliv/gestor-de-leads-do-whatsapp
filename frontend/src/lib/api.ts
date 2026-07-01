@@ -67,8 +67,14 @@ export function getMe() {
   return request<UserResponse>("/auth/me");
 }
 
+export type FunnelTemplateValue =
+  | Record<string, string>
+  | { name: string; funnel_config: Record<string, string> };
+
+export type FunnelTemplateMap = Record<string, FunnelTemplateValue>;
+
 export function getFunnelTemplates() {
-  return request<Record<string, { name: string; funnel_config: Record<string, string> }>>(
+  return request<FunnelTemplateMap>(
     "/auth/funnel-templates"
   );
 }
@@ -99,11 +105,20 @@ export interface LeadListItem {
   status: string;
   current_stage: string | null;
   temperature_score: number | null;
+  analysis_status: AnalysisStatus;
+  analysis_error: string | null;
   is_processing: boolean;
   created_at: string;
   updated_at: string;
   conversation_time_minutes: number | null;
 }
+
+export type AnalysisStatus =
+  | "idle"
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed";
 
 export interface AnalysisSummary {
   id: string;
@@ -164,39 +179,54 @@ export function getMessages(leadId: string, page = 1, pageSize = 50) {
 }
 
 export function updateLeadStatus(leadId: string, status: "converted" | "lost") {
-  return request<{ status: string }>(`/leads/${leadId}/status`, {
+  return request<{ status: string; lead_id: string; new_status: string }>(`/leads/${leadId}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
 }
 
 export function updateLeadStage(leadId: string, current_stage: string) {
-  return request<{ status: string }>(`/leads/${leadId}/stage`, {
+  return request<{ status: string; lead_id: string; new_stage: string }>(`/leads/${leadId}/stage`, {
     method: "PATCH",
     body: JSON.stringify({ current_stage }),
   });
 }
 
 // ---------- Analysis ----------
-export interface AnalysisResponse {
-  id: string;
+export interface AnalysisJobAcceptedResponse {
   lead_id: string;
-  temperature_score: number;
-  current_stage: string | null;
-  conversation_summary: string;
-  qualitative_tips: string;
-  suggested_reply: string;
+  analysis_status: "pending";
 }
 
 export interface AnalyzeBatchResponse {
-  total: number;
-  succeeded: number;
+  total_enqueued: number;
+  lead_ids?: string[];
+}
+
+export interface AnalyzeStatusCounts {
+  idle: number;
+  pending: number;
+  processing: number;
+  completed: number;
   failed: number;
-  results: Array<{ lead_id: string; status: string; detail?: string; temperature_score?: number }>;
+}
+
+export interface AnalyzeStatusResponse {
+  counts: AnalyzeStatusCounts;
+  pending_ids?: string[];
+  processing_ids?: string[];
+  completed_ids?: string[];
+  failed_ids?: string[];
+}
+
+export interface AnalysisLeadStatusResponse {
+  lead_id: string;
+  analysis_status: AnalysisStatus;
+  analysis_error: string | null;
 }
 
 export function analyzeLead(leadId: string) {
-  return request<AnalysisResponse>(`/leads/${leadId}/analyze`, {
+  return request<AnalysisJobAcceptedResponse>(`/leads/${leadId}/analyze`, {
     method: "POST",
   });
 }
@@ -205,6 +235,17 @@ export function analyzeAll() {
   return request<AnalyzeBatchResponse>("/leads/analyze-all", {
     method: "POST",
   });
+}
+
+export function getAnalyzeStatus(leadIds?: string[]) {
+  const params = new URLSearchParams();
+  leadIds?.forEach((id) => params.append("lead_ids", id));
+  const qs = params.toString();
+  return request<AnalyzeStatusResponse>(`/leads/analyze/status${qs ? `?${qs}` : ""}`);
+}
+
+export function getLeadAnalyzeStatus(leadId: string) {
+  return request<AnalysisLeadStatusResponse>(`/leads/${leadId}/analyze/status`);
 }
 
 // ---------- Dashboard ----------
@@ -223,8 +264,8 @@ export function getDashboardStats() {
 // ---------- WhatsApp ----------
 export interface WhatsAppStatus {
   status: string;
-  connected_at: string | null;
-  message?: string;
+  phone: string | null;
+  connected_since: string | null;
 }
 
 export function getWhatsAppStatus() {

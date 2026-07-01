@@ -6,6 +6,7 @@ import {
   updateFunnel,
   getFunnelTemplates,
   type TenantResponse,
+  type FunnelTemplateMap,
 } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,15 +17,10 @@ import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Save } from "lucide-react";
 import { useOnboardingGuard } from "../onboarding/guard";
 
-interface FunnelTemplate {
-  name: string;
-  funnel_config: Record<string, string>;
-}
-
 export default function SettingsPage() {
   const [tenant, setTenant] = useState<TenantResponse | null>(null);
   const [funnelEntries, setFunnelEntries] = useState<Array<[string, string]>>([]);
-  const [templates, setTemplates] = useState<Record<string, FunnelTemplate>>({});
+  const [templates, setTemplates] = useState<FunnelTemplateMap>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 

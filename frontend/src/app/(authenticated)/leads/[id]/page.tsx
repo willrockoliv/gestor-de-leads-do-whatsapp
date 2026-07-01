@@ -78,9 +78,18 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   async function handleAnalyze() {
     setAnalyzing(true);
     try {
-      await analyzeLead(id);
-      toast.success("Análise concluída");
-      await refresh();
+      const res = await analyzeLead(id);
+      setLead((prev) =>
+        prev
+          ? {
+              ...prev,
+              analysis_status: res.analysis_status,
+              analysis_error: null,
+              is_processing: true,
+            }
+          : prev
+      );
+      toast.success("Análise enfileirada");
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         toast.warning("Lead já está sendo processado");
@@ -179,9 +188,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         <Button
           size="sm"
           onClick={handleAnalyze}
-          disabled={analyzing || lead.is_processing}
+          disabled={
+            analyzing ||
+            lead.analysis_status === "pending" ||
+            lead.analysis_status === "processing" ||
+            lead.is_processing
+          }
         >
-          {analyzing || lead.is_processing ? (
+          {analyzing || lead.analysis_status === "pending" || lead.analysis_status === "processing" || lead.is_processing ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <Thermometer className="mr-2 h-4 w-4" />
@@ -251,6 +265,15 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 </span>
               </div>
             </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Status da Análise</span>
+              <Badge variant="outline">{lead.analysis_status}</Badge>
+            </div>
+            {lead.analysis_status === "failed" && lead.analysis_error ? (
+              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/70 dark:bg-red-900/20 dark:text-red-300">
+                {lead.analysis_error}
+              </div>
+            ) : null}
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Criado em</span>
               <span>{createdAt}</span>

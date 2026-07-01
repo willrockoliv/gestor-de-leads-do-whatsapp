@@ -76,9 +76,23 @@ export default function DashboardPage() {
   const handleAnalyzeAll = async () => {
     setAnalyzing(true);
     try {
-      await analyzeAll();
-      toast.success("Análise concluída!");
-      await refresh();
+      const res = await analyzeAll();
+      if (res.total_enqueued > 0) {
+        const enqueuedIds = new Set(res.lead_ids ?? []);
+        setLeads((prev) =>
+          prev.map((lead) =>
+            enqueuedIds.size === 0 || enqueuedIds.has(lead.id)
+              ? {
+                  ...lead,
+                  analysis_status: "pending",
+                  analysis_error: null,
+                  is_processing: true,
+                }
+              : lead
+          )
+        );
+      }
+      toast.success(`${res.total_enqueued} lead(s) enfileirado(s) para análise`);
     } catch {
       toast.error("Erro ao analisar todos os leads");
     } finally {
@@ -277,9 +291,14 @@ export default function DashboardPage() {
                           {Math.round(lead.conversation_time_minutes)} min
                         </span>
                       )}
-                      {lead.is_processing && (
+                      {(lead.analysis_status === "pending" || lead.analysis_status === "processing" || lead.is_processing) && (
                         <span className="flex items-center gap-1.5 text-blue-500">
                           <Loader2 className="w-3.5 h-3.5 animate-spin" /> Processando
+                        </span>
+                      )}
+                      {lead.analysis_status === "failed" && (
+                        <span className="flex items-center gap-1.5 text-red-500">
+                          <AlertCircle className="w-3.5 h-3.5" /> Falhou
                         </span>
                       )}
                     </div>

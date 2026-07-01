@@ -98,9 +98,20 @@ export default function LeadsPage() {
   async function handleAnalyzeSingle(leadId: string) {
     setAnalyzingIds((prev) => new Set(prev).add(leadId));
     try {
-      await analyzeLead(leadId);
-      toast.success("Análise concluída");
-      await refresh();
+      const res = await analyzeLead(leadId);
+      setLeads((prev) =>
+        prev.map((lead) =>
+          lead.id === leadId
+            ? {
+                ...lead,
+                analysis_status: res.analysis_status,
+                analysis_error: null,
+                is_processing: true,
+              }
+            : lead
+        )
+      );
+      toast.success("Análise enfileirada");
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         toast.warning("Lead já está sendo processado");
@@ -120,10 +131,22 @@ export default function LeadsPage() {
     setAnalyzingAll(true);
     try {
       const res = await analyzeAll();
-      toast.success(
-        `${res.succeeded} sucesso, ${res.failed} falhas de ${res.total} leads`
-      );
-      await refresh();
+      if (res.total_enqueued > 0) {
+        setLeads((prev) => {
+          const enqueuedIds = new Set(res.lead_ids ?? []);
+          return prev.map((lead) =>
+            enqueuedIds.size === 0 || enqueuedIds.has(lead.id)
+              ? {
+                  ...lead,
+                  analysis_status: "pending",
+                  analysis_error: null,
+                  is_processing: true,
+                }
+              : lead
+          );
+        });
+      }
+      toast.success(`${res.total_enqueued} lead(s) enfileirado(s) para análise`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao analisar leads");
     } finally {
@@ -273,6 +296,12 @@ export default function LeadsPage() {
                     <Badge variant="outline">
                       {lead.current_stage || "Sem etapa"}
                     </Badge>
+                    {lead.analysis_status === "pending" || lead.analysis_status === "processing" ? (
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Análise em andamento</p>
+                    ) : null}
+                    {lead.analysis_status === "failed" && lead.analysis_error ? (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1 line-clamp-2">{lead.analysis_error}</p>
+                    ) : null}
                   </TableCell>
                   <TableCell>
                     <TemperatureBadge score={lead.temperature_score} />
@@ -288,10 +317,15 @@ export default function LeadsPage() {
                         variant="ghost"
                         size="icon"
                         title="Analisar"
-                        disabled={lead.is_processing || analyzingIds.has(lead.id)}
+                        disabled={
+                          lead.analysis_status === "pending" ||
+                          lead.analysis_status === "processing" ||
+                          lead.is_processing ||
+                          analyzingIds.has(lead.id)
+                        }
                         onClick={() => handleAnalyzeSingle(lead.id)}
                       >
-                        {lead.is_processing || analyzingIds.has(lead.id) ? (
+                        {lead.analysis_status === "pending" || lead.analysis_status === "processing" || lead.is_processing || analyzingIds.has(lead.id) ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Thermometer className="h-4 w-4" />
