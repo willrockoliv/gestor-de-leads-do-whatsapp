@@ -23,7 +23,7 @@ class JsonFormatter(logging.Formatter):
             if value is not None:
                 payload[key] = value
 
-        return json.dumps(payload, ensure_ascii=True)
+        return json.dumps(payload, ensure_ascii=False)
 
 
 def configure_logging(use_json: bool, level: str = "INFO") -> None:
