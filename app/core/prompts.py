@@ -52,7 +52,7 @@ INSTRUÇÕES CRÍTICAS:
     - Tom profissional, consultivo e humano
     - Deve manter o lead engajado e conduzir para o próximo passo do funil (ex.: agendar, confirmar interesse, enviar proposta, fechar etapa)
     - Sempre que possível, inclua uma pergunta de avanço (call-to-action) para continuar a conversa de vendas
-    - Não responder como sistema; escrever como vendedor falando diretamente com o lead
+    - IMPORTANTE: Não responder como sistema; escreva como se fosse o VENDEDOR falando diretamente com o LEAD
 
 IMPORTANTE: Siga o schema acima rigorosamente. Todos os campos de texto são STRINGS simples (nunca arrays).
 Retorne APENAS o JSON puro, sem markdown, sem explicações, sem blocos de código."""
