@@ -9,7 +9,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.prompts import ANALYSIS_SYSTEM_PROMPT, REINFORCED_USER_PROMPT_SUFFIX
+from app.core.prompts import ANALYSIS_SYSTEM_PROMPT, REINFORCED_USER_PROMPT_SUFFIX, CONVERSION_INTENT_KEYWORDS
 from app.models import Analysis, AnalysisStatus, Lead, LeadStatus, Message, Tenant
 from app.schemas.analysis import AnalyzeStatusCounts, AnalyzeStatusResponse, LLMAnalysisResult
 
@@ -17,22 +17,107 @@ logger = logging.getLogger(__name__)
 
 MAX_ERROR_LENGTH = 500
 
+# Messages that are purely placeholders and should be filtered from context
+UNSUPPORTED_MESSAGE_PATTERNS = {
+    "[imagem]",
+    "[vídeo]",
+    "[áudio]",
+    "[sticker]",
+    "[mensagem não suportada]",
+    "[arquivo]",
+    "[contato]",
+    "[localização]",
+    "[chamada de áudio]",
+    "[chamada de vídeo]",
+}
 
-def build_analysis_prompt(funnel_config: dict, messages: list[Message]) -> tuple[str, str]:
+
+def _is_noise_only_message(content: str) -> bool:
+    """Check if message is only a placeholder/noise without real content."""
+    stripped = content.strip().lower()
+    # If message is exactly a placeholder, filter it
+    if stripped in UNSUPPORTED_MESSAGE_PATTERNS:
+        return True
+    # Also filter URLs that are too long (likely copied by mistake/bot)
+    # URLs above 500 chars are almost certainly accidental or bot-generated
+    if stripped.startswith("http") and len(stripped) > 500:
+        return True
+    return False
+
+
+def _filter_noise_messages(messages: list[Message]) -> list[Message]:
+    """Filter out unsupported/noise-only messages from context while preserving meaningful ones."""
+    return [msg for msg in messages if not _is_noise_only_message(msg.content)]
+
+
+def _detect_conversion_intent(messages: list[Message]) -> bool:
+    """Heuristic: detect if lead has explicitly expressed conversion intent in recent messages.
+    
+    - Only checks INBOUND messages (from lead, not from seller)
+    - Scans the LAST 10 inbound messages for conversion keywords
+    - Case-insensitive matching
+    - Returns True if any conversion keyword is found
+    
+    This is used as a fallback heuristic when LLM score seems too conservative.
+    """
+    # Only check inbound messages (direction == "inbound") from the lead
+    inbound_messages = [msg for msg in messages if msg.direction.value == "inbound"]
+    
+    # Check the last 10 inbound messages for conversion keywords
+    recent_inbound = inbound_messages[-10:]
+    
+    for msg in recent_inbound:
+        content_lower = msg.content.lower()
+        for keyword in CONVERSION_INTENT_KEYWORDS:
+            if keyword in content_lower:
+                return True
+    
+    return False
+
+
+def build_analysis_prompt(
+    funnel_config: dict,
+    messages: list[Message],
+    lead_current_stage: str | None = None,
+) -> tuple[str, str]:
     """Build system and user prompts for LLM analysis."""
     settings = get_settings()
     template = ANALYSIS_SYSTEM_PROMPT
 
     stages = "\n".join(f"- {v}" for v in funnel_config.values())
-    system_prompt = template.format(funnel_stages=stages)
+    current_stage = lead_current_stage or "Não definida"
+    system_prompt = template.format(funnel_stages=stages, current_stage=current_stage)
 
+    # Filter noise before slicing context window
+    filtered_messages = _filter_noise_messages(messages)
+    
     conversation_lines = []
-    for msg in messages[-settings.ANALYSIS_MAX_CONTEXT_MESSAGES :]:
+    
+    for msg in filtered_messages[-settings.ANALYSIS_MAX_CONTEXT_MESSAGES :]:
         prefix = "VENDEDOR" if msg.direction.value == "outbound" else "LEAD"
-        conversation_lines.append(f"[{prefix}]: {msg.content}")
+        conversation_lines.append(f"[{msg.timestamp}][{prefix}]: {msg.content}")
 
     user_prompt = "Conversa:\n" + "\n".join(conversation_lines)
     return system_prompt, user_prompt
+
+
+
+def _normalize_llm_response(data: dict) -> dict:
+    """Normalize LLM response by converting arrays to strings for text fields.
+    
+    The LLM sometimes returns arrays instead of strings (e.g., qualitative_tips as list).
+    This function converts known array fields back to strings for validation.
+    """
+    # Convert array fields to strings
+    for field in ["qualitative_tips", "conversation_summary", "suggested_reply", "current_stage"]:
+        if field in data and isinstance(data[field], list):
+            # Join list items with semicolon and space
+            data[field] = "; ".join(str(item).strip() for item in data[field] if item)
+            logger.info(f"[normalize_response] Converted {field} from list to string: {data[field][:50]}...")
+    
+    return data
+
+
 
 
 def parse_llm_response(response_text: str) -> LLMAnalysisResult:
@@ -45,7 +130,9 @@ def parse_llm_response(response_text: str) -> LLMAnalysisResult:
         cleaned = cleaned.strip()
 
     data = json.loads(cleaned)
-    return LLMAnalysisResult.model_validate(data)
+    # Normalize response (convert arrays to strings if needed)
+    normalized_data = _normalize_llm_response(data)
+    return LLMAnalysisResult.model_validate(normalized_data)
 
 
 async def parse_llm_response_with_retry(
@@ -286,8 +373,9 @@ async def call_llm(system_prompt: str, user_prompt: str) -> str:
         ],
         api_key=settings.LLM_API_KEY,
         api_base=settings.LLM_API_BASE,
+        cache=False,
         max_tokens=settings.ANALYSIS_MAX_OUTPUT_TOKENS,
-        timeout=30,
+        timeout=60,
         response_format={"type": "json_object"},
         stream=False,
     )
@@ -295,7 +383,12 @@ async def call_llm(system_prompt: str, user_prompt: str) -> str:
 
 
 async def process_lead_analysis(lead_id: uuid.UUID, db: AsyncSession) -> Analysis:
-    """Run analysis for a lead already claimed by the worker."""
+    """Run analysis for a lead already claimed by the worker.
+    
+    When conversion intent is detected, applies heuristic reinforcement:
+    - Ensures temperature_score >= 75 (hot lead)
+    - Advances to next stage if currently in first stage (works with any funnel config)
+    """
     result = await db.execute(select(Lead).where(Lead.id == lead_id))
     lead = result.scalar_one()
 
@@ -309,7 +402,11 @@ async def process_lead_analysis(lead_id: uuid.UUID, db: AsyncSession) -> Analysi
     if not messages:
         raise ValueError("Lead não possui mensagens para análise")
 
-    system_prompt, user_prompt = build_analysis_prompt(tenant.funnel_config, messages)
+    system_prompt, user_prompt = build_analysis_prompt(
+        tenant.funnel_config,
+        messages,
+        lead_current_stage=lead.current_stage,
+    )
     settings = get_settings()
     response_text = await call_llm(system_prompt, user_prompt)
     parsed = await parse_llm_response_with_retry(
@@ -318,6 +415,20 @@ async def process_lead_analysis(lead_id: uuid.UUID, db: AsyncSession) -> Analysi
         user_prompt,
         retries=max(settings.ANALYSIS_JSON_PARSE_RETRIES - 1, 0),
     )
+
+    # Heuristic reinforcement: if lead expressed explicit conversion intent,
+    # ensure score reflects it (at least 75/100 and not in first stage)
+    has_conversion_intent = _detect_conversion_intent(messages)
+    if has_conversion_intent:
+        logger.info(f"[process_lead_analysis] Detected conversion intent - reinforcing score from {parsed.temperature_score} to min 75")
+        if parsed.temperature_score < 75:
+            parsed.temperature_score = 75
+        # If still in first stage with conversion intent, advance to next stage
+        available_stages = list(tenant.funnel_config.values())
+        if parsed.current_stage == available_stages[0] and len(available_stages) > 1:
+            old_stage = parsed.current_stage
+            parsed.current_stage = available_stages[1]
+            logger.info(f"[process_lead_analysis] Advanced stage from '{old_stage}' to '{parsed.current_stage}'")
 
     analysis = Analysis(
         lead_id=lead_id,
