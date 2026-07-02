@@ -217,3 +217,6 @@ __marimo__/
 # OS
 .DS_Store
 Thumbs.dbtest-results/
+
+# Queries para testes locais
+*.sql
