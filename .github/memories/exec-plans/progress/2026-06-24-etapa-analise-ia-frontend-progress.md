@@ -1,7 +1,8 @@
 # Progresso - Etapa Análise IA Frontend (2026-06-24)
 
-Plano: `.github/memories/exec-plans/active/2026-06-24-etapa-analise-ia-frontend.md`
+Plano: `.github/memories/exec-plans/completed/2026-06-24-etapa-analise-ia-frontend.md`
 Data de início: 2026-06-24
+Data de conclusão: 2026-07-01
 Status: Concluído
 
 ## Status da implementação
@@ -78,14 +79,6 @@ Status: Concluído
 
 - Endpoints backend assíncrono: `POST /leads/{id}/analyze`, `POST /leads/analyze-all`, `GET /leads/analyze/status`.
 - Documentação backend: ARCHITECTURE.md e CUSTOMER_JOURNEY_SEQUENCE_DIAGRAMS.md atualizados.
-
-## Aprendizados
-
-- A preencher quando backend estiver pronto.
-
-## Débitos técnicos
-
-- A preencher durante execução das fases.
 
 ## Decisões importantes
 
