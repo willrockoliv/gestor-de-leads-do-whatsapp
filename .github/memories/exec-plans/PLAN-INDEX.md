@@ -6,7 +6,11 @@ Use este arquivo para localizar rapidamente os planos de execução ativos, comp
 
 ## .github/memories/exec-plans/active/ - planos em andamento
 
-- Nenhum plano ativo no momento.
+- 2026-07-02-deploy-producao.md
+  - Deploy em produção na mesma VPS: Traefik v3 como proxy reverso, Cloudflare Free na frente, separação dev/prod por Docker networks com limites de recurso no dev.
+
+- 2026-07-02-acesso-beta-ip-restrito.md
+  - Liberar acesso ao app em produção apenas para o IP de casa durante a fase beta, via UFW por IP (rápido) ou Cloudflare Access/Zero Trust (robusto, sem depender de IP fixo).
 
 ## .github/memories/exec-plans/completed/ - planos completados
 
